@@ -1,6 +1,5 @@
 import os
 
-from math import pi, sin, cos
 from typing import Tuple
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
@@ -50,8 +49,6 @@ class ExplorerApp(ShowBase):
             mouse_projection = self.calculateMouseProjection()
             self.mouse_np = self.render.attachNewNode(self.generateGeometry(Parallelepiped(1, 1, 1), 'mouse') )
             self.mouse_np.setPos(*mouse_projection)
-
-            # self.render.setShaderInput()
 
             self.taskMgr.add(self.updateMouseProjection, 'updateMouseProjection')
 
