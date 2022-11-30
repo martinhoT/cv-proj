@@ -10,7 +10,88 @@ class Scene:
     objects:    List['Object3D']
 
 
+    @classmethod
+    def from_map_string(cls, map_str: str) -> 'Scene':
+        floor_layouts = []
+        floor_layout = []
+        for line in map_str.splitlines():
+            if line:
+                floor_layout.append(line)
+            
+            else:
+                if floor_layout:
+                    floor_layouts.append(floor_layout.copy())
+                    floor_layout.clear()
+
+        # Leftover
+        if floor_layout:
+            floor_layouts.append(floor_layout.copy())
+            floor_layout.clear()
+        
+        # TODO: check that it's a valid map
+        # TODO: obtain map dimensions
+        width, depth = None, None
+
+        objects = []
+        scene = Scene(objects)
+
+        floor_height = 1
+        wall_length = 5
+        wall_height = 5
+        wall_thin = 1
+
+        for idx, floor_layout in enumerate(floor_layouts):
+            floor_objects = []
+            
+            # TODO: take into account the 'X' tiles
+            floor = Parallelepiped(
+                width=width,
+                height=floor_height,
+                depth=depth,
+            )
+            floor.set_pos((0, 0, idx * (wall_height + floor_height)))
+            floor_objects.append(floor)
+
+            for y, row in enumerate(floor_layout):
+                for x, object_type in enumerate(row):
+                    if object_type == '-':
+                        wall = Parallelepiped(
+                            width=wall_length,
+                            height=wall_height,
+                            depth=wall_thin,
+                        )
+
+                    elif object_type == '|':
+                        wall = Parallelepiped(
+                            width=wall_thin,
+                            height=wall_height,
+                            depth=wall_length,
+                        )
+
+                    else:
+                        wall = None
+                    
+                    if wall:
+                        z = floor_height + idx * (wall_height + floor_height)
+                        wall.set_pos((x, y, z))
+                        floor_objects.append(wall)
+
+
+
+    @classmethod
+    def from_map_file(cls, path: str) -> 'Scene':
+        content = None
+        with open(path, 'rt') as map_file:
+            content = map_file.read()
+
+        return Scene.from_map_str(content)
+
+
+
 class Object3D:
+
+    def get_pos(self) -> Tuple[float, float, float]:
+        raise NotImplementedError()
 
     def get_vertices(self) -> List[List[float]]:
         raise NotImplementedError()
@@ -85,7 +166,21 @@ class Parallelepiped(Object3D):
         color_cols = np.repeat([[r, g, b, a]], len(vertices), axis=0)
         
         self.vertices = np.hstack([ vertices, color_cols ])
+        self.pos = None
         
     
+    def set_pos(self, pos: Tuple[float, float, float]):
+        self.pos = pos
+
+
+    def get_pos(self) -> Tuple[float, float, float]:
+        return self.pos
+
+
     def get_vertices(self) -> List[List[float]]:
         return self.vertices
+
+
+
+if __name__ == '__main__':
+    scene = Scene.from_map_string('test1.map')
