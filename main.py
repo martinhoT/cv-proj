@@ -5,15 +5,24 @@ from typing import Tuple
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
 from panda3d.core import Filename, GeomVertexData, GeomVertexFormat, Geom, GeomVertexWriter, GeomTriangles, GeomNode, \
-    Spotlight, PerspectiveLens
+    Spotlight, PerspectiveLens, WindowProperties
 
 from scene import Object3D, Parallelepiped
 
+WIDTH = 800
+HEIGHT = 600
 
 class ExplorerApp(ShowBase):
 
     def __init__(self):
         ShowBase.__init__(self)
+
+        # set window size
+        props = WindowProperties()
+        props.setSize(WIDTH, HEIGHT)
+        self.win.requestProperties(props)
+
+
 
         self.path = os.path.dirname(os.path.abspath(__file__))
         self.path_p3d = Filename.fromOsSpecific(self.path)
@@ -92,10 +101,13 @@ class ExplorerApp(ShowBase):
     # get mouse position in 3d space
     def calculateMouseProjection(self) -> Tuple[float, float, float]:
         distance = 20
-        x_multiplier = 7.25
-        y_multiplier = 5.45
+        width = self.win.getProperties().getXSize()
+        height = self.win.getProperties().getYSize()
+        x_multiplier = width / 110.34482758620689 # 7.25
+        y_multiplier = height / 110.091743119 # 5.45
         x_offset = -0.5
         y_offset = -0.5
+
         if self.mouseWatcherNode.hasMouse():
             x = self.mouseWatcherNode.getMouseX()
             y = self.mouseWatcherNode.getMouseY()
