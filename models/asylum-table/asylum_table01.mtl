@@ -1,0 +1,19 @@
+# 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
+# File Created: 11.11.2021 13:30:53
+
+newmtl Material_000001
+	Ns 33.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 1.0000 1.0000 1.0000
+	Kd 1.0000 1.0000 1.0000
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka asylum_furniture_sets_02_d.png
+	map_Kd asylum_furniture_sets_02_d.png
+	map_Ks asylum_furniture_sets_02_r.png
+	map_bump asylum_furniture_sets_02_n.png
+	bump asylum_furniture_sets_02_n.png
