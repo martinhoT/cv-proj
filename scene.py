@@ -18,7 +18,7 @@ class Object3D:
 
 class Parallelepiped(Object3D):
 
-    def __init__(self, width: float, height: float, depth: float, color: Tuple[float, float, float, float], tiling_factors: Tuple[float, float]=(1.0, 0.5)):
+    def __init__(self, width: float, height: float, depth: float, color: Tuple[float, float, float, float]=(1.0, 1.0, 1.0, 1.0), tiling_factors: Tuple[float, float]=(1.0, 0.5)):
         r, g, b, a = color
         w, h, d = width, height, depth
         u, v = tiling_factors

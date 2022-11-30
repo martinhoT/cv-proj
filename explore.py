@@ -30,7 +30,7 @@ class ExplorerApp(ShowBase):
             # OpenGL style coloring
             self.scene_vertex_format = GeomVertexFormat.getV3c4t2()
             texture_wall = self.loader.loadTexture(self.path_p3d / 'textures/wall.png')
-            self.wall_0 = self.render.attachNewNode( self.generateGeometry(Parallelepiped(3, 1, 3, (1.0, 1.0, 1.0, 1.0)), 'parallelepiped_0') )
+            self.wall_0 = self.render.attachNewNode(self.generateGeometry(Parallelepiped(3, 1, 3, (1.0, 1.0, 1.0, 1.0)), 'parallelepiped_0') )
             self.wall_0.setTexture(texture_wall)
 
             # Lighting
@@ -44,16 +44,16 @@ class ExplorerApp(ShowBase):
             self.flashlight_np.lookAt(self.table)
             self.render.setLight(self.flashlight_np)
             
-            flashlight_cube = self.generateGeometry(Parallelepiped(2, 2, 2, (1.0, 1.0, 1.0, 1.0)), 'flashlight')
+            flashlight_cube = self.generateGeometry(Parallelepiped(2, 2, 2), 'flashlight')
             self.flashlight_np.attachNewNode(flashlight_cube)
 
             mouse_projection = self.calculateMouseProjection()
-            self.mouse_np = self.render.attachNewNode( self.generateGeometry(Parallelepiped(1, 1, 1, (1.0, 0.0, 1.0, 1.0)), 'mouse') )
+            self.mouse_np = self.render.attachNewNode(self.generateGeometry(Parallelepiped(1, 1, 1), 'mouse') )
             self.mouse_np.setPos(*mouse_projection)
 
-            self.render.setShaderInput()
+            # self.render.setShaderInput()
 
-            # self.taskMgr.add(self.updateMouseProjection, 'updateMouseProjection')
+            self.taskMgr.add(self.updateMouseProjection, 'updateMouseProjection')
 
 
     def generateGeometry(self, object3d: Object3D, name: str) -> GeomNode:
@@ -89,24 +89,24 @@ class ExplorerApp(ShowBase):
         return node
 
 
-    # def calculateMouseProjection(self) -> Tuple[float, float, float]:
-    #     if self.mouseWatcherNode.hasMouse():
-    #         x = self.mouseWatcherNode.getMouseX() * 10
-    #         y = self.mouseWatcherNode.getMouseY() * 8
-    #     else:
-    #         x, y = 0, 0
+    def calculateMouseProjection(self) -> Tuple[float, float, float]:
+        if self.mouseWatcherNode.hasMouse():
+            x = self.mouseWatcherNode.getMouseX() * 10
+            y = self.mouseWatcherNode.getMouseY() * 8
+        else:
+            x, y = 0, 0
 
-    #     return x, 20, y
+        return x, 20, y
 
     
-    # def updateMouseProjection(self, task):
-    #     target = self.calculateMouseProjection()
-    #     self.mouse_np.setPos(target)
-    #     self.flashlight_np.lookAt(target)
+    def updateMouseProjection(self, task):
+        target = self.calculateMouseProjection()
+        self.mouse_np.setPos(target)
+        self.flashlight_np.lookAt(target)
 
-    #     print(target, ' '*20, end='\r')
+        print(target, ' '*20, end='\r')
 
-    #     return Task.cont
+        return Task.cont
 
 
 
