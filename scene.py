@@ -2,6 +2,7 @@ import numpy as np
 
 from typing import Tuple, List
 from dataclasses import dataclass
+from panda3d.core import GeomVertexFormat
 
 
 
@@ -31,6 +32,18 @@ class Scene:
         # TODO: check that it's a valid map
         # TODO: obtain map dimensions
         width, depth = None, None
+        for floor_layout in floor_layouts:
+
+            floor_width = floor_layout[0].count('+') - 1
+            floor_depth = (len(floor_layout) - 1) // 2
+
+            if width is None or depth is None:
+                width = floor_width
+                depth = floor_depth
+            elif floor_width != width:
+                raise ValueError('The width is not consistent among floors!')
+            elif floor_depth != depth:
+                raise ValueError('The depth is not consistent among floors!')
 
         objects = []
         scene = Scene(objects)
@@ -76,6 +89,9 @@ class Scene:
                         wall.set_pos((x, y, z))
                         floor_objects.append(wall)
 
+            objects.extend(floor_objects)
+
+        return scene
 
 
     @classmethod
@@ -84,11 +100,14 @@ class Scene:
         with open(path, 'rt') as map_file:
             content = map_file.read()
 
-        return Scene.from_map_str(content)
+        return Scene.from_map_string(content)
 
 
 
 class Object3D:
+
+    def get_vertex_format(self) -> GeomVertexFormat:
+        raise NotImplementedError()
 
     def get_pos(self) -> Tuple[float, float, float]:
         raise NotImplementedError()
@@ -179,6 +198,10 @@ class Parallelepiped(Object3D):
 
     def get_vertices(self) -> List[List[float]]:
         return self.vertices
+    
+
+    def get_vertex_format(self) -> GeomVertexFormat:
+        return GeomVertexFormat.getV3c4t2()
 
 
 
