@@ -1,15 +1,17 @@
+import math
 import os
 
 from typing import Tuple
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
-from panda3d.core import Filename, GeomVertexData, GeomVertexFormat, Geom, GeomVertexWriter, GeomTriangles, GeomNode, \
-    Spotlight, PerspectiveLens, WindowProperties
+from panda3d.core import *
 
+from CustomObject3D import CustomObject3D
 from scene import Object3D, Parallelepiped
 
 WIDTH = 800
 HEIGHT = 600
+
 
 class ExplorerApp(ShowBase):
 
@@ -21,7 +23,9 @@ class ExplorerApp(ShowBase):
         props.setSize(WIDTH, HEIGHT)
         self.win.requestProperties(props)
 
-
+        # camera variables
+        self.camera_pos = [0, 180, 0]
+        self.camera_zoom = 60
 
         self.path = os.path.dirname(os.path.abspath(__file__))
         self.path_p3d = Filename.fromOsSpecific(self.path)
@@ -29,12 +33,11 @@ class ExplorerApp(ShowBase):
         self.disableMouse()
 
         # Load the environment model
-        self.table = self.loader.loadModel(self.path_p3d / 'models/table-old/o_table_old_01_a.obj')
-        # Reparent the model to render
-        self.table.reparentTo(self.render)
-        # Apply scale and position transforms on the model
-        self.table.setScale(0.25, 0.25, 0.25)
-        self.table.setPos(0, 40, 0)
+        table_model = self.loader.loadModel(self.path_p3d / 'models/table-old/o_table_old_01_a.obj')
+        table_scale = (0.25, 0.25, 0.25)
+        table_position = (0, 40, 0)
+
+        self.table = CustomObject3D(table_model, table_position, table_scale, self.render)
 
         # OpenGL style coloring
         self.scene_vertex_format = GeomVertexFormat.getV3c4t2()
@@ -51,7 +54,7 @@ class ExplorerApp(ShowBase):
 
         self.flashlight_np = self.render.attachNewNode(self.flashlight)
         self.flashlight_np.setPos(0, 10, 0)
-        self.flashlight_np.lookAt(self.table)
+        self.flashlight_np.lookAt(self.table.model)
         self.render.setLight(self.flashlight_np)
 
         flashlight_cube = self.generateGeometry(Parallelepiped(2, 2, 2), 'flashlight')
@@ -64,6 +67,8 @@ class ExplorerApp(ShowBase):
         # self.render.setShaderInput()
 
         self.taskMgr.add(self.updateMouseProjection, 'updateMouseProjection')
+        self.taskMgr.add(self.read_inputs_task, 'read_inputs_task')
+        self.taskMgr.add(self.move_camera_task, 'move_camera_task')
 
     def generateGeometry(self, object3d: Object3D, name: str) -> GeomNode:
         # Number of vertices per primitive (triangles)
@@ -102,8 +107,8 @@ class ExplorerApp(ShowBase):
         distance = 20
         width = self.win.getProperties().getXSize()
         height = self.win.getProperties().getYSize()
-        x_multiplier = width / 110.34482758620689 # 7.25
-        y_multiplier = height / 110.091743119 # 5.45
+        x_multiplier = width / 110.34482758620689  # 7.25
+        y_multiplier = height / 110.091743119  # 5.45
         x_offset = -0.5
         y_offset = -0.5
 
@@ -116,12 +121,47 @@ class ExplorerApp(ShowBase):
 
     def updateMouseProjection(self, task):
         target = self.calculateMouseProjection()
-        # target = -9, 20, 0
+
+        # Pre inputs flash light
         self.mouse_np.setPos(target)
         self.flashlight_np.lookAt(target)
 
         print(target, ' ' * 20, end='\r')
 
+        return Task.cont
+
+    def read_inputs_task(self, task):
+        isDown = self.mouseWatcherNode.is_button_down
+
+        if isDown(KeyboardButton.asciiKey("a")):
+            self.camera_pos[0] -= 1
+        if isDown(KeyboardButton.asciiKey("d")):
+            self.camera_pos[0] += 1
+        if isDown(KeyboardButton.asciiKey("w")):
+            self.camera_pos[1] -= 1
+        if isDown(KeyboardButton.asciiKey("s")):
+            self.camera_pos[1] += 1
+        if isDown(KeyboardButton.asciiKey("e")):
+            self.camera_zoom -= 1
+        if isDown(KeyboardButton.asciiKey("q")):
+            self.camera_zoom += 1
+
+        return Task.cont
+
+    def move_camera_task(self, task):
+        multiplier = self.camera_zoom
+        angle_x_degrees = self.camera_pos[0] * 1
+        angle_y_degrees = self.camera_pos[1] * 1
+        angle_x_radians = angle_x_degrees * (math.pi / 180.0)
+        angle_y_radians = angle_y_degrees * (math.pi / 180.0)
+
+        self.camera.setPos(
+            math.sin(angle_x_radians) * multiplier,
+            -math.cos(angle_x_radians) * multiplier * -math.cos(angle_y_radians),
+            math.sin(angle_y_radians) * multiplier
+        )
+
+        self.camera.lookAt(self.table.model)
         return Task.cont
 
 
