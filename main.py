@@ -11,6 +11,8 @@ from scene import Object3D, Parallelepiped, Scene
 
 WIDTH = 800
 HEIGHT = 600
+# to facilitate analysing the model when debugging
+MOUSE_CAMERA = False
 
 
 class ExplorerApp(ShowBase):
@@ -30,7 +32,8 @@ class ExplorerApp(ShowBase):
         self.path = os.path.dirname(os.path.abspath(__file__))
         self.path_p3d = Filename.fromOsSpecific(self.path)
 
-        self.disableMouse()
+        if not MOUSE_CAMERA:
+            self.disableMouse()
 
         # Load the environment model
         table_model = self.loader.loadModel(self.path_p3d / 'models/table-old/o_table_old_01_a.obj')
@@ -45,7 +48,7 @@ class ExplorerApp(ShowBase):
         #     self.generateGeometry(Parallelepiped(3, 1, 3, (1.0, 1.0, 1.0, 1.0)), 'parallelepiped_0'))
         # self.wall_0.setTexture(texture_wall)
         self.labyrinth = self.render.attachNewNode('Labyrinth')
-        labyrinth_scene = Scene.from_map_file('test1.map')
+        labyrinth_scene = Scene.from_map_file('test2.map')
         labyrinth_walls = [self.generateGeometry(obj, f'wall_{idx}') for idx, obj in enumerate(labyrinth_scene.objects)]
         print('Number of walls:', len(labyrinth_walls))
         for idx, wall in enumerate(labyrinth_walls):
@@ -86,7 +89,8 @@ class ExplorerApp(ShowBase):
 
         # self.taskMgr.add(self.updateMouseProjection, 'updateMouseProjection')
         self.taskMgr.add(self.read_inputs_task, 'read_inputs_task')
-        self.taskMgr.add(self.move_camera_task, 'move_camera_task')
+        if not MOUSE_CAMERA:
+            self.taskMgr.add(self.move_camera_task, 'move_camera_task')
         self.taskMgr.add(self.move_flashlight_task, 'move_flashlight_task')
 
     def read_inputs_task(self, task):
