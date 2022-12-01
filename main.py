@@ -37,29 +37,8 @@ class ExplorerApp(ShowBase):
         if not MOUSE_CAMERA:
             self.disableMouse()
 
-        # Create an helper 3D axis
         if HELPER_3D_AXIS:
-            axis3d = self.render.attachNewNode('axis3d')
-
-            x_axis = Parallelepiped(10, 0.1, 0.1, color=(1, 0, 0, 1))
-            y_axis = Parallelepiped(0.1, 0.1, 10, color=(0, 1, 0, 1))
-            z_axis = Parallelepiped(0.1, 10, 0.1, color=(0, 0, 1, 1))
-
-            x_axis_head = Parallelepiped(0.3, 0.3, 0.3, color=(1, 0, 0, 1))
-            y_axis_head = Parallelepiped(0.3, 0.3, 0.3, color=(0, 1, 0, 1))
-            z_axis_head = Parallelepiped(0.3, 0.3, 0.3, color=(0, 0, 1, 1))
-
-            x_axis_node = axis3d.attach_new_node( self.generateGeometry(x_axis, 'x_axis') )
-            y_axis_node = axis3d.attach_new_node( self.generateGeometry(y_axis, 'y_axis') )
-            z_axis_node = axis3d.attach_new_node( self.generateGeometry(z_axis, 'z_axis') )
-
-            x_axis_head_node = axis3d.attach_new_node( self.generateGeometry(x_axis_head, 'x_axis_head') )
-            x_axis_head_node.setPos(10, 0, 0)
-            y_axis_head_node = axis3d.attach_new_node( self.generateGeometry(y_axis_head, 'y_axis_head') )
-            y_axis_head_node.setPos(0, 10, 0)
-            z_axis_head_node = axis3d.attach_new_node( self.generateGeometry(z_axis_head, 'z_axis_head') )
-            z_axis_head_node.setPos(0, 0, 10)
-
+            self.create3dAxis()
 
         # Load the environment model
         table_model = self.loader.loadModel(self.path_p3d / 'models/table-old/o_table_old_01_a.obj')
@@ -198,6 +177,30 @@ class ExplorerApp(ShowBase):
             return x * x_multiplier + x_offset, distance, y * y_multiplier + y_offset
 
         return 0, distance, 0
+
+    def create3dAxis(self, heads: bool=False):
+        axis3d = self.render.attachNewNode('axis3d')
+
+        x_axis = Parallelepiped(10, 0.1, 0.1, color=(1, 0, 0, 1))
+        y_axis = Parallelepiped(0.1, 0.1, 10, color=(0, 1, 0, 1))
+        z_axis = Parallelepiped(0.1, 10, 0.1, color=(0, 0, 1, 1))
+
+        axis3d.attach_new_node( self.generateGeometry(x_axis, 'x_axis') )
+        axis3d.attach_new_node( self.generateGeometry(y_axis, 'y_axis') )
+        axis3d.attach_new_node( self.generateGeometry(z_axis, 'z_axis') )
+
+        if heads:
+
+            x_axis_head = Parallelepiped(0.3, 0.3, 0.3, color=(1, 0, 0, 1))
+            y_axis_head = Parallelepiped(0.3, 0.3, 0.3, color=(0, 1, 0, 1))
+            z_axis_head = Parallelepiped(0.3, 0.3, 0.3, color=(0, 0, 1, 1))
+
+            x_axis_head_node = axis3d.attach_new_node( self.generateGeometry(x_axis_head, 'x_axis_head') )
+            x_axis_head_node.setPos(10, 0, 0)
+            y_axis_head_node = axis3d.attach_new_node( self.generateGeometry(y_axis_head, 'y_axis_head') )
+            y_axis_head_node.setPos(0, 10, 0)
+            z_axis_head_node = axis3d.attach_new_node( self.generateGeometry(z_axis_head, 'z_axis_head') )
+            z_axis_head_node.setPos(0, 0, 10)
 
     def updateMouseProjection(self, task):
 
