@@ -30,7 +30,6 @@ class Scene:
             floor_layout.clear()
         
         # TODO: check that it's a valid map
-        # TODO: obtain map dimensions
         width, depth = None, None
         for floor_layout in floor_layouts:
 
@@ -58,9 +57,9 @@ class Scene:
             
             # TODO: take into account the 'X' tiles
             floor = Parallelepiped(
-                width=width,
+                width=width*wall_length,
                 height=floor_height,
-                depth=depth,
+                depth=depth*wall_length,
             )
             floor.set_pos((0, 0, idx * (wall_height + floor_height)))
             floor_objects.append(floor)
@@ -120,64 +119,66 @@ class Parallelepiped(Object3D):
 
     def __init__(self, width: float, height: float, depth: float, color: Tuple[float, float, float, float]=(1.0, 1.0, 1.0, 1.0), tiling_factors: Tuple[float, float]=(1.0, 0.5)):
         r, g, b, a = color
-        w, h, d = width, height, depth
+        # Panda3D uses the geographical coordinate system, where XY is on the floor and Z is the height
+        # (https://docs.panda3d.org/1.10/python/introduction/tutorial/loading-the-grassy-scenery)
+        x, y, z = width, depth, height
         u, v = tiling_factors
 
         # Clockwise order (?)
         vertices = np.array([
             # FRONT
             [0, 0, 0, 0,    0],
-            [0, h, 0, 0,    v*h],
-            [w, h, 0, u*w,  v*h],
+            [0, y, 0, 0,    v*y],
+            [x, y, 0, u*x,  v*y],
 
             [0, 0, 0, 0,    0],
-            [w, h, 0, u*w,  v*h],
-            [w, 0, 0, u*w,  0],
+            [x, y, 0, u*x,  v*y],
+            [x, 0, 0, u*x,  0],
 
             # BACK
-            [0, 0, d, u*w,  0],
-            [w, h, d, 0,    v*h],
-            [0, h, d, u*w,  v*h],
+            [0, 0, z, u*x,  0],
+            [x, y, z, 0,    v*y],
+            [0, y, z, u*x,  v*y],
 
-            [0, 0, d, u*w,  0],
-            [w, 0, d, 0,    0],
-            [w, h, d, 0,    v*h],
+            [0, 0, z, u*x,  0],
+            [x, 0, z, 0,    0],
+            [x, y, z, 0,    v*y],
 
             # LEFT
-            [0, h, d, 0,    v*h],
-            [0, h, 0, u*d,  v*h],
-            [0, 0, d, 0,    0],
+            [0, y, z, 0,    v*y],
+            [0, y, 0, u*z,  v*y],
+            [0, 0, z, 0,    0],
 
-            [0, h, 0, u*d,  v*h],
-            [0, 0, 0, u*d,  0],
-            [0, 0, d, 0,    0],
+            [0, y, 0, u*z,  v*y],
+            [0, 0, 0, u*z,  0],
+            [0, 0, z, 0,    0],
 
             # RIGHT
-            [w, 0, d, u*d,  0],
-            [w, h, 0, 0,    v*h],
-            [w, h, d, u*d,  v*h],
+            [x, 0, z, u*z,  0],
+            [x, y, 0, 0,    v*y],
+            [x, y, z, u*z,  v*y],
 
-            [w, 0, d, u*d,  0],
-            [w, 0, 0, 0,    0],
-            [w, h, 0, 0,    v*h],
+            [x, 0, z, u*z,  0],
+            [x, 0, 0, 0,    0],
+            [x, y, 0, 0,    v*y],
 
             # TOP
-            [0, h, d, 0,    v*d],
-            [w, h, d, u*w,  v*d],
-            [0, h, 0, 0,    0],
+            [0, y, z, 0,    v*z],
+            [x, y, z, u*x,  v*z],
+            [0, y, 0, 0,    0],
 
-            [w, h, d, u*w,  v*d],
-            [w, h, 0, u*w,  0],
-            [0, h, 0, 0,    0],
+            [x, y, z, u*x,  v*z],
+            [x, y, 0, u*x,  0],
+            [0, y, 0, 0,    0],
 
             # BOTTOM
-            [0, 0, 0, 0,    v*d],
-            [w, 0, d, u*w,  0],
-            [0, 0, d, 0,    0],
+            [0, 0, 0, 0,    v*z],
+            [x, 0, z, u*x,  0],
+            [0, 0, z, 0,    0],
 
-            [0, 0, 0, 0,    v*d],
-            [w, 0, 0, u*w,  v*d],
-            [w, 0, d, u*w,  0],
+            [0, 0, 0, 0,    v*z],
+            [x, 0, 0, u*x,  v*z],
+            [x, 0, z, u*x,  0],
         ], 'f')
 
         # Color each face with a different shade, mainly for debugging
@@ -200,6 +201,7 @@ class Parallelepiped(Object3D):
         return self.vertices
     
 
+    # TODO: need normals as well
     def get_vertex_format(self) -> GeomVertexFormat:
         return GeomVertexFormat.getV3c4t2()
 

@@ -13,8 +13,10 @@ WIDTH = 800
 HEIGHT = 600
 # to facilitate analysing the model when debugging
 MOUSE_CAMERA = False
+HELPER_3D_AXIS = True
 
 
+# TODO: consistent case style? camelCase, snake_case...
 class ExplorerApp(ShowBase):
 
     def __init__(self):
@@ -34,6 +36,30 @@ class ExplorerApp(ShowBase):
 
         if not MOUSE_CAMERA:
             self.disableMouse()
+
+        # Create an helper 3D axis
+        if HELPER_3D_AXIS:
+            axis3d = self.render.attachNewNode('axis3d')
+
+            x_axis = Parallelepiped(10, 0.1, 0.1, color=(1, 0, 0, 1))
+            y_axis = Parallelepiped(0.1, 0.1, 10, color=(0, 1, 0, 1))
+            z_axis = Parallelepiped(0.1, 10, 0.1, color=(0, 0, 1, 1))
+
+            x_axis_head = Parallelepiped(0.3, 0.3, 0.3, color=(1, 0, 0, 1))
+            y_axis_head = Parallelepiped(0.3, 0.3, 0.3, color=(0, 1, 0, 1))
+            z_axis_head = Parallelepiped(0.3, 0.3, 0.3, color=(0, 0, 1, 1))
+
+            x_axis_node = axis3d.attach_new_node( self.generateGeometry(x_axis, 'x_axis') )
+            y_axis_node = axis3d.attach_new_node( self.generateGeometry(y_axis, 'y_axis') )
+            z_axis_node = axis3d.attach_new_node( self.generateGeometry(z_axis, 'z_axis') )
+
+            x_axis_head_node = axis3d.attach_new_node( self.generateGeometry(x_axis_head, 'x_axis_head') )
+            x_axis_head_node.setPos(10, 0, 0)
+            y_axis_head_node = axis3d.attach_new_node( self.generateGeometry(y_axis_head, 'y_axis_head') )
+            y_axis_head_node.setPos(0, 10, 0)
+            z_axis_head_node = axis3d.attach_new_node( self.generateGeometry(z_axis_head, 'z_axis_head') )
+            z_axis_head_node.setPos(0, 0, 10)
+
 
         # Load the environment model
         table_model = self.loader.loadModel(self.path_p3d / 'models/table-old/o_table_old_01_a.obj')
@@ -57,6 +83,7 @@ class ExplorerApp(ShowBase):
             wall_node = self.labyrinth.attachNewNode(wall)
             wall_node.setTexture(wall_texture)
             wall_node.setPos(wall_obj.get_pos())
+            wall_node.setTwoSided(True)
 
         # Lighting
         self.flashlight_pos = [0, 10, 0]
