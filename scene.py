@@ -126,7 +126,7 @@ class Parallelepiped(Object3D):
 
         # Clockwise order (?)
         vertices = np.array([
-            # FRONT
+            # BOTTOM
             [0, 0, 0, 0,    0],
             [0, y, 0, 0,    v*y],
             [x, y, 0, u*x,  v*y],
@@ -135,7 +135,7 @@ class Parallelepiped(Object3D):
             [x, y, 0, u*x,  v*y],
             [x, 0, 0, u*x,  0],
 
-            # BACK
+            # TOP
             [0, 0, z, u*x,  0],
             [x, y, z, 0,    v*y],
             [0, y, z, u*x,  v*y],
@@ -162,7 +162,7 @@ class Parallelepiped(Object3D):
             [x, 0, 0, 0,    0],
             [x, y, 0, 0,    v*y],
 
-            # TOP
+            # BACK
             [0, y, z, 0,    v*z],
             [x, y, z, u*x,  v*z],
             [0, y, 0, 0,    0],
@@ -171,7 +171,7 @@ class Parallelepiped(Object3D):
             [x, y, 0, u*x,  0],
             [0, y, 0, 0,    0],
 
-            # BOTTOM
+            # FRONT
             [0, 0, 0, 0,    v*z],
             [x, 0, z, u*x,  0],
             [0, 0, z, 0,    0],
@@ -182,10 +182,20 @@ class Parallelepiped(Object3D):
         ], 'f')
 
         # Color each face with a different shade, mainly for debugging
-        # color_cols = np.vstack( [np.repeat([[r_, g_, b_, a_]], 6, axis=0) for r_, g_, b_, a_ in np.linspace([0, 0, 0, 0], [r, g, b, a], 6)] )
-        color_cols = np.repeat([[r, g, b, a]], len(vertices), axis=0)
+        color_cols = np.vstack( [np.repeat([[r_, g_, b_, a_]], 6, axis=0) for r_, g_, b_, a_ in np.linspace([0, 0, 0, 0], [r, g, b, a], 6)] )
+        # color_cols = np.repeat([[r, g, b, a]], len(vertices), axis=0)
         
-        self.vertices = np.hstack([ vertices, color_cols ])
+        normals = [
+            [ 0,  0, -1],   # BOTTOM
+            [ 0,  0,  1],   # TOP
+            [-1,  0,  0],   # LEFT
+            [ 1,  0,  0],   # RIGHT
+            [ 0,  1,  0],   # BACK
+            [ 0, -1,  0],   # FRONT
+        ]
+        normal_cols = np.vstack( [np.repeat([normal], 6, axis=0) for normal in normals] )
+
+        self.vertices = np.hstack([ vertices, color_cols, normal_cols ])
         self.pos = None
         
     
@@ -203,7 +213,7 @@ class Parallelepiped(Object3D):
 
     # TODO: need normals as well
     def get_vertex_format(self) -> GeomVertexFormat:
-        return GeomVertexFormat.getV3c4t2()
+        return GeomVertexFormat.getV3n3c4t2()
 
 
 

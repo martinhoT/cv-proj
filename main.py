@@ -141,11 +141,13 @@ class ExplorerApp(ShowBase):
         vertex_writer = GeomVertexWriter(vertex_data, 'vertex')
         texcoord_writer = GeomVertexWriter(vertex_data, 'texcoord')
         color_writer = GeomVertexWriter(vertex_data, 'color')
+        normal_writer = GeomVertexWriter(vertex_data, 'normal')
 
         for vertex in vertices:
             vertex_writer.addData3(*vertex[:nvp])
             texcoord_writer.addData2(*vertex[nvp:nvp + 2])
-            color_writer.addData4(*vertex[nvp + 2:])
+            color_writer.addData4(*vertex[nvp + 2:nvp + 6])
+            normal_writer.addData3(*vertex[nvp + 6:])
 
         primitive = GeomTriangles(Geom.UHStatic)
 
