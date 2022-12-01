@@ -1,13 +1,13 @@
 import math
 import os
 
-from typing import Tuple
+from typing import List, Tuple
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
 from panda3d.core import *
 
 from CustomObject3D import CustomObject3D
-from scene import Object3D, Parallelepiped
+from scene import Object3D, Parallelepiped, Scene
 
 WIDTH = 800
 HEIGHT = 600
@@ -40,11 +40,20 @@ class ExplorerApp(ShowBase):
         self.table = CustomObject3D(table_model, table_position, table_scale, self.render)
 
         # OpenGL style coloring
-        self.scene_vertex_format = GeomVertexFormat.getV3c4t2()
-        texture_wall = self.loader.loadTexture(self.path_p3d / 'textures/wall.png')
-        self.wall_0 = self.render.attachNewNode(
-            self.generateGeometry(Parallelepiped(3, 1, 3, (1.0, 1.0, 1.0, 1.0)), 'parallelepiped_0'))
-        self.wall_0.setTexture(texture_wall)
+        wall_texture = self.loader.loadTexture(self.path_p3d / 'textures/wall.png')
+        # self.wall_0 = self.render.attachNewNode(
+        #     self.generateGeometry(Parallelepiped(3, 1, 3, (1.0, 1.0, 1.0, 1.0)), 'parallelepiped_0'))
+        # self.wall_0.setTexture(texture_wall)
+        self.labyrinth = self.render.attachNewNode('Labyrinth')
+        labyrinth_scene = Scene.from_map_file('test1.map')
+        labyrinth_walls = [self.generateGeometry(obj, f'wall_{idx}') for idx, obj in enumerate(labyrinth_scene.objects)]
+        print('Number of walls:', len(labyrinth_walls))
+        for idx, wall in enumerate(labyrinth_walls):
+            wall_obj = labyrinth_scene.objects[idx]
+
+            wall_node = self.labyrinth.attachNewNode(wall)
+            wall_node.setTexture(wall_texture)
+            wall_node.setPos(wall_obj.get_pos())
 
         # Lighting
         self.flashlight_pos = [0, 10, 0]
@@ -113,7 +122,8 @@ class ExplorerApp(ShowBase):
         # Number of vertices per primitive (triangles)
         nvp = 3
 
-        vertex_data = GeomVertexData('v_' + name, self.scene_vertex_format, Geom.UHStatic)
+        vertex_format = object3d.get_vertex_format()
+        vertex_data = GeomVertexData('v_' + name, vertex_format, Geom.UHStatic)
 
         vertices = object3d.get_vertices()
         vertex_data.setNumRows(len(vertices))
