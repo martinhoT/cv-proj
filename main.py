@@ -73,9 +73,9 @@ class ExplorerApp(ShowBase):
         flashlight_cube = self.generateGeometry(Parallelepiped(2, 2, 2), 'flashlight')
         self.flashlight_np.attachNewNode(flashlight_cube)
 
-        mouse_projection = self.calculateMouseProjection()
-        self.mouse_np = self.render.attachNewNode(self.generateGeometry(Parallelepiped(1, 1, 1), 'mouse'))
-        self.mouse_np.setPos(*mouse_projection)
+        # mouse_projection = self.calculateMouseProjection()
+        # self.mouse_np = self.render.attachNewNode(self.generateGeometry(Parallelepiped(1, 1, 1), 'mouse'))
+        # self.mouse_np.setPos(*mouse_projection)
 
         # Create Ambient Light
         ambient_light_intensity = 0.3
@@ -198,12 +198,12 @@ class ExplorerApp(ShowBase):
             math.sin(angle_y_radians) * multiplier
         )
 
-        self.camera.lookAt(self.table.model)
+        self.camera.lookAt(self.labyrinth)
         return Task.cont
 
     def move_flashlight_task(self, task):
         self.flashlight_np.setPos(*self.flashlight_pos)
-        self.flashlight_np.lookAt(self.table.model)
+        self.flashlight_np.lookAt(self.labyrinth)
         return Task.cont
 
 
