@@ -24,3 +24,6 @@ class CustomObject3D:
     def set_pos(self, pos_x, pos_y, pos_z):
         self.model.setPos(pos_x, pos_y, pos_z)
         self.position = (pos_x, pos_y, pos_z)
+
+    def set_light(self, light):
+        self.model.setLight(light)

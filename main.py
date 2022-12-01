@@ -47,6 +47,7 @@ class ExplorerApp(ShowBase):
         self.wall_0.setTexture(texture_wall)
 
         # Lighting
+        self.flashlight_pos = [0, 10, 0]
         self.flashlight = Spotlight('flashlight')
         self.flashlight.setColor((1, 1, 1, 1))
         lens = PerspectiveLens()
@@ -64,11 +65,49 @@ class ExplorerApp(ShowBase):
         self.mouse_np = self.render.attachNewNode(self.generateGeometry(Parallelepiped(1, 1, 1), 'mouse'))
         self.mouse_np.setPos(*mouse_projection)
 
+        # Create Ambient Light
+        ambient_light_intensity = 0.3
+        ambient_light = AmbientLight('ambient_light')
+        ambient_light.setColor((ambient_light_intensity, ambient_light_intensity, ambient_light_intensity, 1))
+        ambient_light_np = self.render.attachNewNode(ambient_light)
+        self.render.setLight(ambient_light_np)
+
+
         # self.render.setShaderInput()
 
-        self.taskMgr.add(self.updateMouseProjection, 'updateMouseProjection')
+        # self.taskMgr.add(self.updateMouseProjection, 'updateMouseProjection')
         self.taskMgr.add(self.read_inputs_task, 'read_inputs_task')
         self.taskMgr.add(self.move_camera_task, 'move_camera_task')
+        self.taskMgr.add(self.move_flashlight_task, 'move_flashlight_task')
+
+    def read_inputs_task(self, task):
+        isDown = self.mouseWatcherNode.is_button_down
+
+        # Camera
+        if isDown(KeyboardButton.asciiKey("a")):
+            self.camera_pos[0] -= 1
+        if isDown(KeyboardButton.asciiKey("d")):
+            self.camera_pos[0] += 1
+        if isDown(KeyboardButton.asciiKey("w")):
+            self.camera_pos[1] -= 1
+        if isDown(KeyboardButton.asciiKey("s")):
+            self.camera_pos[1] += 1
+        if isDown(KeyboardButton.asciiKey("e")):
+            self.camera_zoom -= 1
+        if isDown(KeyboardButton.asciiKey("q")):
+            self.camera_zoom += 1
+
+        # Flashlight
+        if isDown(KeyboardButton.left()):
+            self.flashlight_pos[0] -= 1
+        if isDown(KeyboardButton.right()):
+            self.flashlight_pos[0] += 1
+        if isDown(KeyboardButton.up()):
+            self.flashlight_pos[1] += 1
+        if isDown(KeyboardButton.down()):
+            self.flashlight_pos[1] -= 1
+
+        return Task.cont
 
     def generateGeometry(self, object3d: Object3D, name: str) -> GeomNode:
         # Number of vertices per primitive (triangles)
@@ -120,31 +159,15 @@ class ExplorerApp(ShowBase):
         return 0, distance, 0
 
     def updateMouseProjection(self, task):
-        target = self.calculateMouseProjection()
 
-        # Pre inputs flash light
-        self.mouse_np.setPos(target)
-        self.flashlight_np.lookAt(target)
+        # # Pre inputs flash light
+        # target = self.calculateMouseProjection()
+        # self.mouse_np.setPos(target)
+        # self.flashlight_np.lookAt(target)
 
-        print(target, ' ' * 20, end='\r')
+        # self.flashlight_np.lookAt(self.table.model)
 
-        return Task.cont
-
-    def read_inputs_task(self, task):
-        isDown = self.mouseWatcherNode.is_button_down
-
-        if isDown(KeyboardButton.asciiKey("a")):
-            self.camera_pos[0] -= 1
-        if isDown(KeyboardButton.asciiKey("d")):
-            self.camera_pos[0] += 1
-        if isDown(KeyboardButton.asciiKey("w")):
-            self.camera_pos[1] -= 1
-        if isDown(KeyboardButton.asciiKey("s")):
-            self.camera_pos[1] += 1
-        if isDown(KeyboardButton.asciiKey("e")):
-            self.camera_zoom -= 1
-        if isDown(KeyboardButton.asciiKey("q")):
-            self.camera_zoom += 1
+        # print(target, ' ' * 20, end='\r')
 
         return Task.cont
 
@@ -162,6 +185,11 @@ class ExplorerApp(ShowBase):
         )
 
         self.camera.lookAt(self.table.model)
+        return Task.cont
+
+    def move_flashlight_task(self, task):
+        self.flashlight_np.setPos(*self.flashlight_pos)
+        self.flashlight_np.lookAt(self.table.model)
         return Task.cont
 
 
