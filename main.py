@@ -11,6 +11,7 @@ from scene import Object3D, Parallelepiped, Scene
 
 WIDTH = 800
 HEIGHT = 600
+PLAYER_SPEED = 0.25
 # to facilitate analysing the model when debugging
 MOUSE_CAMERA = False
 HELPER_3D_AXIS = True
@@ -46,8 +47,8 @@ class ExplorerApp(ShowBase):
         player_model = self.loader.loadModel(self.path_p3d / 'models/player/amongus.obj')
         # rotate player model vertically
         player_model.setHpr(0, 90, 0)
-        player_scale = (1, 1, 1)
-        player_position = (-15, 20, -5)
+        player_scale = (0.5, 0.5, 0.5)
+        player_position = [-15, 20, -5]
         # Create collision node
         player_collider_node = CollisionNode("Player")
 
@@ -56,6 +57,8 @@ class ExplorerApp(ShowBase):
         player_collider.show()
 
         self.player = CustomObject3D(player_model, player_position, self.render, scale=player_scale)
+        self.player_position = player_position
+
 
 
         # OpenGL style coloring
@@ -112,10 +115,19 @@ class ExplorerApp(ShowBase):
         # self.render.setShaderInput()
 
         # self.taskMgr.add(self.updateMouseProjection, 'updateMouseProjection')
+
+        # Collision stuff
+        self.cTrav = CollisionTraverser()
+        self.pusher = CollisionHandlerPusher()
+
+        self.pusher.addCollider(player_collider, self.player.model)
+        self.cTrav.addCollider(player_collider, self.pusher)
+
         self.taskMgr.add(self.read_inputs_task, 'read_inputs_task')
         if not MOUSE_CAMERA:
             self.taskMgr.add(self.move_camera_task, 'move_camera_task')
         self.taskMgr.add(self.move_flashlight_task, 'move_flashlight_task')
+        self.taskMgr.add(self.move_player_task, 'move_player_task')
 
     def read_inputs_task(self, task):
         isDown = self.mouseWatcherNode.is_button_down
@@ -143,6 +155,20 @@ class ExplorerApp(ShowBase):
             self.flashlight_pos[1] += 1
         if isDown(KeyboardButton.down()):
             self.flashlight_pos[1] -= 1
+
+        # Player
+        if isDown(KeyboardButton.asciiKey("j")):
+            self.player_position[0] -= PLAYER_SPEED
+        if isDown(KeyboardButton.asciiKey("l")):
+            self.player_position[0] += PLAYER_SPEED
+        if isDown(KeyboardButton.asciiKey("i")):
+            self.player_position[1] += PLAYER_SPEED
+        if isDown(KeyboardButton.asciiKey("k")):
+            self.player_position[1] -= PLAYER_SPEED
+        if isDown(KeyboardButton.asciiKey("u")):
+            self.player_position[2] += PLAYER_SPEED
+        if isDown(KeyboardButton.asciiKey("o")):
+            self.player_position[2] -= PLAYER_SPEED
 
         return Task.cont
 
@@ -253,6 +279,10 @@ class ExplorerApp(ShowBase):
     def move_flashlight_task(self, task):
         self.flashlight_np.setPos(*self.flashlight_pos)
         self.flashlight_np.lookAt(self.labyrinth)
+        return Task.cont
+
+    def move_player_task(self, task):
+        self.player.model.setPos(*self.player_position)
         return Task.cont
 
 
