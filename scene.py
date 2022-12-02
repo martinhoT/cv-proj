@@ -6,6 +6,8 @@ from panda3d.core import GeomVertexFormat
 
 
 
+DEBUG = True
+
 @dataclass
 class Scene:
     objects:    List['Object3D']
@@ -33,7 +35,7 @@ class Scene:
         width, depth = None, None
         for floor_layout in floor_layouts:
 
-            floor_width = floor_layout[0].count('+') - 1
+            floor_width = (len(floor_layout[0]) - 1) // 2
             floor_depth = (len(floor_layout) - 1) // 2
 
             if width is None or depth is None:
@@ -52,25 +54,36 @@ class Scene:
         wall_height = 5
         wall_thin = 1
 
+        if DEBUG:
+            floor_color = (1.0, 0.0, 0.0, 1.0)
+            wall_color = (0.0, 1.0, 0.0, 1.0)
+            pillar_color = (0.0, 0.0, 1.0, 1.0)
+        else:
+            floor_color = (1.0, 1.0, 1.0, 1.0)
+            wall_color = (1.0, 1.0, 1.0, 1.0)
+            pillar_color = (1.0, 1.0, 1.0, 1.0)
+
         for idx, floor_layout in enumerate(floor_layouts):
             floor_objects = []
             
             # TODO: take into account the 'X' tiles
             floor = Parallelepiped(
-                width=width*wall_length,
+                width=wall_thin + (width) * (wall_length + wall_thin),
                 height=floor_height,
-                depth=depth*wall_length,
+                depth=wall_thin + (depth) * (wall_length + wall_thin),
+                color=floor_color,
             )
             floor.set_pos((0, 0, idx * (wall_height + floor_height)))
             floor_objects.append(floor)
 
-            for y, row in enumerate(floor_layout):
-                for x, object_type in enumerate(row):
+            for y_idx, row in enumerate(floor_layout):
+                for x_idx, object_type in enumerate(row):
                     if object_type == '-':
                         wall = Parallelepiped(
                             width=wall_length,
                             height=wall_height,
                             depth=wall_thin,
+                            color=wall_color,
                         )
 
                     elif object_type == '|':
@@ -78,13 +91,25 @@ class Scene:
                             width=wall_thin,
                             height=wall_height,
                             depth=wall_length,
+                            color=wall_color,
+                        )
+
+                    elif object_type == '+':
+                        wall = Parallelepiped(
+                            width=wall_thin,
+                            height=wall_height,
+                            depth=wall_thin,
+                            color=pillar_color,
                         )
 
                     else:
                         wall = None
                     
                     if wall:
+                        x = (x_idx % 2) * wall_thin + (x_idx // 2) * (wall_length + wall_thin)
+                        y = (y_idx % 2) * wall_thin + (y_idx // 2) * (wall_length + wall_thin)
                         z = floor_height + idx * (wall_height + floor_height)
+                        print((x,y,z))
                         wall.set_pos((x, y, z))
                         floor_objects.append(wall)
 
@@ -182,8 +207,8 @@ class Parallelepiped(Object3D):
         ], 'f')
 
         # Color each face with a different shade, mainly for debugging
-        color_cols = np.vstack( [np.repeat([[r_, g_, b_, a_]], 6, axis=0) for r_, g_, b_, a_ in np.linspace([0, 0, 0, 0], [r, g, b, a], 6)] )
-        # color_cols = np.repeat([[r, g, b, a]], len(vertices), axis=0)
+        # color_cols = np.vstack( [np.repeat([[r_, g_, b_, a_]], 6, axis=0) for r_, g_, b_, a_ in np.linspace([0, 0, 0, 0], [r, g, b, a], 6)] )
+        color_cols = np.repeat([[r, g, b, a]], len(vertices), axis=0)
         
         normals = [
             [ 0,  0, -1],   # BOTTOM
