@@ -11,6 +11,7 @@ from scene import Object3D, Parallelepiped, Scene
 
 WIDTH = 800
 HEIGHT = 600
+PLAYER_SPEED = 0.25
 # to facilitate analysing the model when debugging
 MOUSE_CAMERA = False
 HELPER_3D_AXIS = True
@@ -42,11 +43,24 @@ class ExplorerApp(ShowBase):
             self.create3dAxis()
 
         # Load the environment model
-        table_model = self.loader.loadModel(self.path_p3d / 'models/table-old/o_table_old_01_a.obj')
-        table_scale = (0.25, 0.25, 0.25)
-        table_position = (0, 40, 0)
+        # table_model = self.loader.loadModel(self.path_p3d / 'models/table-old/o_table_old_01_a.obj')
+        # simplepbr.init()
+        player_model = self.loader.loadModel(self.path_p3d / 'models/player/amongus.obj')
+        # rotate player model vertically
+        player_model.setHpr(0, 90, 0)
+        player_scale = (0.5, 0.5, 0.5)
+        player_position = [-15, 20, -5]
+        # Create collision node
+        player_collider_node = CollisionNode("Player")
 
-        self.table = CustomObject3D(table_model, table_position, table_scale, self.render)
+        player_collider_node.addSolid(CollisionCapsule(4, 3, 2, 4, 1, 2, 1))
+        player_collider = player_model.attachNewNode(player_collider_node)
+        player_collider.show()
+
+        self.player = CustomObject3D(player_model, player_position, self.render, scale=player_scale)
+        self.player_position = player_position
+
+
 
         # OpenGL style coloring
         wall_texture = self.loader.loadTexture(self.path_p3d / 'textures/wall.png')
@@ -63,6 +77,15 @@ class ExplorerApp(ShowBase):
             wall_node = self.labyrinth.attachNewNode(wall)
             wall_node.setTexture(wall_texture)
             wall_node.setPos(wall_obj.get_pos())
+            wall_collider_node = CollisionNode(f"Wall_{idx}")
+            # get center of the wall
+            wall_center = Point3(wall_obj.width / 2, wall_obj.depth / 2, wall_obj.height / 2)
+            wall_collider_node.addSolid(CollisionBox(wall_center,
+                                                     wall_obj.width / 2,
+                                                     wall_obj.depth / 2,
+                                                     wall_obj.height / 2))
+            wall_collider = wall_node.attachNewNode(wall_collider_node)
+            wall_collider.show()
 
         # Lighting
         self.flashlight_pos = [0, 10, 0]
@@ -73,7 +96,7 @@ class ExplorerApp(ShowBase):
 
         self.flashlight_np = self.render.attachNewNode(self.flashlight)
         self.flashlight_np.setPos(0, 10, 0)
-        self.flashlight_np.lookAt(self.table.model)
+        self.flashlight_np.lookAt(self.player.model)
         self.render.setLight(self.flashlight_np)
 
         flashlight_cube = self.generateGeometry(Parallelepiped(2, 2, 2), 'flashlight')
@@ -90,14 +113,22 @@ class ExplorerApp(ShowBase):
         ambient_light_np = self.render.attachNewNode(ambient_light)
         self.render.setLight(ambient_light_np)
 
-
         # self.render.setShaderInput()
 
         # self.taskMgr.add(self.updateMouseProjection, 'updateMouseProjection')
+
+        # Collision stuff
+        self.cTrav = CollisionTraverser()
+        self.pusher = CollisionHandlerPusher()
+
+        self.pusher.addCollider(player_collider, self.player.model)
+        self.cTrav.addCollider(player_collider, self.pusher)
+
         self.taskMgr.add(self.read_inputs_task, 'read_inputs_task')
         if not MOUSE_CAMERA:
             self.taskMgr.add(self.move_camera_task, 'move_camera_task')
         self.taskMgr.add(self.move_flashlight_task, 'move_flashlight_task')
+        self.taskMgr.add(self.move_player_task, 'move_player_task')
 
     def read_inputs_task(self, task):
         isDown = self.mouseWatcherNode.is_button_down
@@ -125,6 +156,20 @@ class ExplorerApp(ShowBase):
             self.flashlight_pos[1] += 1
         if isDown(KeyboardButton.down()):
             self.flashlight_pos[1] -= 1
+
+        # Player
+        if isDown(KeyboardButton.asciiKey("j")):
+            self.player_position[0] -= PLAYER_SPEED
+        if isDown(KeyboardButton.asciiKey("l")):
+            self.player_position[0] += PLAYER_SPEED
+        if isDown(KeyboardButton.asciiKey("i")):
+            self.player_position[1] += PLAYER_SPEED
+        if isDown(KeyboardButton.asciiKey("k")):
+            self.player_position[1] -= PLAYER_SPEED
+        if isDown(KeyboardButton.asciiKey("u")):
+            self.player_position[2] += PLAYER_SPEED
+        if isDown(KeyboardButton.asciiKey("o")):
+            self.player_position[2] -= PLAYER_SPEED
 
         return Task.cont
 
@@ -180,28 +225,27 @@ class ExplorerApp(ShowBase):
 
         return 0, distance, 0
 
-    def create3dAxis(self, heads: bool=False):
+    def create3dAxis(self, heads: bool = False):
         axis3d = self.render.attachNewNode('axis3d')
 
         x_axis = Parallelepiped(10, 0.1, 0.1, color=(1, 0, 0, 1))
         y_axis = Parallelepiped(0.1, 0.1, 10, color=(0, 1, 0, 1))
         z_axis = Parallelepiped(0.1, 10, 0.1, color=(0, 0, 1, 1))
 
-        axis3d.attach_new_node( self.generateGeometry(x_axis, 'x_axis') )
-        axis3d.attach_new_node( self.generateGeometry(y_axis, 'y_axis') )
-        axis3d.attach_new_node( self.generateGeometry(z_axis, 'z_axis') )
+        axis3d.attach_new_node(self.generateGeometry(x_axis, 'x_axis'))
+        axis3d.attach_new_node(self.generateGeometry(y_axis, 'y_axis'))
+        axis3d.attach_new_node(self.generateGeometry(z_axis, 'z_axis'))
 
         if heads:
-
             x_axis_head = Parallelepiped(0.3, 0.3, 0.3, color=(1, 0, 0, 1))
             y_axis_head = Parallelepiped(0.3, 0.3, 0.3, color=(0, 1, 0, 1))
             z_axis_head = Parallelepiped(0.3, 0.3, 0.3, color=(0, 0, 1, 1))
 
-            x_axis_head_node = axis3d.attach_new_node( self.generateGeometry(x_axis_head, 'x_axis_head') )
+            x_axis_head_node = axis3d.attach_new_node(self.generateGeometry(x_axis_head, 'x_axis_head'))
             x_axis_head_node.setPos(10, 0, 0)
-            y_axis_head_node = axis3d.attach_new_node( self.generateGeometry(y_axis_head, 'y_axis_head') )
+            y_axis_head_node = axis3d.attach_new_node(self.generateGeometry(y_axis_head, 'y_axis_head'))
             y_axis_head_node.setPos(0, 10, 0)
-            z_axis_head_node = axis3d.attach_new_node( self.generateGeometry(z_axis_head, 'z_axis_head') )
+            z_axis_head_node = axis3d.attach_new_node(self.generateGeometry(z_axis_head, 'z_axis_head'))
             z_axis_head_node.setPos(0, 0, 10)
 
     def updateMouseProjection(self, task):
@@ -236,6 +280,10 @@ class ExplorerApp(ShowBase):
     def move_flashlight_task(self, task):
         self.flashlight_np.setPos(*self.flashlight_pos)
         self.flashlight_np.lookAt(self.labyrinth)
+        return Task.cont
+
+    def move_player_task(self, task):
+        self.player.model.setPos(*self.player_position)
         return Task.cont
 
 
