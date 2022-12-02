@@ -143,7 +143,52 @@ class Scene:
             objects.extend(floor_objects)
             previous_layout = floor_layout
         
-        # TODO: use previous_layout to create the roof
+        # Roof
+        for y_idx, row in enumerate(previous_layout):
+            for x_idx, object_type in enumerate(row):
+                block = None
+
+                # Floor
+                if object_type != ' ':
+                    # Middle floor
+                    if (x_idx % 2) == 1 and (y_idx % 2) == 1:
+                        block = Parallelepiped(
+                            width=wall_length,
+                            height=floor_height,
+                            depth=wall_length,
+                            color=floor_color,
+                        )
+                    # Horizontal floor
+                    elif (x_idx % 2) == 1:
+                        block = Parallelepiped(
+                            width=wall_length,
+                            height=floor_height,
+                            depth=wall_thin,
+                            color=floor_color,
+                        )
+                    # Vertical floor
+                    elif (y_idx % 2) == 1:
+                        block = Parallelepiped(
+                            width=wall_thin,
+                            height=floor_height,
+                            depth=wall_length,
+                            color=floor_color,
+                        )
+                    # Pillar floor
+                    else:
+                        block = Parallelepiped(
+                            width=wall_thin,
+                            height=floor_height,
+                            depth=wall_thin,
+                            color=floor_color,
+                        )
+                
+                if block:
+                    x = (x_idx % 2) * wall_thin + (x_idx // 2) * (wall_length + wall_thin)
+                    y = (y_idx % 2) * wall_thin + (y_idx // 2) * (wall_length + wall_thin)
+                    z = (idx + 1) * (wall_height + floor_height)
+                    block.set_pos((x, y, z))
+                    objects.append(block)
 
         return scene
 
