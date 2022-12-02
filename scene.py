@@ -63,57 +63,87 @@ class Scene:
             wall_color = (1.0, 1.0, 1.0, 1.0)
             pillar_color = (1.0, 1.0, 1.0, 1.0)
 
+        previous_layout = []
         for idx, floor_layout in enumerate(floor_layouts):
             floor_objects = []
-            
-            # TODO: take into account the 'X' tiles
-            floor = Parallelepiped(
-                width=wall_thin + (width) * (wall_length + wall_thin),
-                height=floor_height,
-                depth=wall_thin + (depth) * (wall_length + wall_thin),
-                color=floor_color,
-            )
-            floor.set_pos((0, 0, idx * (wall_height + floor_height)))
-            floor_objects.append(floor)
-
             for y_idx, row in enumerate(floor_layout):
                 for x_idx, object_type in enumerate(row):
+                    block = None
+
+                    # Horizontal wall
                     if object_type == '-':
-                        wall = Parallelepiped(
+                        block = Parallelepiped(
                             width=wall_length,
-                            height=wall_height,
+                            height=floor_height + wall_height,
                             depth=wall_thin,
                             color=wall_color,
                         )
 
+                    # Vertical wall
                     elif object_type == '|':
-                        wall = Parallelepiped(
+                        block = Parallelepiped(
                             width=wall_thin,
-                            height=wall_height,
+                            height=floor_height + wall_height,
                             depth=wall_length,
                             color=wall_color,
                         )
 
+                    # Pillar
                     elif object_type == '+':
-                        wall = Parallelepiped(
+                        block = Parallelepiped(
                             width=wall_thin,
-                            height=wall_height,
+                            height=floor_height + wall_height,
                             depth=wall_thin,
                             color=pillar_color,
                         )
-
-                    else:
-                        wall = None
                     
-                    if wall:
+                    # Floor
+                    elif object_type == '.' \
+                            or (object_type != 'X' and previous_layout and previous_layout[y_idx][x_idx] != ' '):
+                        # Middle floor
+                        if (x_idx % 2) == 1 and (y_idx % 2) == 1:
+                            block = Parallelepiped(
+                                width=wall_length,
+                                height=floor_height,
+                                depth=wall_length,
+                                color=floor_color,
+                            )
+                        # Horizontal floor
+                        elif (x_idx % 2) == 1:
+                            block = Parallelepiped(
+                                width=wall_length,
+                                height=floor_height,
+                                depth=wall_thin,
+                                color=floor_color,
+                            )
+                        # Vertical floor
+                        elif (y_idx % 2) == 1:
+                            block = Parallelepiped(
+                                width=wall_thin,
+                                height=floor_height,
+                                depth=wall_length,
+                                color=floor_color,
+                            )
+                        # Pillar floor
+                        else:
+                            block = Parallelepiped(
+                                width=wall_thin,
+                                height=floor_height,
+                                depth=wall_thin,
+                                color=floor_color,
+                            )
+                    
+                    if block:
                         x = (x_idx % 2) * wall_thin + (x_idx // 2) * (wall_length + wall_thin)
                         y = (y_idx % 2) * wall_thin + (y_idx // 2) * (wall_length + wall_thin)
-                        z = floor_height + idx * (wall_height + floor_height)
-                        print((x,y,z))
-                        wall.set_pos((x, y, z))
-                        floor_objects.append(wall)
+                        z = idx * (wall_height + floor_height)
+                        block.set_pos((x, y, z))
+                        floor_objects.append(block)
 
             objects.extend(floor_objects)
+            previous_layout = floor_layout
+        
+        # TODO: use previous_layout to create the roof
 
         return scene
 

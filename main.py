@@ -17,6 +17,7 @@ HELPER_3D_AXIS = True
 
 
 # TODO: consistent case style? camelCase, snake_case...
+# TODO: to consider: temporary lights (like candles)? fixed headlights?
 class ExplorerApp(ShowBase):
 
     def __init__(self):
@@ -53,7 +54,7 @@ class ExplorerApp(ShowBase):
         #     self.generateGeometry(Parallelepiped(3, 1, 3, (1.0, 1.0, 1.0, 1.0)), 'parallelepiped_0'))
         # self.wall_0.setTexture(texture_wall)
         self.labyrinth = self.render.attachNewNode('Labyrinth')
-        labyrinth_scene = Scene.from_map_file('test2.map')
+        labyrinth_scene = Scene.from_map_file('test1.map')
         labyrinth_walls = [self.generateGeometry(obj, f'wall_{idx}') for idx, obj in enumerate(labyrinth_scene.objects)]
         print('Number of walls:', len(labyrinth_walls))
         for idx, wall in enumerate(labyrinth_walls):
