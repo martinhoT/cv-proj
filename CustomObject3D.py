@@ -4,7 +4,7 @@ from typing import Tuple, List
 
 class CustomObject3D:
 
-    def __init__(self, model: NodePath, position: list[float, float, float],
+    def __init__(self, model: NodePath, position: Tuple[float, float, float],
                  parent: NodePath, scale: Tuple[float, float, float] = (1, 1, 1),
                  collision: CollisionNode = None):
         self.model = model
