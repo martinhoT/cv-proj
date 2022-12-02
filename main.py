@@ -73,6 +73,15 @@ class ExplorerApp(ShowBase):
             wall_node = self.labyrinth.attachNewNode(wall)
             wall_node.setTexture(wall_texture)
             wall_node.setPos(wall_obj.get_pos())
+            wall_collider_node = CollisionNode(f"Wall_{idx}")
+            # get center of the wall
+            wall_center = Point3(wall_obj.width / 2, wall_obj.depth / 2, wall_obj.height / 2)
+            wall_collider_node.addSolid(CollisionBox(wall_center,
+                                                     wall_obj.width / 2,
+                                                     wall_obj.depth / 2,
+                                                     wall_obj.height / 2))
+            wall_collider = wall_node.attachNewNode(wall_collider_node)
+            wall_collider.show()
 
         # Lighting
         self.flashlight_pos = [0, 10, 0]
@@ -238,12 +247,12 @@ class ExplorerApp(ShowBase):
             math.sin(angle_y_radians) * multiplier
         )
 
-        self.camera.lookAt(self.player.model)
+        self.camera.lookAt(self.labyrinth)
         return Task.cont
 
     def move_flashlight_task(self, task):
         self.flashlight_np.setPos(*self.flashlight_pos)
-        self.flashlight_np.lookAt(self.player.model)
+        self.flashlight_np.lookAt(self.labyrinth)
         return Task.cont
 
 

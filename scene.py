@@ -142,7 +142,13 @@ class Object3D:
 
 class Parallelepiped(Object3D):
 
-    def __init__(self, width: float, height: float, depth: float, color: Tuple[float, float, float, float]=(1.0, 1.0, 1.0, 1.0), tiling_factors: Tuple[float, float]=(1.0, 0.5)):
+    def __init__(self, width: float, height: float, depth: float, color: Tuple[float, float, float, float]=(1.0, 1.0, 1.0, 1.0),
+                 tiling_factors: Tuple[float, float]=(1.0, 0.5)):
+
+        self.height = height
+        self.width = width
+        self.depth = depth
+
         r, g, b, a = color
         # Panda3D uses the geographical coordinate system, where XY is on the floor and Z is the height
         # (https://docs.panda3d.org/1.10/python/introduction/tutorial/loading-the-grassy-scenery)
