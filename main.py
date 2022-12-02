@@ -73,7 +73,6 @@ class ExplorerApp(ShowBase):
             wall_node = self.labyrinth.attachNewNode(wall)
             wall_node.setTexture(wall_texture)
             wall_node.setPos(wall_obj.get_pos())
-            wall_node.setTwoSided(True)
 
         # Lighting
         self.flashlight_pos = [0, 10, 0]
