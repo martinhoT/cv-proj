@@ -96,11 +96,17 @@ class ExplorerApp(ShowBase):
         self.pusher.addCollider(player_collider, self.player.model)
         self.cTrav.addCollider(player_collider, self.pusher)
 
+        # Task management
+        self.mouse_coords = [0, 0]
+
+        self.taskMgr.add(self.update_mouse_coords_task, 'update_mouse_coords_task')
         self.taskMgr.add(self.read_inputs_task, 'read_inputs_task')
         if not MOUSE_CAMERA:
             self.taskMgr.add(self.move_camera_task, 'move_camera_task')
         self.taskMgr.add(self.move_flashlight_task, 'move_flashlight_task')
         self.taskMgr.add(self.move_player_task, 'move_player_task')
+
+        self.setupShaders()
 
     def read_inputs_task(self, task):
         isDown = self.mouseWatcherNode.is_button_down
@@ -213,6 +219,21 @@ class ExplorerApp(ShowBase):
 
         return labyrinth_np
 
+    def setupShaders(self):
+        # Plenty of features, including normal maps and per-pixel lighting
+        # (https://docs.panda3d.org/1.10/python/programming/shaders/shader-generator)
+        self.render.setShaderAuto()
+
+        flashlight_shader = Shader.load(Shader.SL_GLSL,
+            vertex='shaders/test.vert',
+            fragment='shaders/flashlight.frag')
+
+        self.labyrinth.setShaderInputs(
+            u_resolution=(WIDTH, HEIGHT),
+            u_mouse=self.mouse_coords,
+        )
+        self.labyrinth.setShader(flashlight_shader)
+
     # get mouse position in 3d space
     def calculateMouseProjection(self) -> Tuple[float, float, float]:
         distance = 20
@@ -266,6 +287,15 @@ class ExplorerApp(ShowBase):
 
         return Task.cont
 
+    def update_mouse_coords_task(self, task):
+        if self.mouseWatcherNode.hasMouse():
+            self.mouse_coords[0] = self.mouseWatcherNode.getMouseX()
+            self.mouse_coords[1] = self.mouseWatcherNode.getMouseY()
+        
+        self.labyrinth.setShaderInput('u_mouse', self.mouse_coords)
+
+        return Task.cont
+
     def move_camera_task(self, task):
         multiplier = self.camera_zoom
         angle_x_degrees = self.camera_pos[0] * 1
@@ -293,4 +323,5 @@ class ExplorerApp(ShowBase):
 
 
 app = ExplorerApp()
+app.setFrameRateMeter(True)
 app.run()
