@@ -1,8 +1,9 @@
 import math
 import os
 
-from typing import List, Tuple
+from typing import Tuple
 from direct.showbase.ShowBase import ShowBase
+from direct.filter.FilterManager import FilterManager
 from direct.task import Task
 from panda3d.core import *
 
@@ -16,6 +17,13 @@ PLAYER_SPEED = 0.25
 MOUSE_CAMERA = False
 HELPER_3D_AXIS = True
 SHOW_COLLISIONS = False
+
+# Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
+# If power-of-2 textures is enforced, then the code has to deal with the texture padding.
+# We want so simplify the shader code so they are disabled. There is already wide support for non-power-of-2 textures (https://discourse.panda3d.org/t/cg-glsl-filtermanager-texpad-x/14694/8)
+loadPrcFileData('', '''
+textures-power-2 none
+''')
 
 
 # TODO: consistent case style? camelCase, snake_case...
@@ -108,6 +116,7 @@ class ExplorerApp(ShowBase):
 
         self.setupShaders()
 
+    # TODO: use self.accept(key, func, args) instead?
     def read_inputs_task(self, task):
         isDown = self.mouseWatcherNode.is_button_down
 
@@ -225,14 +234,20 @@ class ExplorerApp(ShowBase):
         self.render.setShaderAuto()
 
         flashlight_shader = Shader.load(Shader.SL_GLSL,
-            vertex='shaders/test.vert',
+            vertex='shaders/flashlight.vert',
             fragment='shaders/flashlight.frag')
 
-        self.labyrinth.setShaderInputs(
-            u_resolution=(WIDTH, HEIGHT),
+        manager = FilterManager(self.win, self.cam)
+        tex = Texture()
+        self.quad = manager.renderSceneInto(colortex=tex)
+        self.quad
+        self.quad.setShader(flashlight_shader)
+        # TODO: resolution may have to be updated if the window is resized. See: https://github.com/totex/Panda3D-shaders
+        self.quad.setShaderInputs(
+            tex=tex,
             u_mouse=self.mouse_coords,
+            u_resolution=(WIDTH, HEIGHT),
         )
-        self.labyrinth.setShader(flashlight_shader)
 
     # get mouse position in 3d space
     def calculateMouseProjection(self) -> Tuple[float, float, float]:
@@ -292,7 +307,7 @@ class ExplorerApp(ShowBase):
             self.mouse_coords[0] = self.mouseWatcherNode.getMouseX()
             self.mouse_coords[1] = self.mouseWatcherNode.getMouseY()
         
-        self.labyrinth.setShaderInput('u_mouse', self.mouse_coords)
+        self.quad.setShaderInput('u_mouse', self.mouse_coords)
 
         return Task.cont
 
