@@ -7,7 +7,7 @@ from direct.task import Task
 from panda3d.core import *
 
 from CustomObject3D import CustomObject3D
-from scene import Object3D, Parallelepiped, Scene
+from labyrinth import Parallelepiped, Labyrinth
 
 WIDTH = 800
 HEIGHT = 600
@@ -18,7 +18,7 @@ HELPER_3D_AXIS = True
 
 
 # TODO: consistent case style? camelCase, snake_case...
-# TODO: to consider: temporary lights (like candles)? fixed headlights?
+# TODO: to consider: temporary lights (like candles)? fixed literal spotlights?
 class ExplorerApp(ShowBase):
 
     def __init__(self):
@@ -60,7 +60,10 @@ class ExplorerApp(ShowBase):
         self.player = CustomObject3D(player_model, player_position, self.render, scale=player_scale)
         self.player_position = player_position
 
-        self.labyrinth = self.generateLabyrinth(parent_node=self.render)        
+        self.labyrinth = self.generateLabyrinth(
+            parent_node=self.render,
+            labyrinth_file='test2.map',
+        )        
 
         # Lighting
         self.flashlight_pos = [0, 10, 0]
@@ -77,20 +80,12 @@ class ExplorerApp(ShowBase):
         flashlight_cube = self.generateGeometry(Parallelepiped(2, 2, 2), 'flashlight')
         self.flashlight_np.attachNewNode(flashlight_cube)
 
-        # mouse_projection = self.calculateMouseProjection()
-        # self.mouse_np = self.render.attachNewNode(self.generateGeometry(Parallelepiped(1, 1, 1), 'mouse'))
-        # self.mouse_np.setPos(*mouse_projection)
-
         # Create Ambient Light
         ambient_light_intensity = 0.3
         ambient_light = AmbientLight('ambient_light')
         ambient_light.setColor((ambient_light_intensity, ambient_light_intensity, ambient_light_intensity, 1))
         ambient_light_np = self.render.attachNewNode(ambient_light)
         self.render.setLight(ambient_light_np)
-
-        # self.render.setShaderInput()
-
-        # self.taskMgr.add(self.updateMouseProjection, 'updateMouseProjection')
 
         # Collision stuff
         self.cTrav = CollisionTraverser()
@@ -148,14 +143,15 @@ class ExplorerApp(ShowBase):
 
         return Task.cont
 
-    def generateGeometry(self, object3d: Object3D, name: str) -> GeomNode:
+    def generateGeometry(self, parallelepiped: Parallelepiped, name: str) -> GeomNode:
         # Number of vertices per primitive (triangles)
         nvp = 3
 
-        vertex_format = object3d.get_vertex_format()
+        # OpenGL style
+        vertex_format = GeomVertexFormat.getV3n3c4t2()
         vertex_data = GeomVertexData('v_' + name, vertex_format, Geom.UHStatic)
 
-        vertices = object3d.get_vertices()
+        vertices = parallelepiped.vertices
         vertex_data.setNumRows(len(vertices))
 
         vertex_writer = GeomVertexWriter(vertex_data, 'vertex')
@@ -183,18 +179,18 @@ class ExplorerApp(ShowBase):
 
         return node
 
-    def generateLabyrinth(self, parent_node: NodePath) -> NodePath:
+    def generateLabyrinth(self, parent_node: NodePath, labyrinth_file: str) -> NodePath:
         wall_texture = self.loader.loadTexture(self.path_p3d / 'textures/wall.png')
-        labyrinth = parent_node.attachNewNode('Labyrinth')
-        labyrinth_scene = Scene.from_map_file('test1.map')
-        labyrinth_walls = [self.generateGeometry(obj, f'wall_{idx}') for idx, obj in enumerate(labyrinth_scene.objects)]
+        labyrinth_np = parent_node.attachNewNode('Labyrinth')
+        labyrinth = Labyrinth.from_map_file(labyrinth_file)
+        labyrinth_walls = [self.generateGeometry(obj, f'wall_{idx}') for idx, obj in enumerate(labyrinth.blocks)]
         print('Number of walls:', len(labyrinth_walls))
         for idx, wall in enumerate(labyrinth_walls):
-            wall_obj = labyrinth_scene.objects[idx]
+            wall_obj = labyrinth.blocks[idx]
 
-            wall_node = labyrinth.attachNewNode(wall)
+            wall_node = labyrinth_np.attachNewNode(wall)
             wall_node.setTexture(wall_texture)
-            wall_node.setPos(wall_obj.get_pos())
+            wall_node.setPos(wall_obj.position)
             wall_collider_node = CollisionNode(f"Wall_{idx}")
             # get center of the wall
             wall_center = Point3(wall_obj.width / 2, wall_obj.depth / 2, wall_obj.height / 2)
@@ -205,7 +201,14 @@ class ExplorerApp(ShowBase):
             wall_collider = wall_node.attachNewNode(wall_collider_node)
             wall_collider.show()
         
-        return labyrinth
+        # Center the labyrinth to the origin
+        labyrinth_np.setPos(
+            - labyrinth.width / 2,
+            - labyrinth.depth / 2,
+            - labyrinth.height / 2,
+        )
+
+        return labyrinth_np
 
     # get mouse position in 3d space
     def calculateMouseProjection(self) -> Tuple[float, float, float]:
@@ -273,12 +276,12 @@ class ExplorerApp(ShowBase):
             math.sin(angle_y_radians) * multiplier
         )
 
-        self.camera.lookAt(self.labyrinth)
+        self.camera.lookAt((0,0,0))
         return Task.cont
 
     def move_flashlight_task(self, task):
         self.flashlight_np.setPos(*self.flashlight_pos)
-        self.flashlight_np.lookAt(self.labyrinth)
+        self.flashlight_np.lookAt((0,0,0))
         return Task.cont
 
     def move_player_task(self, task):

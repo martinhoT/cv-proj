@@ -8,13 +8,16 @@ from panda3d.core import GeomVertexFormat
 
 DEBUG = True
 
-@dataclass
-class Scene:
-    objects:    List['Object3D']
+@dataclass(frozen=True)
+class Labyrinth:
+    blocks:     List['Parallelepiped']
+    width:      float
+    height:     float
+    depth:      float
 
 
     @classmethod
-    def from_map_string(cls, map_str: str) -> 'Scene':
+    def from_map_string(cls, map_str: str) -> 'Labyrinth':
         floor_layouts = []
         floor_layout = []
         for line in map_str.splitlines():
@@ -31,28 +34,31 @@ class Scene:
             floor_layouts.append(floor_layout.copy())
             floor_layout.clear()
         
-        # TODO: check that it's a valid map
-        width, depth = None, None
+        # Width and depth of each floor in terms of the number of tiles
+        width_units, depth_units = None, None
         for floor_layout in floor_layouts:
 
             floor_width = (len(floor_layout[0]) - 1) // 2
             floor_depth = (len(floor_layout) - 1) // 2
 
-            if width is None or depth is None:
-                width = floor_width
-                depth = floor_depth
-            elif floor_width != width:
+            if width_units is None or depth_units is None:
+                width_units = floor_width
+                depth_units = floor_depth
+            elif floor_width != width_units:
                 raise ValueError('The width is not consistent among floors!')
-            elif floor_depth != depth:
+            elif floor_depth != depth_units:
                 raise ValueError('The depth is not consistent among floors!')
-
-        objects = []
-        scene = Scene(objects)
+        
+        blocks = []
 
         floor_height = 1
         wall_length = 5
         wall_height = 5
         wall_thin = 1
+
+        labyrinth_width = wall_thin + width_units * (wall_thin + wall_length)
+        labyrinth_height = floor_height + len(floor_layouts) * (floor_height + wall_height)
+        labyrinth_depth = wall_thin + depth_units * (wall_thin + wall_length)
 
         if DEBUG:
             floor_color = (1.0, 0.0, 0.0, 1.0)
@@ -65,164 +71,163 @@ class Scene:
 
         previous_layout = []
         for idx, floor_layout in enumerate(floor_layouts):
-            floor_objects = []
             for y_idx, row in enumerate(floor_layout):
                 for x_idx, object_type in enumerate(row):
-                    block = None
+                    block_kwargs = None
 
                     # Horizontal wall
                     if object_type == '-':
-                        block = Parallelepiped(
-                            width=wall_length,
-                            height=floor_height + wall_height,
-                            depth=wall_thin,
-                            color=wall_color,
-                        )
+                        block_kwargs = {
+                            'width': wall_length,
+                            'height': floor_height + wall_height,
+                            'depth': wall_thin,
+                            'color': wall_color,
+                        }
 
                     # Vertical wall
                     elif object_type == '|':
-                        block = Parallelepiped(
-                            width=wall_thin,
-                            height=floor_height + wall_height,
-                            depth=wall_length,
-                            color=wall_color,
-                        )
+                        block_kwargs = {
+                            'width': wall_thin,
+                            'height': floor_height + wall_height,
+                            'depth': wall_length,
+                            'color': wall_color,
+                        }
 
                     # Pillar
                     elif object_type == '+':
-                        block = Parallelepiped(
-                            width=wall_thin,
-                            height=floor_height + wall_height,
-                            depth=wall_thin,
-                            color=pillar_color,
-                        )
+                        block_kwargs = {
+                            'width': wall_thin,
+                            'height': floor_height + wall_height,
+                            'depth': wall_thin,
+                            'color': pillar_color,
+                        }
                     
                     # Floor
                     elif object_type == '.' \
                             or (object_type != 'X' and previous_layout and previous_layout[y_idx][x_idx] != ' '):
                         # Middle floor
                         if (x_idx % 2) == 1 and (y_idx % 2) == 1:
-                            block = Parallelepiped(
-                                width=wall_length,
-                                height=floor_height,
-                                depth=wall_length,
-                                color=floor_color,
-                            )
+                            block_kwargs = {
+                                'width': wall_length,
+                                'height': floor_height,
+                                'depth': wall_length,
+                                'color': floor_color,
+                            }
                         # Horizontal floor
                         elif (x_idx % 2) == 1:
-                            block = Parallelepiped(
-                                width=wall_length,
-                                height=floor_height,
-                                depth=wall_thin,
-                                color=floor_color,
-                            )
+                            block_kwargs = {
+                                'width': wall_length,
+                                'height': floor_height,
+                                'depth': wall_thin,
+                                'color': floor_color,
+                            }
                         # Vertical floor
                         elif (y_idx % 2) == 1:
-                            block = Parallelepiped(
-                                width=wall_thin,
-                                height=floor_height,
-                                depth=wall_length,
-                                color=floor_color,
-                            )
+                            block_kwargs = {
+                                'width': wall_thin,
+                                'height': floor_height,
+                                'depth': wall_length,
+                                'color': floor_color,
+                            }
                         # Pillar floor
                         else:
-                            block = Parallelepiped(
-                                width=wall_thin,
-                                height=floor_height,
-                                depth=wall_thin,
-                                color=floor_color,
-                            )
+                            block_kwargs = {
+                                'width': wall_thin,
+                                'height': floor_height,
+                                'depth': wall_thin,
+                                'color': floor_color,
+                            }
                     
-                    if block:
+                    if block_kwargs:
                         x = (x_idx % 2) * wall_thin + (x_idx // 2) * (wall_length + wall_thin)
                         y = (y_idx % 2) * wall_thin + (y_idx // 2) * (wall_length + wall_thin)
                         z = idx * (wall_height + floor_height)
-                        block.set_pos((x, y, z))
-                        floor_objects.append(block)
+                        blocks.append( Parallelepiped(**block_kwargs, position=(x, y, z)) )
 
-            objects.extend(floor_objects)
             previous_layout = floor_layout
         
         # Roof
         for y_idx, row in enumerate(previous_layout):
             for x_idx, object_type in enumerate(row):
-                block = None
+                block_kwargs = None
 
                 # Floor
                 if object_type != ' ':
                     # Middle floor
                     if (x_idx % 2) == 1 and (y_idx % 2) == 1:
-                        block = Parallelepiped(
-                            width=wall_length,
-                            height=floor_height,
-                            depth=wall_length,
-                            color=floor_color,
-                        )
+                        block_kwargs = {
+                            'width': wall_length,
+                            'height': floor_height,
+                            'depth': wall_length,
+                            'color': floor_color,
+                        }
                     # Horizontal floor
                     elif (x_idx % 2) == 1:
-                        block = Parallelepiped(
-                            width=wall_length,
-                            height=floor_height,
-                            depth=wall_thin,
-                            color=floor_color,
-                        )
+                        block_kwargs = {
+                            'width': wall_length,
+                            'height': floor_height,
+                            'depth': wall_thin,
+                            'color': floor_color,
+                        }
                     # Vertical floor
                     elif (y_idx % 2) == 1:
-                        block = Parallelepiped(
-                            width=wall_thin,
-                            height=floor_height,
-                            depth=wall_length,
-                            color=floor_color,
-                        )
+                        block_kwargs = {
+                            'width': wall_thin,
+                            'height': floor_height,
+                            'depth': wall_length,
+                            'color': floor_color,
+                        }
                     # Pillar floor
                     else:
-                        block = Parallelepiped(
-                            width=wall_thin,
-                            height=floor_height,
-                            depth=wall_thin,
-                            color=floor_color,
-                        )
+                        block_kwargs = {
+                            'width': wall_thin,
+                            'height': floor_height,
+                            'depth': wall_thin,
+                            'color': floor_color,
+                        }
                 
-                if block:
+                if block_kwargs:
                     x = (x_idx % 2) * wall_thin + (x_idx // 2) * (wall_length + wall_thin)
                     y = (y_idx % 2) * wall_thin + (y_idx // 2) * (wall_length + wall_thin)
                     z = (idx + 1) * (wall_height + floor_height)
-                    block.set_pos((x, y, z))
-                    objects.append(block)
+                    blocks.append( Parallelepiped(**block_kwargs, position=(x, y, z)) )
 
-        return scene
+        return Labyrinth(
+            blocks=blocks,
+            width=labyrinth_width,
+            height=labyrinth_height,
+            depth=labyrinth_depth,
+        )
 
 
     @classmethod
-    def from_map_file(cls, path: str) -> 'Scene':
+    def from_map_file(cls, path: str) -> 'Labyrinth':
         content = None
         with open(path, 'rt') as map_file:
             content = map_file.read()
 
-        return Scene.from_map_string(content)
+        return Labyrinth.from_map_string(content)
 
 
 
-class Object3D:
-
-    def get_vertex_format(self) -> GeomVertexFormat:
-        raise NotImplementedError()
-
-    def get_pos(self) -> Tuple[float, float, float]:
-        raise NotImplementedError()
-
-    def get_vertices(self) -> List[List[float]]:
-        raise NotImplementedError()
+@dataclass(init=False, frozen=True)
+class Parallelepiped:
+    width:      float
+    height:     float
+    depth:      float
+    vertices:   np.ndarray
+    position:   Tuple[float, float, float]
 
 
-class Parallelepiped(Object3D):
+    def __init__(self, width: float, height: float, depth: float,
+                color: Tuple[float, float, float, float]=(1.0, 1.0, 1.0, 1.0),
+                tiling_factors: Tuple[float, float]=(1.0, 0.5),
+                position: Tuple[float, float, float]=None):
 
-    def __init__(self, width: float, height: float, depth: float, color: Tuple[float, float, float, float]=(1.0, 1.0, 1.0, 1.0),
-                 tiling_factors: Tuple[float, float]=(1.0, 0.5)):
-
-        self.height = height
-        self.width = width
-        self.depth = depth
+        # TODO: eww (required since it's frozen...)
+        object.__setattr__(self, 'height', height)
+        object.__setattr__(self, 'width', width)
+        object.__setattr__(self, 'depth', depth)
 
         r, g, b, a = color
         # Panda3D uses the geographical coordinate system, where XY is on the floor and Z is the height
@@ -301,27 +306,10 @@ class Parallelepiped(Object3D):
         ]
         normal_cols = np.vstack( [np.repeat([normal], 6, axis=0) for normal in normals] )
 
-        self.vertices = np.hstack([ vertices, color_cols, normal_cols ])
-        self.pos = None
-        
+        object.__setattr__(self, 'vertices', np.hstack([ vertices, color_cols, normal_cols ]))
+        object.__setattr__(self, 'position', position)
     
-    def set_pos(self, pos: Tuple[float, float, float]):
-        self.pos = pos
-
-
-    def get_pos(self) -> Tuple[float, float, float]:
-        return self.pos
-
-
-    def get_vertices(self) -> List[List[float]]:
-        return self.vertices
-    
-
-    # TODO: need normals as well
-    def get_vertex_format(self) -> GeomVertexFormat:
-        return GeomVertexFormat.getV3n3c4t2()
-
 
 
 if __name__ == '__main__':
-    scene = Scene.from_map_string('test1.map')
+    scene = Labyrinth.from_map_string('test1.map')
