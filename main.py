@@ -15,6 +15,7 @@ PLAYER_SPEED = 0.25
 # to facilitate analysing the model when debugging
 MOUSE_CAMERA = False
 HELPER_3D_AXIS = True
+SHOW_COLLISIONS = False
 
 
 # TODO: consistent case style? camelCase, snake_case...
@@ -55,7 +56,8 @@ class ExplorerApp(ShowBase):
 
         player_collider_node.addSolid(CollisionCapsule(4, 3, 2, 4, 1, 2, 1))
         player_collider = player_model.attachNewNode(player_collider_node)
-        player_collider.show()
+        if SHOW_COLLISIONS:
+            player_collider.show()
 
         self.player = CustomObject3D(player_model, player_position, self.render, scale=player_scale)
         self.player_position = player_position
@@ -199,7 +201,8 @@ class ExplorerApp(ShowBase):
                                                      wall_obj.depth / 2,
                                                      wall_obj.height / 2))
             wall_collider = wall_node.attachNewNode(wall_collider_node)
-            wall_collider.show()
+            if SHOW_COLLISIONS:
+                wall_collider.show()
         
         # Center the labyrinth to the origin
         labyrinth_np.setPos(
