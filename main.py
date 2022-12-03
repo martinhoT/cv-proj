@@ -60,32 +60,7 @@ class ExplorerApp(ShowBase):
         self.player = CustomObject3D(player_model, player_position, self.render, scale=player_scale)
         self.player_position = player_position
 
-
-
-        # OpenGL style coloring
-        wall_texture = self.loader.loadTexture(self.path_p3d / 'textures/wall.png')
-        # self.wall_0 = self.render.attachNewNode(
-        #     self.generateGeometry(Parallelepiped(3, 1, 3, (1.0, 1.0, 1.0, 1.0)), 'parallelepiped_0'))
-        # self.wall_0.setTexture(texture_wall)
-        self.labyrinth = self.render.attachNewNode('Labyrinth')
-        labyrinth_scene = Scene.from_map_file('test1.map')
-        labyrinth_walls = [self.generateGeometry(obj, f'wall_{idx}') for idx, obj in enumerate(labyrinth_scene.objects)]
-        print('Number of walls:', len(labyrinth_walls))
-        for idx, wall in enumerate(labyrinth_walls):
-            wall_obj = labyrinth_scene.objects[idx]
-
-            wall_node = self.labyrinth.attachNewNode(wall)
-            wall_node.setTexture(wall_texture)
-            wall_node.setPos(wall_obj.get_pos())
-            wall_collider_node = CollisionNode(f"Wall_{idx}")
-            # get center of the wall
-            wall_center = Point3(wall_obj.width / 2, wall_obj.depth / 2, wall_obj.height / 2)
-            wall_collider_node.addSolid(CollisionBox(wall_center,
-                                                     wall_obj.width / 2,
-                                                     wall_obj.depth / 2,
-                                                     wall_obj.height / 2))
-            wall_collider = wall_node.attachNewNode(wall_collider_node)
-            wall_collider.show()
+        self.labyrinth = self.generateLabyrinth(parent_node=self.render)        
 
         # Lighting
         self.flashlight_pos = [0, 10, 0]
@@ -207,6 +182,30 @@ class ExplorerApp(ShowBase):
         node.addGeom(geom)
 
         return node
+
+    def generateLabyrinth(self, parent_node: NodePath) -> NodePath:
+        wall_texture = self.loader.loadTexture(self.path_p3d / 'textures/wall.png')
+        labyrinth = parent_node.attachNewNode('Labyrinth')
+        labyrinth_scene = Scene.from_map_file('test1.map')
+        labyrinth_walls = [self.generateGeometry(obj, f'wall_{idx}') for idx, obj in enumerate(labyrinth_scene.objects)]
+        print('Number of walls:', len(labyrinth_walls))
+        for idx, wall in enumerate(labyrinth_walls):
+            wall_obj = labyrinth_scene.objects[idx]
+
+            wall_node = labyrinth.attachNewNode(wall)
+            wall_node.setTexture(wall_texture)
+            wall_node.setPos(wall_obj.get_pos())
+            wall_collider_node = CollisionNode(f"Wall_{idx}")
+            # get center of the wall
+            wall_center = Point3(wall_obj.width / 2, wall_obj.depth / 2, wall_obj.height / 2)
+            wall_collider_node.addSolid(CollisionBox(wall_center,
+                                                     wall_obj.width / 2,
+                                                     wall_obj.depth / 2,
+                                                     wall_obj.height / 2))
+            wall_collider = wall_node.attachNewNode(wall_collider_node)
+            wall_collider.show()
+        
+        return labyrinth
 
     # get mouse position in 3d space
     def calculateMouseProjection(self) -> Tuple[float, float, float]:
