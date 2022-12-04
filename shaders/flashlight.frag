@@ -1,6 +1,7 @@
 #version 330
 
 uniform sampler2D tex;
+uniform sampler2D dtex;
 uniform vec2 u_mouse;
 uniform vec2 u_resolution;
 uniform float lightPower;
@@ -18,9 +19,17 @@ vec3 filledCircle(in vec2 center, in float radius, in vec2 point, in float borde
 
 void main() {
     vec2 st = 2 * (gl_FragCoord.xy/u_resolution) - 1;
+    vec4 backgroundColor = vec4(0.0, 0.0, 0.1, 0.0);
+
+    float depth = texture2D(dtex, texcoord).x;
+    // How much is the light affected by the distance to the camera. 1 means full fog.
+    float fogDisturbance = pow(depth, 50);
+
+    vec4 flashlightColor = vec4(filledCircle(u_mouse, 0.4, st, 0.5), 1.0);
 
     vec4 base = texture2D(tex, texcoord);
-    vec4 flashlight_lit = max(vec4(0.0, 0.0, 0.1, 0.0), lightPower * vec4(filledCircle(u_mouse, 0.4, st, 0.5), 1.0));
+    vec4 flashlight_lit = max(backgroundColor, mix(lightPower * flashlightColor, backgroundColor, fogDisturbance) );
 
     p3d_FragColor = base * flashlight_lit;
+    // p3d_FragColor = vec4(fogDisturbance);
 }

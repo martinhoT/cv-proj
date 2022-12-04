@@ -249,11 +249,13 @@ class ExplorerApp(ShowBase):
 
         manager = FilterManager(self.win, self.cam)
         tex = Texture()
-        self.quad_filter = manager.renderSceneInto(colortex=tex)
+        dtex = Texture()
+        self.quad_filter = manager.renderSceneInto(colortex=tex, depthtex=dtex)
         self.quad_filter.setShader(flashlight_shader)
         # TODO: resolution may have to be updated if the window is resized. See: https://github.com/totex/Panda3D-shaders
         self.quad_filter.setShaderInputs(
             tex=tex,
+            dtex=dtex,
             u_mouse=self.mouse_coords,
             u_resolution=(WIDTH, HEIGHT),
             lightPower=self.flashlight_power,
