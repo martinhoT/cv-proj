@@ -79,6 +79,8 @@ class ExplorerApp(ShowBase):
         self.flashlight_pos = [0, 10, 0]
         self.flashlight = Spotlight('flashlight')
         self.flashlight.setColor((1, 1, 1, 1))
+        # self.flashlight.setAttenuation((1, 0, 1))   # fall off with distance
+        # self.flashlight.setShadowCaster(True, 512, 512)   # enable shadows
         lens = PerspectiveLens()
         self.flashlight.setLens(lens)
 
@@ -114,7 +116,11 @@ class ExplorerApp(ShowBase):
         self.taskMgr.add(self.move_flashlight_task, 'move_flashlight_task')
         self.taskMgr.add(self.move_player_task, 'move_player_task')
 
+        self.quad_filter = None
+        self.flashlight_power = 1
         self.setupShaders()
+
+        self.accept('x', self.toggle_light)
 
     # TODO: use self.accept(key, func, args) instead?
     def read_inputs_task(self, task):
@@ -159,6 +165,10 @@ class ExplorerApp(ShowBase):
             self.player_position[2] -= PLAYER_SPEED
 
         return Task.cont
+
+    def toggle_light(self):
+        self.flashlight_power = 1 - self.flashlight_power
+        self.quad_filter.setShaderInput('lightPower', self.flashlight_power)
 
     def generateGeometry(self, parallelepiped: Parallelepiped, name: str) -> GeomNode:
         # Number of vertices per primitive (triangles)
@@ -239,14 +249,14 @@ class ExplorerApp(ShowBase):
 
         manager = FilterManager(self.win, self.cam)
         tex = Texture()
-        self.quad = manager.renderSceneInto(colortex=tex)
-        self.quad
-        self.quad.setShader(flashlight_shader)
+        self.quad_filter = manager.renderSceneInto(colortex=tex)
+        self.quad_filter.setShader(flashlight_shader)
         # TODO: resolution may have to be updated if the window is resized. See: https://github.com/totex/Panda3D-shaders
-        self.quad.setShaderInputs(
+        self.quad_filter.setShaderInputs(
             tex=tex,
             u_mouse=self.mouse_coords,
             u_resolution=(WIDTH, HEIGHT),
+            lightPower=self.flashlight_power,
         )
 
     # get mouse position in 3d space
@@ -307,7 +317,7 @@ class ExplorerApp(ShowBase):
             self.mouse_coords[0] = self.mouseWatcherNode.getMouseX()
             self.mouse_coords[1] = self.mouseWatcherNode.getMouseY()
         
-        self.quad.setShaderInput('u_mouse', self.mouse_coords)
+        self.quad_filter.setShaderInput('u_mouse', self.mouse_coords)
 
         return Task.cont
 

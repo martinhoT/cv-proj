@@ -3,6 +3,7 @@
 uniform sampler2D tex;
 uniform vec2 u_mouse;
 uniform vec2 u_resolution;
+uniform float lightPower;
 
 in vec2 texcoord;
 
@@ -19,7 +20,7 @@ void main() {
     vec2 st = 2 * (gl_FragCoord.xy/u_resolution) - 1;
 
     vec4 base = texture2D(tex, texcoord);
-    vec4 flashlight_lit = max(vec4(0.0, 0.0, 0.1, 0.0), vec4(filledCircle(u_mouse, 0.8, st, 0.1), 1.0));
+    vec4 flashlight_lit = max(vec4(0.0, 0.0, 0.1, 0.0), lightPower * vec4(filledCircle(u_mouse, 0.4, st, 0.5), 1.0));
 
     p3d_FragColor = base * flashlight_lit;
 }
