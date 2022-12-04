@@ -238,6 +238,9 @@ class ExplorerApp(ShowBase):
 
         return labyrinth_np
 
+    def windowResized(self):
+        self.quad_filter.setShaderInput('u_resolution', (self.win.getXSize(), self.win.getYSize()))
+
     def setupShaders(self):
         # Plenty of features, including normal maps and per-pixel lighting
         # (https://docs.panda3d.org/1.10/python/programming/shaders/shader-generator)
@@ -252,7 +255,6 @@ class ExplorerApp(ShowBase):
         dtex = Texture()
         self.quad_filter = manager.renderSceneInto(colortex=tex, depthtex=dtex)
         self.quad_filter.setShader(flashlight_shader)
-        # TODO: resolution may have to be updated if the window is resized. See: https://github.com/totex/Panda3D-shaders
         self.quad_filter.setShaderInputs(
             tex=tex,
             dtex=dtex,
@@ -260,6 +262,8 @@ class ExplorerApp(ShowBase):
             u_resolution=(WIDTH, HEIGHT),
             lightPower=self.flashlight_power,
         )
+
+        self.accept('aspectRatioChanged', self.windowResized)
 
     # get mouse position in 3d space
     def calculateMouseProjection(self) -> Tuple[float, float, float]:
