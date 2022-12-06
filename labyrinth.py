@@ -2,7 +2,6 @@ import numpy as np
 
 from typing import Tuple, List
 from dataclasses import dataclass
-from panda3d.core import GeomVertexFormat
 
 
 

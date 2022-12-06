@@ -250,14 +250,19 @@ class ExplorerApp(ShowBase):
             vertex='shaders/flashlight.vert',
             fragment='shaders/flashlight.frag')
 
+        # Save the normal buffer into the auxiliary bitplane
+        self.render.setAttrib(AuxBitplaneAttrib.make(AuxBitplaneAttrib.ABO_aux_normal))
+
         manager = FilterManager(self.win, self.cam)
         tex = Texture()
         dtex = Texture()
-        self.quad_filter = manager.renderSceneInto(colortex=tex, depthtex=dtex)
+        ntex = Texture()
+        self.quad_filter = manager.renderSceneInto(colortex=tex, depthtex=dtex, auxtex=ntex)
         self.quad_filter.setShader(flashlight_shader)
         self.quad_filter.setShaderInputs(
             tex=tex,
             dtex=dtex,
+            ntex=ntex,
             u_mouse=self.mouse_coords,
             u_resolution=(WIDTH, HEIGHT),
             lightPower=self.flashlight_power,
