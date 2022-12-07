@@ -207,7 +207,9 @@ class ExplorerApp(ShowBase):
         return node
 
     def generateLabyrinth(self, parent_node: NodePath, labyrinth_file: str) -> NodePath:
-        wall_texture = self.loader.loadTexture(self.path_p3d / 'textures/wall.png')
+        # Keep track of textures used by the labyrinth's blocks, so we don't have to tell Panda3D to repeatedly load them
+        textures = {}
+
         labyrinth_np = parent_node.attachNewNode('Labyrinth')
         labyrinth = Labyrinth.from_map_file(labyrinth_file)
         labyrinth_walls = [self.generateGeometry(obj, f'wall_{idx}') for idx, obj in enumerate(labyrinth.blocks)]
@@ -216,8 +218,15 @@ class ExplorerApp(ShowBase):
             wall_obj = labyrinth.blocks[idx]
 
             wall_node = labyrinth_np.attachNewNode(wall)
-            wall_node.setTexture(wall_texture)
+            if wall_obj.texture not in textures:
+                textures[wall_obj.texture] = self.loader.loadTexture(self.path_p3d / wall_obj.texture)
+            wall_node.setTexture(textures[wall_obj.texture])
             wall_node.setPos(wall_obj.position)
+            
+            if labyrinth.is_window(wall_obj):
+                wall_node.setTransparency(True)
+
+            # Collisions
             wall_collider_node = CollisionNode(f"Wall_{idx}")
             # get center of the wall
             wall_center = Point3(wall_obj.width / 2, wall_obj.depth / 2, wall_obj.height / 2)
