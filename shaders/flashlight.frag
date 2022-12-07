@@ -22,19 +22,25 @@ void main() {
     vec2 st = 2 * (gl_FragCoord.xy/u_resolution) - 1;
     vec4 backgroundColor = vec4(0.0, 0.0, 0.1, 0.0);
 
-    vec3 normals = texture2D(ntex, texcoord).rgb;
+    // Equal to just picking the y normal
+    vec3 normal = texture2D(ntex, texcoord).rgb;
+    // We only need the y coordinate, since the flashlight is pointing in the y direction
+    float normalDiff = 1.0 - max(normal.g, 0.0);
 
     float depth = texture2D(dtex, texcoord).x;
-    // How much is the light affected by the distance to the camera. 1 means full fog.
-    float fogDisturbance = pow(depth, 50);
+    // How much is the light affected by the distance to the camera. 0 means full fog.
+    float fogDisturbance = 1 - pow(depth, 50);
 
     vec4 flashlightColor = vec4(filledCircle(u_mouse, 0.4, st, 0.5), 1.0);
 
+    // TODO: Make depth affect the flashlight radius & smoothness instead
+    // TODO: Deferred lighting?
     vec4 base = texture2D(tex, texcoord);
-    vec4 flashlight_lit = max(backgroundColor, mix(lightPower * flashlightColor, backgroundColor, fogDisturbance) );
+    vec4 flashlightLit = max(backgroundColor, fogDisturbance * lightPower * normalDiff * flashlightColor);
 
-    p3d_FragColor = base * flashlight_lit;
+    p3d_FragColor = base * flashlightLit;
     // p3d_FragColor = vec4(depth);   // Depth buffer
-    // p3d_FragColor = vec4(normals, 1.0);   // Normal buffer
+    // p3d_FragColor = vec4(normal, 1.0);   // Normal buffer
     // p3d_FragColor = vec4(fogDisturbance);
+    // p3d_FragColor = vec4(normalDiff);
 }
