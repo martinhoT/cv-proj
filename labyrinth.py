@@ -15,6 +15,67 @@ class Labyrinth:
     depth:      float
 
 
+    TEXTURE_WALL = 'textures/wall.png'
+    TEXTURE_WINDOW = 'textures/glass.png'
+
+    NODE_WALL_H = '-'
+    NODE_WALL_V = '|'
+    NODE_WINDOW_H = '_'
+    NODE_WINDOW_V = '!'
+    NODE_PILLAR = '+'
+    NODE_FLOOR = '.'
+    NODE_EMPTY = ' '
+    NODE_HOLE = 'X'
+    NODE_START = 'S'
+    NODE_FINISH = 'F'
+
+    NODES_WALL = {NODE_WALL_H, NODE_WALL_V}
+    NODES_WINDOW = {NODE_WINDOW_H, NODE_WINDOW_V}
+    NODES_H = {NODE_WALL_H, NODE_WINDOW_H}
+    NODES_V = {NODE_WALL_V, NODE_WINDOW_V}
+
+    DIMS_FLOOR_HEIGHT = 1
+    DIMS_WALL_LENGTH = 5
+    DIMS_WALL_HEIGHT = 5
+    DIMS_WALL_THIN = 1
+
+    ATTRIBUTES_WALL_H = {
+        'width': DIMS_WALL_LENGTH,
+        'height': DIMS_FLOOR_HEIGHT + DIMS_WALL_HEIGHT,
+        'depth': DIMS_WALL_THIN,
+    }
+    ATTRIBUTES_WALL_V = {
+        'width': DIMS_WALL_THIN,
+        'height': DIMS_FLOOR_HEIGHT + DIMS_WALL_HEIGHT,
+        'depth': DIMS_WALL_LENGTH,
+    }
+    ATTRIBUTES_PILLAR = {
+        'width': DIMS_WALL_THIN,
+        'height': DIMS_FLOOR_HEIGHT + DIMS_WALL_HEIGHT,
+        'depth': DIMS_WALL_THIN,
+    }
+    ATTRIBUTES_FLOOR_MIDDLE = {
+        'width': DIMS_WALL_LENGTH,
+        'height': DIMS_FLOOR_HEIGHT,
+        'depth': DIMS_WALL_LENGTH,
+    }
+    ATTRIBUTES_FLOOR_WALL_H = {
+        'width': DIMS_WALL_LENGTH,
+        'height': DIMS_FLOOR_HEIGHT,
+        'depth': DIMS_WALL_THIN,
+    }
+    ATTRIBUTES_FLOOR_WALL_V = {
+        'width': DIMS_WALL_THIN,
+        'height': DIMS_FLOOR_HEIGHT,
+        'depth': DIMS_WALL_LENGTH,
+    }
+    ATTRIBUTES_FLOOR_PILLAR = {
+        'width': DIMS_WALL_THIN,
+        'height': DIMS_FLOOR_HEIGHT,
+        'depth': DIMS_WALL_THIN,
+    }
+
+
     @classmethod
     def from_map_string(cls, map_str: str) -> 'Labyrinth':
         floor_layouts = []
@@ -50,14 +111,9 @@ class Labyrinth:
         
         blocks = []
 
-        floor_height = 1
-        wall_length = 5
-        wall_height = 5
-        wall_thin = 1
-
-        labyrinth_width = wall_thin + width_units * (wall_thin + wall_length)
-        labyrinth_height = floor_height + len(floor_layouts) * (floor_height + wall_height)
-        labyrinth_depth = wall_thin + depth_units * (wall_thin + wall_length)
+        labyrinth_width = cls.DIMS_WALL_THIN + width_units * (cls.DIMS_WALL_THIN + cls.DIMS_WALL_LENGTH)
+        labyrinth_height = cls.DIMS_FLOOR_HEIGHT + len(floor_layouts) * (cls.DIMS_FLOOR_HEIGHT + cls.DIMS_WALL_HEIGHT)
+        labyrinth_depth = cls.DIMS_WALL_THIN + depth_units * (cls.DIMS_WALL_THIN + cls.DIMS_WALL_LENGTH)
 
         if DEBUG:
             floor_color = (1.0, 0.0, 0.0, 1.0)
@@ -68,6 +124,12 @@ class Labyrinth:
             wall_color = (1.0, 1.0, 1.0, 1.0)
             pillar_color = (1.0, 1.0, 1.0, 1.0)
 
+        get_position = lambda x, y, floor: (
+            (x % 2) * cls.DIMS_WALL_THIN + (x // 2) * (cls.DIMS_WALL_LENGTH + cls.DIMS_WALL_THIN),   # X
+            (y % 2) * cls.DIMS_WALL_THIN + (y // 2) * (cls.DIMS_WALL_LENGTH + cls.DIMS_WALL_THIN),   # Y
+            floor * (cls.DIMS_WALL_HEIGHT + cls.DIMS_FLOOR_HEIGHT)                                   # Z
+        )
+
         previous_layout = []
         for idx, floor_layout in enumerate(floor_layouts):
             for y_idx, row in enumerate(floor_layout):
@@ -75,73 +137,72 @@ class Labyrinth:
                     block_kwargs = None
 
                     # Horizontal wall
-                    if object_type == '-':
+                    if object_type in cls.NODES_H:
                         block_kwargs = {
-                            'width': wall_length,
-                            'height': floor_height + wall_height,
-                            'depth': wall_thin,
+                            **cls.ATTRIBUTES_WALL_H,
                             'color': wall_color,
                         }
 
                     # Vertical wall
-                    elif object_type == '|':
+                    elif object_type in cls.NODES_V:
                         block_kwargs = {
-                            'width': wall_thin,
-                            'height': floor_height + wall_height,
-                            'depth': wall_length,
+                            **cls.ATTRIBUTES_WALL_V,
                             'color': wall_color,
                         }
 
                     # Pillar
-                    elif object_type == '+':
+                    elif object_type == cls.NODE_PILLAR:
                         block_kwargs = {
-                            'width': wall_thin,
-                            'height': floor_height + wall_height,
-                            'depth': wall_thin,
+                            **cls.ATTRIBUTES_PILLAR,
                             'color': pillar_color,
                         }
                     
                     # Floor
-                    elif object_type == '.' \
-                            or (object_type != 'X' and previous_layout and previous_layout[y_idx][x_idx] != ' '):
+                    elif object_type == cls.NODE_FLOOR \
+                            or (object_type != cls.NODE_HOLE and previous_layout and previous_layout[y_idx][x_idx] != cls.NODE_EMPTY):
+                        
                         # Middle floor
                         if (x_idx % 2) == 1 and (y_idx % 2) == 1:
-                            block_kwargs = {
-                                'width': wall_length,
-                                'height': floor_height,
-                                'depth': wall_length,
-                                'color': floor_color,
-                            }
+                            block_kwargs = cls.ATTRIBUTES_FLOOR_MIDDLE.copy()
+
                         # Horizontal floor
                         elif (x_idx % 2) == 1:
-                            block_kwargs = {
-                                'width': wall_length,
-                                'height': floor_height,
-                                'depth': wall_thin,
-                                'color': floor_color,
-                            }
+                            block_kwargs = cls.ATTRIBUTES_FLOOR_WALL_H.copy()
+
                         # Vertical floor
                         elif (y_idx % 2) == 1:
-                            block_kwargs = {
-                                'width': wall_thin,
-                                'height': floor_height,
-                                'depth': wall_length,
-                                'color': floor_color,
-                            }
+                            block_kwargs = cls.ATTRIBUTES_FLOOR_WALL_V.copy()
+
                         # Pillar floor
                         else:
-                            block_kwargs = {
-                                'width': wall_thin,
-                                'height': floor_height,
-                                'depth': wall_thin,
-                                'color': floor_color,
-                            }
+                            block_kwargs = cls.ATTRIBUTES_FLOOR_PILLAR.copy()
+
+                        block_kwargs['color'] = floor_color
                     
                     if block_kwargs:
-                        x = (x_idx % 2) * wall_thin + (x_idx // 2) * (wall_length + wall_thin)
-                        y = (y_idx % 2) * wall_thin + (y_idx // 2) * (wall_length + wall_thin)
-                        z = idx * (wall_height + floor_height)
-                        blocks.append( Parallelepiped(**block_kwargs, position=(x, y, z)) )
+                        position = get_position(x_idx, y_idx, idx)
+                        block_kwargs['position'] = position
+                        if object_type in cls.NODES_WINDOW:
+                            block_kwargs['texture'] = cls.TEXTURE_WINDOW
+
+                            # Add an extra floor block below the window to look better
+                            attrs = cls.ATTRIBUTES_FLOOR_WALL_H if object_type == cls.NODE_WINDOW_H else cls.ATTRIBUTES_FLOOR_WALL_V
+                            base_floor_kwargs = {
+                                **attrs,
+                                'color': floor_color,
+                                'position': position,
+                                'texture': cls.TEXTURE_WALL,
+                                'tiling_factors': (1.0, 0.5),
+                            }
+                            blocks.append( Parallelepiped(**base_floor_kwargs) )
+
+                            # Account for the fact that there is now floor below
+                            block_kwargs['height'] -= cls.DIMS_FLOOR_HEIGHT
+                            block_kwargs['position'] = (position[0], position[1], position[2] + cls.DIMS_FLOOR_HEIGHT)
+                        else:
+                            block_kwargs['texture'] = cls.TEXTURE_WALL
+                            block_kwargs['tiling_factors'] = (1.0, 0.5)
+                        blocks.append( Parallelepiped(**block_kwargs) )
 
             previous_layout = floor_layout
         
@@ -151,45 +212,31 @@ class Labyrinth:
                 block_kwargs = None
 
                 # Floor
-                if object_type != ' ':
+                if object_type != cls.NODE_EMPTY:
+                   
                     # Middle floor
                     if (x_idx % 2) == 1 and (y_idx % 2) == 1:
-                        block_kwargs = {
-                            'width': wall_length,
-                            'height': floor_height,
-                            'depth': wall_length,
-                            'color': floor_color,
-                        }
+                        block_kwargs = cls.ATTRIBUTES_FLOOR_MIDDLE.copy()
+
                     # Horizontal floor
                     elif (x_idx % 2) == 1:
-                        block_kwargs = {
-                            'width': wall_length,
-                            'height': floor_height,
-                            'depth': wall_thin,
-                            'color': floor_color,
-                        }
+                        block_kwargs = cls.ATTRIBUTES_FLOOR_WALL_H.copy()
+
                     # Vertical floor
                     elif (y_idx % 2) == 1:
-                        block_kwargs = {
-                            'width': wall_thin,
-                            'height': floor_height,
-                            'depth': wall_length,
-                            'color': floor_color,
-                        }
+                        block_kwargs = cls.ATTRIBUTES_FLOOR_WALL_V.copy()
+
                     # Pillar floor
                     else:
-                        block_kwargs = {
-                            'width': wall_thin,
-                            'height': floor_height,
-                            'depth': wall_thin,
-                            'color': floor_color,
-                        }
+                        block_kwargs = cls.ATTRIBUTES_FLOOR_PILLAR.copy()
+
+                    block_kwargs['color'] = floor_color
                 
                 if block_kwargs:
-                    x = (x_idx % 2) * wall_thin + (x_idx // 2) * (wall_length + wall_thin)
-                    y = (y_idx % 2) * wall_thin + (y_idx // 2) * (wall_length + wall_thin)
-                    z = (idx + 1) * (wall_height + floor_height)
-                    blocks.append( Parallelepiped(**block_kwargs, position=(x, y, z)) )
+                    block_kwargs['position'] = get_position(x_idx, y_idx, idx)
+                    block_kwargs['texture'] = cls.TEXTURE_WALL
+                    block_kwargs['tiling_factors'] = (1.0, 0.5)
+                    blocks.append( Parallelepiped(**block_kwargs) )
 
         return Labyrinth(
             blocks=blocks,
@@ -208,6 +255,11 @@ class Labyrinth:
         return Labyrinth.from_map_string(content)
 
 
+    # TODO: A rather lazy way to determine this...
+    def is_window(self, obj: 'Parallelepiped') -> bool:
+        return obj.texture == self.TEXTURE_WINDOW
+
+
 
 @dataclass(init=False, frozen=True)
 class Parallelepiped:
@@ -217,14 +269,16 @@ class Parallelepiped:
     vertices:   np.ndarray
     position:   Tuple[float, float, float]
     color:      Tuple[float, float, float, float]
+    texture:    str
 
 
     def __init__(self, width: float, height: float, depth: float,
                 color: Tuple[float, float, float, float]=(1.0, 1.0, 1.0, 1.0),
-                tiling_factors: Tuple[float, float]=(1.0, 0.5),
-                position: Tuple[float, float, float]=None):
+                tiling_factors: Tuple[float, float]=None,
+                position: Tuple[float, float, float]=None,
+                texture: str=None):
 
-        # TODO: eww (required since it's frozen...)
+        # Required, since it's frozen...
         object.__setattr__(self, 'height', height)
         object.__setattr__(self, 'width', width)
         object.__setattr__(self, 'depth', depth)
@@ -234,63 +288,73 @@ class Parallelepiped:
         # Panda3D uses the geographical coordinate system, where XY is on the floor and Z is the height
         # (https://docs.panda3d.org/1.10/python/introduction/tutorial/loading-the-grassy-scenery)
         x, y, z = width, depth, height
-        u, v = tiling_factors
+        
+        # Determine how textures should be tiled.
+        # If the tiling factors are not specified, then the whole texture is mapped to the face.
+        # Otherwise, the UVs are a factor of the object's dimensions.
+        if tiling_factors is not None:
+            u, v = tiling_factors
+            ux, uy = u*x, u*y
+            vy, vz = v*y, v*z
+        else:
+            ux, uy = 1, 1
+            vy, vz = 1, 1
 
-        # Clockwise order (?)
+        # Clockwise order
         vertices = np.array([
             # BOTTOM
-            [0, 0, 0,   0,    0],
-            [0, y, 0,   0,  v*y],
-            [x, y, 0, u*x,  v*y],
+            [0, 0, 0,  0,  0],
+            [0, y, 0,  0, vy],
+            [x, y, 0, ux, vy],
 
-            [0, 0, 0,   0,    0],
-            [x, y, 0, u*x,  v*y],
-            [x, 0, 0, u*x,    0],
+            [0, 0, 0,  0,  0],
+            [x, y, 0, ux, vy],
+            [x, 0, 0, ux,  0],
 
             # TOP
-            [0, 0, z, u*x,    0],
-            [x, y, z,   0,  v*y],
-            [0, y, z, u*x,  v*y],
+            [0, 0, z, ux,  0],
+            [x, y, z,  0, vy],
+            [0, y, z, ux, vy],
 
-            [0, 0, z, u*x,    0],
-            [x, 0, z,   0,    0],
-            [x, y, z,   0,  v*y],
+            [0, 0, z, ux,  0],
+            [x, 0, z,  0,  0],
+            [x, y, z,  0, vy],
 
             # LEFT
-            [0, y, z,   0,  v*z],
-            [0, y, 0,   0,    0],
-            [0, 0, z, u*y,  v*z],
+            [0, y, z,  0, vz],
+            [0, y, 0,  0,  0],
+            [0, 0, z, uy, vz],
 
-            [0, y, 0,   0,    0],
-            [0, 0, 0, u*y,    0],
-            [0, 0, z, u*y,  v*z],
+            [0, y, 0,  0,  0],
+            [0, 0, 0, uy,  0],
+            [0, 0, z, uy, vz],
 
             # RIGHT
-            [x, 0, z,   0,  v*z],
-            [x, y, 0, u*y,    0],
-            [x, y, z, u*y,  v*z],
+            [x, 0, z,  0, vz],
+            [x, y, 0, uy,  0],
+            [x, y, z, uy, vz],
 
-            [x, 0, z,   0,  v*z],
-            [x, 0, 0,   0,    0],
-            [x, y, 0, u*y,    0],
+            [x, 0, z,  0, vz],
+            [x, 0, 0,  0,  0],
+            [x, y, 0, uy,  0],
 
             # BACK
-            [0, y, z,   0,  v*z],
-            [x, y, z, u*x,  v*z],
-            [0, y, 0,   0,    0],
+            [0, y, z,  0, vz],
+            [x, y, z, ux, vz],
+            [0, y, 0,  0,  0],
 
-            [x, y, z, u*x,  v*z],
-            [x, y, 0, u*x,    0],
-            [0, y, 0,   0,    0],
+            [x, y, z, ux, vz],
+            [x, y, 0, ux,  0],
+            [0, y, 0,  0,  0],
 
             # FRONT
-            [0, 0, 0,   0,  v*z],
-            [x, 0, z, u*x,    0],
-            [0, 0, z,   0,    0],
+            [0, 0, 0,  0, vz],
+            [x, 0, z, ux,  0],
+            [0, 0, z,  0,  0],
 
-            [0, 0, 0,   0,  v*z],
-            [x, 0, 0, u*x,  v*z],
-            [x, 0, z, u*x,    0],
+            [0, 0, 0,  0, vz],
+            [x, 0, 0, ux, vz],
+            [x, 0, z, ux,  0],
         ], 'f')
 
         # Color each face with a different shade, mainly for debugging
@@ -309,6 +373,7 @@ class Parallelepiped:
 
         object.__setattr__(self, 'vertices', np.hstack([ vertices, color_cols, normal_cols ]))
         object.__setattr__(self, 'position', position)
+        object.__setattr__(self, 'texture', texture)
     
 
 
