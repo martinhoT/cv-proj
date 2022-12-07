@@ -58,7 +58,7 @@ class ExplorerApp(ShowBase):
         # rotate player model vertically
         player_model.setHpr(0, 90, 0)
         player_scale = (0.5, 0.5, 0.5)
-        player_position = [-15, 20, -5]
+        player_position = [-1.25, -0.125, -8.5]
         # Create collision node
         player_collider_node = CollisionNode("Player")
 
@@ -67,7 +67,7 @@ class ExplorerApp(ShowBase):
         if SHOW_COLLISIONS:
             player_collider.show()
 
-        self.player = CustomObject3D(player_model, player_position, self.render, scale=player_scale)
+        self.player = CustomObject3D(player_model, player_position, self.render, scale=player_scale, speed=PLAYER_SPEED)
         self.player_position = player_position
 
         self.labyrinth = self.generateLabyrinth(
@@ -120,7 +120,22 @@ class ExplorerApp(ShowBase):
         self.flashlight_power = 1
         self.setupShaders()
 
+        # inputs
         self.accept('x', self.toggle_light)
+        # self.accept('j', self.move_entity, [self.player, (-1, 0, 0)])
+        # self.accept('l', self.move_entity, [self.player, (1, 0, 0)])
+        # self.accept('i', self.move_entity, [self.player, (0, -1, 0)])
+        # self.accept('k', self.move_entity, [self.player, (0, 1, 0)])
+        # self.accept('j-repeat', self.move_entity, [self.player, (-1, 0, 0)])
+        # self.accept('l-repeat', self.move_entity, [self.player, (1, 0, 0)])
+        # self.accept('i-repeat', self.move_entity, [self.player, (0, -1, 0)])
+        # self.accept('k-repeat', self.move_entity, [self.player, (0, 1, 0)])
+        
+    
+    def move_entity(self, entity, direction):
+        print("Amogus")
+        entity.move(*direction)
+        print(f"{entity.model.getPos() = }")
 
     # TODO: use self.accept(key, func, args) instead?
     def read_inputs_task(self, task):
@@ -150,19 +165,22 @@ class ExplorerApp(ShowBase):
         if isDown(KeyboardButton.down()):
             self.flashlight_pos[1] -= 1
 
-        # Player
+        #Player
+        player_movement = [0, 0, 0]
         if isDown(KeyboardButton.asciiKey("j")):
-            self.player_position[0] -= PLAYER_SPEED
+            player_movement[0] -= PLAYER_SPEED
         if isDown(KeyboardButton.asciiKey("l")):
-            self.player_position[0] += PLAYER_SPEED
+            player_movement[0] += PLAYER_SPEED
         if isDown(KeyboardButton.asciiKey("i")):
-            self.player_position[1] += PLAYER_SPEED
+            player_movement[1] += PLAYER_SPEED
         if isDown(KeyboardButton.asciiKey("k")):
-            self.player_position[1] -= PLAYER_SPEED
+            player_movement[1] -= PLAYER_SPEED
         if isDown(KeyboardButton.asciiKey("u")):
-            self.player_position[2] += PLAYER_SPEED
+            player_movement[2] += PLAYER_SPEED
         if isDown(KeyboardButton.asciiKey("o")):
-            self.player_position[2] -= PLAYER_SPEED
+            player_movement[2] -= PLAYER_SPEED
+        
+        self.player.move(*player_movement)
 
         return Task.cont
 
@@ -354,7 +372,7 @@ class ExplorerApp(ShowBase):
         return Task.cont
 
     def move_player_task(self, task):
-        self.player.model.setPos(*self.player_position)
+        # self.player.model.setPos(*self.player_position)
         return Task.cont
 
 
