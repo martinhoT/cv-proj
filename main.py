@@ -8,11 +8,13 @@ from direct.task import Task
 from panda3d.core import *
 
 from CustomObject3D import CustomObject3D
+from Player import Player
 from labyrinth import Parallelepiped, Labyrinth
 
 WIDTH = 800
 HEIGHT = 600
 PLAYER_SPEED = 0.25
+PLAYER_JUMP_SPEED = 0.35
 # to facilitate analysing the model when debugging
 MOUSE_CAMERA = False
 HELPER_3D_AXIS = True
@@ -58,7 +60,7 @@ class ExplorerApp(ShowBase):
         # rotate player model vertically
         player_model.setHpr(0, 90, 0)
         player_scale = (0.5, 0.5, 0.5)
-        player_position = [-1.25, -0.125, -8.5]
+        player_position = [-1.25, -0.125, 20]
         # Create collision node
         player_collider_node = CollisionNode("Player")
 
@@ -67,7 +69,7 @@ class ExplorerApp(ShowBase):
         if SHOW_COLLISIONS:
             player_collider.show()
 
-        self.player = CustomObject3D(player_model, player_position, self.render, scale=player_scale, speed=PLAYER_SPEED)
+        self.player = Player(player_model, player_position, self.render, scale=player_scale, speed=PLAYER_SPEED)
         self.player_position = player_position
 
         self.labyrinth = self.generateLabyrinth(
@@ -122,14 +124,24 @@ class ExplorerApp(ShowBase):
 
         # inputs
         self.accept('x', self.toggle_light)
-        # self.accept('j', self.move_entity, [self.player, (-1, 0, 0)])
-        # self.accept('l', self.move_entity, [self.player, (1, 0, 0)])
-        # self.accept('i', self.move_entity, [self.player, (0, -1, 0)])
-        # self.accept('k', self.move_entity, [self.player, (0, 1, 0)])
-        # self.accept('j-repeat', self.move_entity, [self.player, (-1, 0, 0)])
-        # self.accept('l-repeat', self.move_entity, [self.player, (1, 0, 0)])
-        # self.accept('i-repeat', self.move_entity, [self.player, (0, -1, 0)])
-        # self.accept('k-repeat', self.move_entity, [self.player, (0, 1, 0)])
+        self.pusher.addInPattern('%fn-into-%in')
+        self.pusher.addInPattern('%fn-out-%in')
+        self.pusher.addInPattern('%fn-again-%in')
+        
+        self.accept("Player-out-Ground", self.player_out_ground)
+        
+        self.accept("Player-into-Ground", self.player_hit_ground)
+        self.accept("Player-again-Ground", self.player_hit_ground)
+        
+    def player_hit_ground(self, entity):
+        print("Hit ground", entity)
+        self.player.is_on_ground = True
+        self.player.velocity[2] = 0
+    
+    def player_out_ground(self, entity):
+        # print("Out of ground", entity)]
+        print("Out of ground")
+        self.player.is_on_ground = False
         
     
     def move_entity(self, entity, direction):
@@ -166,21 +178,22 @@ class ExplorerApp(ShowBase):
             self.flashlight_pos[1] -= 1
 
         #Player
-        player_movement = [0, 0, 0]
+        self.player.velocity[0] = 0
+        self.player.velocity[1] = 0
         if isDown(KeyboardButton.asciiKey("j")):
-            player_movement[0] -= PLAYER_SPEED
+            self.player.velocity[0] -= PLAYER_SPEED
         if isDown(KeyboardButton.asciiKey("l")):
-            player_movement[0] += PLAYER_SPEED
+            self.player.velocity[0] += PLAYER_SPEED
         if isDown(KeyboardButton.asciiKey("i")):
-            player_movement[1] += PLAYER_SPEED
+            self.player.velocity[1] += PLAYER_SPEED
         if isDown(KeyboardButton.asciiKey("k")):
-            player_movement[1] -= PLAYER_SPEED
+            self.player.velocity[1] -= PLAYER_SPEED
         if isDown(KeyboardButton.asciiKey("u")):
-            player_movement[2] += PLAYER_SPEED
-        if isDown(KeyboardButton.asciiKey("o")):
-            player_movement[2] -= PLAYER_SPEED
+            if self.player.is_on_ground:
+                self.player.velocity[2] = PLAYER_JUMP_SPEED
+                self.player.is_on_ground = False
         
-        self.player.move(*player_movement)
+        self.player.update()
 
         return Task.cont
 
@@ -232,11 +245,12 @@ class ExplorerApp(ShowBase):
         print('Number of walls:', len(labyrinth_walls))
         for idx, wall in enumerate(labyrinth_walls):
             wall_obj = labyrinth.blocks[idx]
-
+            is_ground = wall_obj.color == (1.0, 0.0, 0.0, 1.0)
             wall_node = labyrinth_np.attachNewNode(wall)
             wall_node.setTexture(wall_texture)
             wall_node.setPos(wall_obj.position)
-            wall_collider_node = CollisionNode(f"Wall_{idx}")
+            node_name = "Ground" if is_ground else "Wall"
+            wall_collider_node = CollisionNode(node_name)
             # get center of the wall
             wall_center = Point3(wall_obj.width / 2, wall_obj.depth / 2, wall_obj.height / 2)
             wall_collider_node.addSolid(CollisionBox(wall_center,
@@ -329,15 +343,6 @@ class ExplorerApp(ShowBase):
             z_axis_head_node.setPos(0, 0, 10)
 
     def updateMouseProjection(self, task):
-
-        # # Pre inputs flash light
-        # target = self.calculateMouseProjection()
-        # self.mouse_np.setPos(target)
-        # self.flashlight_np.lookAt(target)
-
-        # self.flashlight_np.lookAt(self.table.model)
-
-        # print(target, ' ' * 20, end='\r')
 
         return Task.cont
 

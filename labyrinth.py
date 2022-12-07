@@ -216,6 +216,7 @@ class Parallelepiped:
     depth:      float
     vertices:   np.ndarray
     position:   Tuple[float, float, float]
+    color:      Tuple[float, float, float, float]
 
 
     def __init__(self, width: float, height: float, depth: float,
@@ -227,6 +228,7 @@ class Parallelepiped:
         object.__setattr__(self, 'height', height)
         object.__setattr__(self, 'width', width)
         object.__setattr__(self, 'depth', depth)
+        object.__setattr__(self, 'color', color)
 
         r, g, b, a = color
         # Panda3D uses the geographical coordinate system, where XY is on the floor and Z is the height
