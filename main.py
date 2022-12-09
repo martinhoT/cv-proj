@@ -125,13 +125,12 @@ class ExplorerApp(ShowBase):
         # inputs
         self.accept('x', self.toggle_light)
         self.pusher.addInPattern('%fn-into-%in')
-        self.pusher.addInPattern('%fn-out-%in')
-        self.pusher.addInPattern('%fn-again-%in')
+        self.pusher.addOutPattern('%fn-out-%in')
+        self.pusher.addAgainPattern('%fn-again-%in')
         
         self.accept("Player-out-Ground", self.player_out_ground)
-        
         self.accept("Player-into-Ground", self.player_hit_ground)
-        # self.accept("Player-again-Ground", self.player_hit_ground)
+        self.accept("Player-again-Ground", self.player_hit_ground)
         
     def player_hit_ground(self, entity):
         print("Hit ground", entity)
