@@ -1,5 +1,6 @@
 import math
 import os
+import time
 
 from typing import Tuple
 from direct.showbase.ShowBase import ShowBase
@@ -121,6 +122,7 @@ class ExplorerApp(ShowBase):
         self.quad_filter = None
         self.flashlight_power = 1
         self.flashlight_flicker = 0
+        self.start_time = time.time()   # avoid providing extremelly large numbers to the shaders, since GLSL acts funky with those (in sin() for instance), so send time since app launch
         self.setupShaders()
 
         # inputs
@@ -197,7 +199,7 @@ class ExplorerApp(ShowBase):
 
     def toggle_light(self):
         self.flashlight_flicker = 1 - self.flashlight_flicker
-        self.quad_filter.setShaderInput('lightFlicker', self.flashlight_flicker)
+        self.quad_filter.setShaderInput('lightFlickerRatio', self.flashlight_flicker)
 
     def generateGeometry(self, parallelepiped: Parallelepiped, name: str) -> GeomNode:
         # Number of vertices per primitive (triangles)
@@ -304,11 +306,18 @@ class ExplorerApp(ShowBase):
             ntex=ntex,
             u_mouse=self.mouse_coords,
             u_resolution=(WIDTH, HEIGHT),
+            u_time=time.time() - self.start_time,
             lightPower=self.flashlight_power,
-            lightFlicker=self.flashlight_flicker,
+            lightFlickerRatio=self.flashlight_flicker,
         )
 
         self.accept('aspectRatioChanged', self.windowResized)
+        self.taskMgr.add(self.update_shader_time_task, 'update_shader_time_task')
+
+    def update_shader_time_task(self, task):
+        self.quad_filter.setShaderInput('u_time', time.time() - self.start_time)
+        # print(time.time())
+        return Task.cont
 
     def create3dAxis(self, heads: bool = False):
         axis3d = self.render.attachNewNode('axis3d')

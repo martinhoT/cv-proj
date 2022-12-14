@@ -22,7 +22,7 @@ float random(vec2 st) {
 // Vector st should be in range [0, 1]
 // Formula from: https://en.wikipedia.org/wiki/Bilinear_interpolation
 float bilinearInterpolation(float v00, float v10, float v01, float v11, vec2 st) {
-    float f = 0.01;
+    float f = .01;
     float f1 = f;
     float f2 = 1.-f;
     
@@ -46,7 +46,7 @@ float noise(vec2 st, float interval) {
 }
 
 float fbm(vec2 st) {
-    const int nFuncs = 10;
+    const int nFuncs = 25;
     float freq = .5;
 
     float res = 0.;
@@ -57,6 +57,6 @@ float fbm(vec2 st) {
 }
 
 void main() {
-    vec2 st = gl_FragCoord.xy/u_resolution.xy;
+    vec2 st = gl_FragCoord.xy / u_resolution.xy;
     gl_FragColor = vec4(fbm(st));
 }
