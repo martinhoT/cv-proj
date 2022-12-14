@@ -51,7 +51,7 @@ float noise(vec2 st, float interval) {
 }
 
 float fbm(vec2 st) {
-    const int nFuncs = 7;
+    const int nFuncs = 6;
     float freq = .5;
 
     float res = 0.;
