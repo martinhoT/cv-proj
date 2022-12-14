@@ -120,6 +120,7 @@ class ExplorerApp(ShowBase):
 
         self.quad_filter = None
         self.flashlight_power = 1
+        self.flashlight_flicker = 0
         self.setupShaders()
 
         # inputs
@@ -142,13 +143,11 @@ class ExplorerApp(ShowBase):
         print("Out of ground")
         self.player.is_on_ground = False
         
-    
     def move_entity(self, entity, direction):
         print("Amogus")
         entity.move(*direction)
         print(f"{entity.model.getPos() = }")
 
-    # TODO: use self.accept(key, func, args) instead?
     def read_inputs_task(self, task):
         isDown = self.mouseWatcherNode.is_button_down
 
@@ -197,8 +196,8 @@ class ExplorerApp(ShowBase):
         return Task.cont
 
     def toggle_light(self):
-        self.flashlight_power = 1 - self.flashlight_power
-        self.quad_filter.setShaderInput('lightPower', self.flashlight_power)
+        self.flashlight_flicker = 1 - self.flashlight_flicker
+        self.quad_filter.setShaderInput('lightFlicker', self.flashlight_flicker)
 
     def generateGeometry(self, parallelepiped: Parallelepiped, name: str) -> GeomNode:
         # Number of vertices per primitive (triangles)
@@ -306,26 +305,10 @@ class ExplorerApp(ShowBase):
             u_mouse=self.mouse_coords,
             u_resolution=(WIDTH, HEIGHT),
             lightPower=self.flashlight_power,
+            lightFlicker=self.flashlight_flicker,
         )
 
         self.accept('aspectRatioChanged', self.windowResized)
-
-    # get mouse position in 3d space
-    def calculateMouseProjection(self) -> Tuple[float, float, float]:
-        distance = 20
-        width = self.win.getProperties().getXSize()
-        height = self.win.getProperties().getYSize()
-        x_multiplier = width / 110.34482758620689  # 7.25
-        y_multiplier = height / 110.091743119  # 5.45
-        x_offset = -0.5
-        y_offset = -0.5
-
-        if self.mouseWatcherNode.hasMouse():
-            x = self.mouseWatcherNode.getMouseX()
-            y = self.mouseWatcherNode.getMouseY()
-            return x * x_multiplier + x_offset, distance, y * y_multiplier + y_offset
-
-        return 0, distance, 0
 
     def create3dAxis(self, heads: bool = False):
         axis3d = self.render.attachNewNode('axis3d')
@@ -349,10 +332,6 @@ class ExplorerApp(ShowBase):
             y_axis_head_node.setPos(0, 10, 0)
             z_axis_head_node = axis3d.attach_new_node(self.generateGeometry(z_axis_head, 'z_axis_head'))
             z_axis_head_node.setPos(0, 0, 10)
-
-    def updateMouseProjection(self, task):
-
-        return Task.cont
 
     def update_mouse_coords_task(self, task):
         if self.mouseWatcherNode.hasMouse():
