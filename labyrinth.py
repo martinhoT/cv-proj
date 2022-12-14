@@ -238,7 +238,7 @@ class Labyrinth:
                     block_kwargs['otype'] = 'floor'
                 
                 if block_kwargs:
-                    block_kwargs['position'] = get_position(x_idx, y_idx, idx)
+                    block_kwargs['position'] = get_position(x_idx, y_idx, idx + 1)
                     block_kwargs['texture'] = cls.TEXTURE_WALL
                     block_kwargs['tiling_factors'] = (1.0, 0.5)
                     blocks.append( Parallelepiped(**block_kwargs) )
