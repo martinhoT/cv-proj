@@ -79,7 +79,7 @@ class ExplorerApp(ShowBase):
 
         self.labyrinth = self.generateLabyrinth(
             parent_node=self.render,
-            labyrinth_file='test2.map',
+            labyrinth_file='test1.map',
         )        
 
         # Lighting
@@ -206,6 +206,7 @@ class ExplorerApp(ShowBase):
         self.flashlight_flicker = 1 - self.flashlight_flicker
         self.quad_filter.setShaderInput('lightFlickerRatio', self.flashlight_flicker)
 
+    # TODO: orthographical lens shows visual artifacts in geometry?
     def toggle_perspective(self):
         if isinstance(self.cam.node().getLens(), PerspectiveLens):
             self.cam.node().setLens(self.camera_orthographic_lens)
@@ -258,7 +259,7 @@ class ExplorerApp(ShowBase):
         if LOG: print('Number of walls:', len(labyrinth_walls))
         for idx, wall in enumerate(labyrinth_walls):
             wall_obj = labyrinth.blocks[idx]
-            is_ground = wall_obj.otype == 'floor'
+            is_ground = wall_obj.otype == Labyrinth.TYPE_FLOOR
             wall_node = labyrinth_np.attachNewNode(wall)
             if wall_obj.texture not in textures:
                 textures[wall_obj.texture] = self.loader.loadTexture(self.path_p3d / wall_obj.texture)

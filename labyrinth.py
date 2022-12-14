@@ -18,6 +18,11 @@ class Labyrinth:
     TEXTURE_WALL = 'textures/wall.png'
     TEXTURE_WINDOW = 'textures/glass.png'
 
+    TYPE_FLOOR = 'floor'
+    TYPE_WALL = 'wall'
+    TYPE_WINDOW = 'window'
+    TYPE_PILLAR = 'pillar'
+
     NODE_WALL_H = '-'
     NODE_WALL_V = '|'
     NODE_WINDOW_H = '_'
@@ -39,40 +44,48 @@ class Labyrinth:
     DIMS_WALL_HEIGHT = 5
     DIMS_WALL_THIN = 1
 
+    # TODO: rework to use subclasses / inheritance, this is unreadable...
     ATTRIBUTES_WALL_H = {
         'width': DIMS_WALL_LENGTH,
         'height': DIMS_FLOOR_HEIGHT + DIMS_WALL_HEIGHT,
         'depth': DIMS_WALL_THIN,
+        'otype': TYPE_WALL,
     }
     ATTRIBUTES_WALL_V = {
         'width': DIMS_WALL_THIN,
         'height': DIMS_FLOOR_HEIGHT + DIMS_WALL_HEIGHT,
         'depth': DIMS_WALL_LENGTH,
+        'otype': TYPE_WALL,
     }
     ATTRIBUTES_PILLAR = {
         'width': DIMS_WALL_THIN,
         'height': DIMS_FLOOR_HEIGHT + DIMS_WALL_HEIGHT,
         'depth': DIMS_WALL_THIN,
+        'otype': TYPE_PILLAR,
     }
     ATTRIBUTES_FLOOR_MIDDLE = {
         'width': DIMS_WALL_LENGTH,
         'height': DIMS_FLOOR_HEIGHT,
         'depth': DIMS_WALL_LENGTH,
+        'otype': TYPE_FLOOR,
     }
     ATTRIBUTES_FLOOR_WALL_H = {
         'width': DIMS_WALL_LENGTH,
         'height': DIMS_FLOOR_HEIGHT,
         'depth': DIMS_WALL_THIN,
+        'otype': TYPE_FLOOR,
     }
     ATTRIBUTES_FLOOR_WALL_V = {
         'width': DIMS_WALL_THIN,
         'height': DIMS_FLOOR_HEIGHT,
         'depth': DIMS_WALL_LENGTH,
+        'otype': TYPE_FLOOR,
     }
     ATTRIBUTES_FLOOR_PILLAR = {
         'width': DIMS_WALL_THIN,
         'height': DIMS_FLOOR_HEIGHT,
         'depth': DIMS_WALL_THIN,
+        'otype': TYPE_FLOOR,
     }
 
 
@@ -141,7 +154,6 @@ class Labyrinth:
                         block_kwargs = {
                             **cls.ATTRIBUTES_WALL_H,
                             'color': wall_color,
-                            'otype': 'wall',
                         }
 
                     # Vertical wall
@@ -149,7 +161,6 @@ class Labyrinth:
                         block_kwargs = {
                             **cls.ATTRIBUTES_WALL_V,
                             'color': wall_color,
-                            'otype': 'wall',
                         }
 
                     # Pillar
@@ -157,7 +168,6 @@ class Labyrinth:
                         block_kwargs = {
                             **cls.ATTRIBUTES_PILLAR,
                             'color': pillar_color,
-                            'otype': 'pillar',
                         }
                     
                     # Floor
@@ -181,7 +191,6 @@ class Labyrinth:
                             block_kwargs = cls.ATTRIBUTES_FLOOR_PILLAR.copy()
 
                         block_kwargs['color'] = floor_color
-                        block_kwargs['otype'] = 'floor'
                     
                     if block_kwargs:
                         position = get_position(x_idx, y_idx, idx)
@@ -203,6 +212,7 @@ class Labyrinth:
                             # Account for the fact that there is now floor below
                             block_kwargs['height'] -= cls.DIMS_FLOOR_HEIGHT
                             block_kwargs['position'] = (position[0], position[1], position[2] + cls.DIMS_FLOOR_HEIGHT)
+                            block_kwargs['otype'] = cls.TYPE_WINDOW
                         else:
                             block_kwargs['texture'] = cls.TEXTURE_WALL
                             block_kwargs['tiling_factors'] = (1.0, 0.5)
@@ -235,7 +245,6 @@ class Labyrinth:
                         block_kwargs = cls.ATTRIBUTES_FLOOR_PILLAR.copy()
 
                     block_kwargs['color'] = floor_color
-                    block_kwargs['otype'] = 'floor'
                 
                 if block_kwargs:
                     block_kwargs['position'] = get_position(x_idx, y_idx, idx + 1)
@@ -262,7 +271,7 @@ class Labyrinth:
 
     # TODO: A rather lazy way to determine this...
     def is_window(self, obj: 'Parallelepiped') -> bool:
-        return obj.texture == self.TEXTURE_WINDOW
+        return obj.otype == 'window'
 
 
 
