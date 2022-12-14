@@ -9,10 +9,12 @@ DEBUG = True
 
 @dataclass(frozen=True)
 class Labyrinth:
-    blocks:     List['Parallelepiped']
-    width:      float
-    height:     float
-    depth:      float
+    blocks:         List['Parallelepiped']
+    width:          float
+    height:         float
+    depth:          float
+    start_pos:      Tuple[float, float, float]
+    finish_pos:     Tuple[float, float, float]
 
 
     TEXTURE_WALL = 'textures/wall.png'
@@ -143,6 +145,9 @@ class Labyrinth:
             floor * (cls.DIMS_WALL_HEIGHT + cls.DIMS_FLOOR_HEIGHT)                                   # Z
         )
 
+        start_pos = None
+        finish_pos = None
+
         previous_layout = []
         for idx, floor_layout in enumerate(floor_layouts):
             for y_idx, row in enumerate(floor_layout):
@@ -192,6 +197,19 @@ class Labyrinth:
 
                         block_kwargs['color'] = floor_color
                     
+                    elif object_type == cls.NODE_START:
+                        position = get_position(x_idx, y_idx, idx)
+                        length_to_center = (cls.DIMS_WALL_LENGTH + 2 * cls.DIMS_WALL_THIN) / 2
+                        start_pos = (position[0], position[1] + length_to_center, position[2] + cls.DIMS_FLOOR_HEIGHT)   # not sure why only center Y, but works
+                        # Create a floor underneath
+                        block_kwargs = {
+                            **cls.ATTRIBUTES_FLOOR_MIDDLE,
+                            'color': floor_color,
+                        }
+                    
+                    elif object_type == cls.NODE_FINISH:
+                        finish_pos = get_position(x_idx, y_idx, idx)
+
                     if block_kwargs:
                         position = get_position(x_idx, y_idx, idx)
                         block_kwargs['position'] = position
@@ -247,7 +265,7 @@ class Labyrinth:
                     block_kwargs['color'] = floor_color
                 
                 if block_kwargs:
-                    block_kwargs['position'] = get_position(x_idx, y_idx, idx + 1)
+                    block_kwargs['position'] = get_position(x_idx, y_idx, idx + 1)   # evil usage of 'idx' left from the previous loop
                     block_kwargs['texture'] = cls.TEXTURE_WALL
                     block_kwargs['tiling_factors'] = (1.0, 0.5)
                     blocks.append( Parallelepiped(**block_kwargs) )
@@ -257,6 +275,8 @@ class Labyrinth:
             width=labyrinth_width,
             height=labyrinth_height,
             depth=labyrinth_depth,
+            start_pos=start_pos,
+            finish_pos=finish_pos,
         )
 
 

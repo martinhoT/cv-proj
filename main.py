@@ -59,6 +59,11 @@ class ExplorerApp(ShowBase):
         if HELPER_3D_AXIS:
             self.create3dAxis()
 
+        self.labyrinth_np, self.labyrinth = self.generateLabyrinth(
+            parent_node=self.render,
+            labyrinth_file=labyrinth_file,
+        )
+
         # Load the environment model
         # table_model = self.loader.loadModel(self.path_p3d / 'models/table-old/o_table_old_01_a.obj')
         # simplepbr.init()
@@ -66,7 +71,7 @@ class ExplorerApp(ShowBase):
         # rotate player model vertically
         player_model.setHpr(0, 90, 0)
         player_scale = (0.5, 0.5, 0.5)
-        player_position = [-1.25, -0.125, 20]
+        player_position = self.labyrinth.start_pos if self.labyrinth.start_pos is not None else [self.labyrinth.width / 2, self.labyrinth.depth / 2, self.labyrinth.height]
         # Create collision node
         player_collider_node = CollisionNode("Player")
 
@@ -75,13 +80,8 @@ class ExplorerApp(ShowBase):
         if SHOW_COLLISIONS:
             player_collider.show()
 
-        self.player = Player(player_model, player_position, self.render, scale=player_scale, speed=PLAYER_SPEED)
+        self.player = Player(player_model, player_position, self.labyrinth_np, scale=player_scale, speed=PLAYER_SPEED)
         self.player_position = player_position
-
-        self.labyrinth = self.generateLabyrinth(
-            parent_node=self.render,
-            labyrinth_file=labyrinth_file,
-        )        
 
         # Lighting
         self.flashlight_pos = [0, 10, 0]
@@ -250,7 +250,7 @@ class ExplorerApp(ShowBase):
 
         return node
 
-    def generateLabyrinth(self, parent_node: NodePath, labyrinth_file: str) -> NodePath:
+    def generateLabyrinth(self, parent_node: NodePath, labyrinth_file: str) -> Tuple[NodePath, Labyrinth]:
         # Keep track of textures used by the labyrinth's blocks, so we don't have to tell Panda3D to repeatedly load them
         textures = {}
 
@@ -290,10 +290,11 @@ class ExplorerApp(ShowBase):
             - labyrinth.height / 2,
         )
 
-        return labyrinth_np
+        return labyrinth_np, labyrinth
 
     def update_orthographic_lens(self, windowX: int, windowY: int):
         """Set the orthographic lens' parameters with respect to the window size."""
+        # TODO: this also depends on the camera zoom... should we bother with that?
         self.camera_orthographic_lens.setFilmSize(30 * max(windowX / windowY, 1))   # Why? no clue
         self.camera_orthographic_lens.setAspectRatio(windowX / windowY)
 
