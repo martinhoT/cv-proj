@@ -45,6 +45,9 @@ class ExplorerApp(ShowBase):
         # camera variables
         self.camera_pos = [0, 180, 0]
         self.camera_zoom = 60
+        self.camera_perspective_lens = self.cam.node().getLens()
+        self.camera_orthographic_lens = OrthographicLens()
+        self.update_orthographic_lens(WIDTH, HEIGHT)
 
         self.path = os.path.dirname(os.path.abspath(__file__))
         self.path_p3d = Filename.fromOsSpecific(self.path)
@@ -128,6 +131,7 @@ class ExplorerApp(ShowBase):
 
         # inputs
         self.accept('x', self.toggle_light)
+        self.accept('c', self.toggle_perspective)
         self.pusher.addInPattern('%fn-into-%in')
         self.pusher.addOutPattern('%fn-out-%in')
         self.pusher.addAgainPattern('%fn-again-%in')
@@ -201,6 +205,12 @@ class ExplorerApp(ShowBase):
     def toggle_light(self):
         self.flashlight_flicker = 1 - self.flashlight_flicker
         self.quad_filter.setShaderInput('lightFlickerRatio', self.flashlight_flicker)
+
+    def toggle_perspective(self):
+        if isinstance(self.cam.node().getLens(), PerspectiveLens):
+            self.cam.node().setLens(self.camera_orthographic_lens)
+        else:
+            self.cam.node().setLens(self.camera_perspective_lens)
 
     def generateGeometry(self, parallelepiped: Parallelepiped, name: str) -> GeomNode:
         # Number of vertices per primitive (triangles)
@@ -280,8 +290,15 @@ class ExplorerApp(ShowBase):
 
         return labyrinth_np
 
+    def update_orthographic_lens(self, windowX: int, windowY: int):
+        """Set the orthographic lens' parameters with respect to the window size."""
+        self.camera_orthographic_lens.setFilmSize(30 * max(windowX / windowY, 1))   # Why? no clue
+        self.camera_orthographic_lens.setAspectRatio(windowX / windowY)
+
     def windowResized(self):
-        self.quad_filter.setShaderInput('u_resolution', (self.win.getXSize(), self.win.getYSize()))
+        newX, newY = self.win.getSize()
+        self.quad_filter.setShaderInput('u_resolution', (newX, newY))
+        self.update_orthographic_lens(newX, newY)
 
     def setupShaders(self):
         # Plenty of features, including normal maps and per-pixel lighting
