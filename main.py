@@ -20,6 +20,7 @@ PLAYER_JUMP_SPEED = 0.35
 MOUSE_CAMERA = False
 HELPER_3D_AXIS = True
 SHOW_COLLISIONS = False
+LOG = False
 
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
 # If power-of-2 textures is enforced, then the code has to deal with the texture padding.
@@ -136,19 +137,19 @@ class ExplorerApp(ShowBase):
         self.accept("Player-again-Ground", self.player_hit_ground)
         
     def player_hit_ground(self, entity):
-        print("Hit ground", entity)
+        if LOG: print("Hit ground", entity)
         self.player.is_on_ground = True
         self.player.velocity[2] = 0
     
     def player_out_ground(self, entity):
         # print("Out of ground", entity)]
-        print("Out of ground")
+        if LOG: print("Out of ground")
         self.player.is_on_ground = False
         
     def move_entity(self, entity, direction):
-        print("Amogus")
+        if LOG: print("Amogus")
         entity.move(*direction)
-        print(f"{entity.model.getPos() = }")
+        if LOG: print(f"{entity.model.getPos() = }")
 
     def read_inputs_task(self, task):
         isDown = self.mouseWatcherNode.is_button_down
@@ -244,7 +245,7 @@ class ExplorerApp(ShowBase):
         labyrinth_np = parent_node.attachNewNode('Labyrinth')
         labyrinth = Labyrinth.from_map_file(labyrinth_file)
         labyrinth_walls = [self.generateGeometry(obj, f'wall_{idx}') for idx, obj in enumerate(labyrinth.blocks)]
-        print('Number of walls:', len(labyrinth_walls))
+        if LOG: print('Number of walls:', len(labyrinth_walls))
         for idx, wall in enumerate(labyrinth_walls):
             wall_obj = labyrinth.blocks[idx]
             is_ground = wall_obj.color == (1.0, 0.0, 0.0, 1.0)
@@ -316,7 +317,6 @@ class ExplorerApp(ShowBase):
 
     def update_shader_time_task(self, task):
         self.quad_filter.setShaderInput('u_time', time.time() - self.start_time)
-        # print(time.time())
         return Task.cont
 
     def create3dAxis(self, heads: bool = False):
