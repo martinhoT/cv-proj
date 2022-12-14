@@ -1,6 +1,7 @@
 import math
 import os
 import time
+import argparse
 
 from typing import Tuple
 from direct.showbase.ShowBase import ShowBase
@@ -34,7 +35,7 @@ textures-power-2 none
 # TODO: to consider: temporary lights (like candles)? fixed literal spotlights?
 class ExplorerApp(ShowBase):
 
-    def __init__(self):
+    def __init__(self, labyrinth_file: str):
         ShowBase.__init__(self)
 
         # set window size
@@ -79,7 +80,7 @@ class ExplorerApp(ShowBase):
 
         self.labyrinth = self.generateLabyrinth(
             parent_node=self.render,
-            labyrinth_file='test1.map',
+            labyrinth_file=labyrinth_file,
         )        
 
         # Lighting
@@ -395,6 +396,15 @@ class ExplorerApp(ShowBase):
         return Task.cont
 
 
-app = ExplorerApp()
+
+parser = argparse.ArgumentParser('CV Project')
+parser.add_argument('--map', '-m',
+    type=str,
+    default='test1.map',
+    help='The labyrinth map file to be loaded. (default=\'test1.map\')')
+
+args = parser.parse_args()
+
+app = ExplorerApp(labyrinth_file=args.map)
 app.setFrameRateMeter(True)
 app.run()
