@@ -141,6 +141,7 @@ class Labyrinth:
                         block_kwargs = {
                             **cls.ATTRIBUTES_WALL_H,
                             'color': wall_color,
+                            'otype': 'wall',
                         }
 
                     # Vertical wall
@@ -148,6 +149,7 @@ class Labyrinth:
                         block_kwargs = {
                             **cls.ATTRIBUTES_WALL_V,
                             'color': wall_color,
+                            'otype': 'wall',
                         }
 
                     # Pillar
@@ -155,6 +157,7 @@ class Labyrinth:
                         block_kwargs = {
                             **cls.ATTRIBUTES_PILLAR,
                             'color': pillar_color,
+                            'otype': 'pillar',
                         }
                     
                     # Floor
@@ -178,6 +181,7 @@ class Labyrinth:
                             block_kwargs = cls.ATTRIBUTES_FLOOR_PILLAR.copy()
 
                         block_kwargs['color'] = floor_color
+                        block_kwargs['otype'] = 'floor'
                     
                     if block_kwargs:
                         position = get_position(x_idx, y_idx, idx)
@@ -231,6 +235,7 @@ class Labyrinth:
                         block_kwargs = cls.ATTRIBUTES_FLOOR_PILLAR.copy()
 
                     block_kwargs['color'] = floor_color
+                    block_kwargs['otype'] = 'floor'
                 
                 if block_kwargs:
                     block_kwargs['position'] = get_position(x_idx, y_idx, idx)
@@ -268,7 +273,7 @@ class Parallelepiped:
     depth:      float
     vertices:   np.ndarray
     position:   Tuple[float, float, float]
-    color:      Tuple[float, float, float, float]
+    otype:      str                         # Generic string that describes this object (to identify walls, floor, etc.)
     texture:    str
 
 
@@ -276,13 +281,13 @@ class Parallelepiped:
                 color: Tuple[float, float, float, float]=(1.0, 1.0, 1.0, 1.0),
                 tiling_factors: Tuple[float, float]=None,
                 position: Tuple[float, float, float]=None,
-                texture: str=None):
+                texture: str=None,
+                otype: str=None):
 
         # Required, since it's frozen...
         object.__setattr__(self, 'height', height)
         object.__setattr__(self, 'width', width)
         object.__setattr__(self, 'depth', depth)
-        object.__setattr__(self, 'color', color)
 
         r, g, b, a = color
         # Panda3D uses the geographical coordinate system, where XY is on the floor and Z is the height
@@ -374,6 +379,7 @@ class Parallelepiped:
         object.__setattr__(self, 'vertices', np.hstack([ vertices, color_cols, normal_cols ]))
         object.__setattr__(self, 'position', position)
         object.__setattr__(self, 'texture', texture)
+        object.__setattr__(self, 'otype', otype)
     
 
 

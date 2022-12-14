@@ -248,7 +248,7 @@ class ExplorerApp(ShowBase):
         if LOG: print('Number of walls:', len(labyrinth_walls))
         for idx, wall in enumerate(labyrinth_walls):
             wall_obj = labyrinth.blocks[idx]
-            is_ground = wall_obj.color == (1.0, 0.0, 0.0, 1.0)
+            is_ground = wall_obj.otype == 'floor'
             wall_node = labyrinth_np.attachNewNode(wall)
             if wall_obj.texture not in textures:
                 textures[wall_obj.texture] = self.loader.loadTexture(self.path_p3d / wall_obj.texture)
