@@ -289,9 +289,8 @@ class Labyrinth:
         return Labyrinth.from_map_string(content)
 
 
-    # TODO: A rather lazy way to determine this...
     def is_window(self, obj: 'Parallelepiped') -> bool:
-        return obj.otype == 'window'
+        return obj.otype == self.TYPE_WINDOW
 
 
 
