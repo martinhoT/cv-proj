@@ -144,12 +144,12 @@ class ExplorerApp(ShowBase):
         
     def player_hit_ground(self, entity):
         is_bellow_player = entity.getSurfacePoint(self.player.model).getY() < 0
+        self.player.velocity[2] = 0
+        
         if is_bellow_player:
             if self.DEBUG_LOG: print("Hit ground", entity)
             self.player.is_on_ground = True
-            self.player.velocity[2] = 0
-        else:
-            self.player.velocity[2] = 0
+
             
     
     def player_out_ground(self, entity):
@@ -158,9 +158,7 @@ class ExplorerApp(ShowBase):
         self.player.is_on_ground = False
         
     def move_entity(self, entity, direction):
-        if self.DEBUG_LOG: print("Amogus")
         entity.move(*direction)
-        if self.DEBUG_LOG: print(f"{entity.model.getPos() = }")
 
     def read_inputs_task(self, task):
         isDown = self.mouseWatcherNode.is_button_down

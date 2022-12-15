@@ -1,5 +1,5 @@
 from CustomObject3D import CustomObject3D
-from panda3d.core import NodePath, CollisionNode, LPoint3f
+from panda3d.core import *
 from typing import Tuple, List
 
 
@@ -18,4 +18,8 @@ class Player(CustomObject3D):
             self.velocity[2] -= self.gravity
         self.move()
 
+
+    def create_light(self):
+        pb = PointLight('plight')
+        
             
