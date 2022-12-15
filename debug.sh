@@ -1,0 +1,1 @@
+python3 main.py --debug_fps --debug_map

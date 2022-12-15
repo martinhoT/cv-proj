@@ -17,11 +17,6 @@ WIDTH = 800
 HEIGHT = 600
 PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
-# to facilitate analysing the model when debugging
-MOUSE_CAMERA = False
-HELPER_3D_AXIS = True
-SHOW_COLLISIONS = False
-LOG = False
 
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
 # If power-of-2 textures is enforced, then the code has to deal with the texture padding.
@@ -35,8 +30,14 @@ textures-power-2 none
 # TODO: to consider: temporary lights (like candles)? fixed literal spotlights?
 class ExplorerApp(ShowBase):
 
-    def __init__(self, labyrinth_file: str):
+    def __init__(self, labyrinth_file: str, debug_opts: dict):
         ShowBase.__init__(self)
+
+        self.DEBUG_LOG = debug_opts.get('debug_log', False)
+        self.DEBUG_MAP = debug_opts.get('debug_map', False)
+        self.DEBUG_3D_AXIS = debug_opts.get('debug_3d_axis', False)
+        self.DEBUG_COLLISIONS = debug_opts.get('debug_collisions', False)
+        self.DEBUG_MOUSE_CAMERA = debug_opts.get('debug_mouse_camera', False)
 
         # set window size
         props = WindowProperties()
@@ -53,10 +54,10 @@ class ExplorerApp(ShowBase):
         self.path = os.path.dirname(os.path.abspath(__file__))
         self.path_p3d = Filename.fromOsSpecific(self.path)
 
-        if not MOUSE_CAMERA:
+        if not self.DEBUG_MOUSE_CAMERA:
             self.disableMouse()
 
-        if HELPER_3D_AXIS:
+        if self.DEBUG_3D_AXIS:
             self.create3dAxis()
 
         self.labyrinth_np, self.labyrinth = self.generateLabyrinth(
@@ -77,7 +78,7 @@ class ExplorerApp(ShowBase):
 
         player_collider_node.addSolid(CollisionCapsule(4, 3, 2, 4, 1, 2, 1))
         player_collider = player_model.attachNewNode(player_collider_node)
-        if SHOW_COLLISIONS:
+        if self.DEBUG_COLLISIONS:
             player_collider.show()
 
         self.player = Player(player_model, player_position, self.labyrinth_np, scale=player_scale, speed=PLAYER_SPEED)
@@ -119,7 +120,7 @@ class ExplorerApp(ShowBase):
 
         self.taskMgr.add(self.update_mouse_coords_task, 'update_mouse_coords_task')
         self.taskMgr.add(self.read_inputs_task, 'read_inputs_task')
-        if not MOUSE_CAMERA:
+        if not self.DEBUG_MOUSE_CAMERA:
             self.taskMgr.add(self.move_camera_task, 'move_camera_task')
         self.taskMgr.add(self.move_flashlight_task, 'move_flashlight_task')
         self.taskMgr.add(self.move_player_task, 'move_player_task')
@@ -142,19 +143,19 @@ class ExplorerApp(ShowBase):
         self.accept("Player-again-Ground", self.player_hit_ground)
         
     def player_hit_ground(self, entity):
-        if LOG: print("Hit ground", entity)
+        if self.DEBUG_LOG: print("Hit ground", entity)
         self.player.is_on_ground = True
         self.player.velocity[2] = 0
     
     def player_out_ground(self, entity):
         # print("Out of ground", entity)]
-        if LOG: print("Out of ground")
+        if self.DEBUG_LOG: print("Out of ground")
         self.player.is_on_ground = False
         
     def move_entity(self, entity, direction):
-        if LOG: print("Amogus")
+        if self.DEBUG_LOG: print("Amogus")
         entity.move(*direction)
-        if LOG: print(f"{entity.model.getPos() = }")
+        if self.DEBUG_LOG: print(f"{entity.model.getPos() = }")
 
     def read_inputs_task(self, task):
         isDown = self.mouseWatcherNode.is_button_down
@@ -255,9 +256,9 @@ class ExplorerApp(ShowBase):
         textures = {}
 
         labyrinth_np = parent_node.attachNewNode('Labyrinth')
-        labyrinth = Labyrinth.from_map_file(labyrinth_file)
+        labyrinth = Labyrinth.from_map_file(labyrinth_file, self.DEBUG_MAP)
         labyrinth_walls = [self.generateGeometry(obj, f'wall_{idx}') for idx, obj in enumerate(labyrinth.blocks)]
-        if LOG: print('Number of walls:', len(labyrinth_walls))
+        if self.DEBUG_LOG: print('Number of walls:', len(labyrinth_walls))
         for idx, wall in enumerate(labyrinth_walls):
             wall_obj = labyrinth.blocks[idx]
             is_ground = wall_obj.otype == Labyrinth.TYPE_FLOOR
@@ -280,7 +281,7 @@ class ExplorerApp(ShowBase):
                                                      wall_obj.depth / 2,
                                                      wall_obj.height / 2))
             wall_collider = wall_node.attachNewNode(wall_collider_node)
-            if SHOW_COLLISIONS:
+            if self.DEBUG_COLLISIONS:
                 wall_collider.show()
         
         # Center the labyrinth to the origin
@@ -398,14 +399,38 @@ class ExplorerApp(ShowBase):
 
 
 
-parser = argparse.ArgumentParser('CV Project')
+parser = argparse.ArgumentParser('cv-proj')
 parser.add_argument('--map', '-m',
     type=str,
     default='test1.map',
-    help='The labyrinth map file to be loaded. (default=\'test1.map\')')
+    help='the labyrinth map file to be loaded (default=\'test1.map\')')
+
+parser_debug = parser.add_argument_group('debug', 'Add debug info to the game.')
+parser_debug.add_argument('--debug_map',
+    action='store_true',
+    help='activate the debug environment for the labyrinth scene (colored walls, for instance)')
+parser_debug.add_argument('--debug_mouse-camera',
+    action='store_true',
+    help='let the camera be controllable with the mouse')
+parser_debug.add_argument('--debug_3d-axis',
+    action='store_true',
+    help='place a 3D axis in the scene at the origin')
+parser_debug.add_argument('--debug_collisions',
+    action='store_true',
+    help='show the collision boundaries')
+parser_debug.add_argument('--debug_fps',
+    action='store_true',
+    help='show an FPS counter at the top right')
+parser_debug.add_argument('--debug_log',
+    action='store_true',
+    help='print debug messages (reduces performance)')
+
 
 args = parser.parse_args()
 
-app = ExplorerApp(labyrinth_file=args.map)
-app.setFrameRateMeter(True)
+app = ExplorerApp(
+    labyrinth_file=args.map,
+    debug_opts={k: v for k, v in args._get_kwargs() if k.startswith('debug_')},
+)
+app.setFrameRateMeter(args.debug_fps)
 app.run()

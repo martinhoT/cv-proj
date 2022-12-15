@@ -5,8 +5,6 @@ from dataclasses import dataclass
 
 
 
-DEBUG = True
-
 @dataclass(frozen=True)
 class Labyrinth:
     blocks:         List['Parallelepiped']
@@ -92,7 +90,7 @@ class Labyrinth:
 
 
     @classmethod
-    def from_map_string(cls, map_str: str) -> 'Labyrinth':
+    def from_map_string(cls, map_str: str, debug: bool=False) -> 'Labyrinth':
         floor_layouts = []
         floor_layout = []
         for line in map_str.splitlines():
@@ -130,7 +128,7 @@ class Labyrinth:
         labyrinth_height = cls.DIMS_FLOOR_HEIGHT + len(floor_layouts) * (cls.DIMS_FLOOR_HEIGHT + cls.DIMS_WALL_HEIGHT)
         labyrinth_depth = cls.DIMS_WALL_THIN + depth_units * (cls.DIMS_WALL_THIN + cls.DIMS_WALL_LENGTH)
 
-        if DEBUG:
+        if debug:
             floor_color = (1.0, 0.0, 0.0, 1.0)
             wall_color = (0.0, 1.0, 0.0, 1.0)
             pillar_color = (0.0, 0.0, 1.0, 1.0)
@@ -281,12 +279,12 @@ class Labyrinth:
 
 
     @classmethod
-    def from_map_file(cls, path: str) -> 'Labyrinth':
+    def from_map_file(cls, path: str, debug: bool=False) -> 'Labyrinth':
         content = None
         with open(path, 'rt') as map_file:
             content = map_file.read()
 
-        return Labyrinth.from_map_string(content)
+        return Labyrinth.from_map_string(content, debug)
 
 
     def is_window(self, obj: 'Parallelepiped') -> bool:
