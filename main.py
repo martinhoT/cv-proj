@@ -13,6 +13,8 @@ from CustomObject3D import CustomObject3D
 from Player import Player
 from labyrinth import Parallelepiped, Labyrinth
 
+from common import *
+
 WIDTH = 800
 HEIGHT = 600
 PLAYER_SPEED = 0.25
@@ -88,8 +90,7 @@ class ExplorerApp(ShowBase):
         self.flashlight_pos = [0, 10, 0]
         self.flashlight = Spotlight('flashlight')
         self.flashlight.setColor((1, 1, 1, 1))
-        # self.flashlight.setAttenuation((1, 0, 1))   # fall off with distance
-        # self.flashlight.setShadowCaster(True, 512, 512)   # enable shadows
+
         lens = PerspectiveLens()
         self.flashlight.setLens(lens)
 
@@ -98,7 +99,7 @@ class ExplorerApp(ShowBase):
         self.flashlight_np.lookAt(self.player.model)
         self.render.setLight(self.flashlight_np)
 
-        flashlight_cube = self.generateGeometry(Parallelepiped(2, 2, 2), 'flashlight')
+        flashlight_cube = generateGeometry(Parallelepiped(2, 2, 2), 'flashlight')
         self.flashlight_np.attachNewNode(flashlight_cube)
 
         # Create Ambient Light
@@ -202,6 +203,8 @@ class ExplorerApp(ShowBase):
             if self.player.is_on_ground:
                 self.player.velocity[2] = PLAYER_JUMP_SPEED
                 self.player.is_on_ground = False
+        if isDown(KeyboardButton.asciiKey("o")):
+            self.player.create_light()
         
         self.player.update()
 
@@ -218,49 +221,13 @@ class ExplorerApp(ShowBase):
         else:
             self.cam.node().setLens(self.camera_perspective_lens)
 
-    def generateGeometry(self, parallelepiped: Parallelepiped, name: str) -> GeomNode:
-        # Number of vertices per primitive (triangles)
-        nvp = 3
-
-        # OpenGL style
-        vertex_format = GeomVertexFormat.getV3n3c4t2()
-        vertex_data = GeomVertexData('v_' + name, vertex_format, Geom.UHStatic)
-
-        vertices = parallelepiped.vertices
-        vertex_data.setNumRows(len(vertices))
-
-        vertex_writer = GeomVertexWriter(vertex_data, 'vertex')
-        texcoord_writer = GeomVertexWriter(vertex_data, 'texcoord')
-        color_writer = GeomVertexWriter(vertex_data, 'color')
-        normal_writer = GeomVertexWriter(vertex_data, 'normal')
-
-        for vertex in vertices:
-            vertex_writer.addData3(*vertex[:nvp])
-            texcoord_writer.addData2(*vertex[nvp:nvp + 2])
-            color_writer.addData4(*vertex[nvp + 2:nvp + 6])
-            normal_writer.addData3(*vertex[nvp + 6:])
-
-        primitive = GeomTriangles(Geom.UHStatic)
-
-        for _ in range(len(vertices) // nvp):
-            primitive.add_next_vertices(nvp)
-            primitive.closePrimitive()
-
-        geom = Geom(vertex_data)
-        geom.addPrimitive(primitive)
-
-        node = GeomNode(name)
-        node.addGeom(geom)
-
-        return node
-
     def generateLabyrinth(self, parent_node: NodePath, labyrinth_file: str) -> Tuple[NodePath, Labyrinth]:
         # Keep track of textures used by the labyrinth's blocks, so we don't have to tell Panda3D to repeatedly load them
         textures = {}
 
         labyrinth_np = parent_node.attachNewNode('Labyrinth')
         labyrinth = Labyrinth.from_map_file(labyrinth_file, self.DEBUG_MAP)
-        labyrinth_walls = [self.generateGeometry(obj, f'wall_{idx}') for idx, obj in enumerate(labyrinth.blocks)]
+        labyrinth_walls = [generateGeometry(obj, f'wall_{idx}') for idx, obj in enumerate(labyrinth.blocks)]
         if self.DEBUG_LOG: print('Number of walls:', len(labyrinth_walls))
         for idx, wall in enumerate(labyrinth_walls):
             wall_obj = labyrinth.blocks[idx]
@@ -350,20 +317,20 @@ class ExplorerApp(ShowBase):
         y_axis = Parallelepiped(0.1, 0.1, 10, color=(0, 1, 0, 1))
         z_axis = Parallelepiped(0.1, 10, 0.1, color=(0, 0, 1, 1))
 
-        axis3d.attach_new_node(self.generateGeometry(x_axis, 'x_axis'))
-        axis3d.attach_new_node(self.generateGeometry(y_axis, 'y_axis'))
-        axis3d.attach_new_node(self.generateGeometry(z_axis, 'z_axis'))
+        axis3d.attach_new_node(generateGeometry(x_axis, 'x_axis'))
+        axis3d.attach_new_node(generateGeometry(y_axis, 'y_axis'))
+        axis3d.attach_new_node(generateGeometry(z_axis, 'z_axis'))
 
         if heads:
             x_axis_head = Parallelepiped(0.3, 0.3, 0.3, color=(1, 0, 0, 1))
             y_axis_head = Parallelepiped(0.3, 0.3, 0.3, color=(0, 1, 0, 1))
             z_axis_head = Parallelepiped(0.3, 0.3, 0.3, color=(0, 0, 1, 1))
 
-            x_axis_head_node = axis3d.attach_new_node(self.generateGeometry(x_axis_head, 'x_axis_head'))
+            x_axis_head_node = axis3d.attach_new_node(generateGeometry(x_axis_head, 'x_axis_head'))
             x_axis_head_node.setPos(10, 0, 0)
-            y_axis_head_node = axis3d.attach_new_node(self.generateGeometry(y_axis_head, 'y_axis_head'))
+            y_axis_head_node = axis3d.attach_new_node(generateGeometry(y_axis_head, 'y_axis_head'))
             y_axis_head_node.setPos(0, 10, 0)
-            z_axis_head_node = axis3d.attach_new_node(self.generateGeometry(z_axis_head, 'z_axis_head'))
+            z_axis_head_node = axis3d.attach_new_node(generateGeometry(z_axis_head, 'z_axis_head'))
             z_axis_head_node.setPos(0, 0, 10)
 
     def update_mouse_coords_task(self, task):

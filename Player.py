@@ -1,6 +1,8 @@
 from CustomObject3D import CustomObject3D
 from panda3d.core import *
 from typing import Tuple, List
+from labyrinth import Parallelepiped
+from common import *
 
 
 class Player(CustomObject3D):
@@ -20,6 +22,16 @@ class Player(CustomObject3D):
 
 
     def create_light(self):
-        pb = PointLight('plight')
+        pl = PointLight('plight')
+        pl.setColor((0, 0, 1, 1))
+                
+        pn = self.parent.attachNewNode(pl)
+        pn.setPos(self.position)
+        
+        light_cube = generateGeometry(Parallelepiped(2, 2, 2), 'flashlight')
+        pn.attachNewNode(light_cube)
+        
+        self.parent.setLight(pn)
+        
         
             
