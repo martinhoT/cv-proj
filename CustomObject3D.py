@@ -2,7 +2,7 @@ from panda3d.core import NodePath, CollisionNode, LPoint3f
 from typing import Tuple, List
 
 
-GRAVITY = 0.001
+GRAVITY = 0.01
 
 class CustomObject3D:
 

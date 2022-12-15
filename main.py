@@ -143,9 +143,14 @@ class ExplorerApp(ShowBase):
         self.accept("Player-again-Ground", self.player_hit_ground)
         
     def player_hit_ground(self, entity):
-        if self.DEBUG_LOG: print("Hit ground", entity)
-        self.player.is_on_ground = True
-        self.player.velocity[2] = 0
+        is_bellow_player = entity.getSurfacePoint(self.player.model).getY() < 0
+        if is_bellow_player:
+            if self.DEBUG_LOG: print("Hit ground", entity)
+            self.player.is_on_ground = True
+            self.player.velocity[2] = 0
+        else:
+            self.player.velocity[2] = 0
+            
     
     def player_out_ground(self, entity):
         # print("Out of ground", entity)]
