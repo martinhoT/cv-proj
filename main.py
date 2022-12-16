@@ -51,7 +51,7 @@ class ExplorerApp(ShowBase):
         self.camera_zoom = 60
         self.camera_perspective_lens = self.cam.node().getLens()
         self.camera_orthographic_lens = OrthographicLens()
-        self.update_orthographic_lens(WIDTH, HEIGHT)
+        update_orthographic_lens(self.camera_orthographic_lens, WIDTH, HEIGHT)
 
         self.path = os.path.dirname(os.path.abspath(__file__))
         self.path_p3d = Filename.fromOsSpecific(self.path)
@@ -90,6 +90,8 @@ class ExplorerApp(ShowBase):
         self.flashlight_pos = [0, 10, 0]
         self.flashlight = Spotlight('flashlight')
         self.flashlight.setColor((1, 1, 1, 1))
+        
+        self.flashlight.setShadowCaster(True, 512, 512)   # enable shadows
 
         lens = PerspectiveLens()
         self.flashlight.setLens(lens)
@@ -204,7 +206,7 @@ class ExplorerApp(ShowBase):
                 self.player.velocity[2] = PLAYER_JUMP_SPEED
                 self.player.is_on_ground = False
         if isDown(KeyboardButton.asciiKey("o")):
-            self.player.create_light()
+            self.player.put_light()
         
         self.player.update()
 
@@ -263,16 +265,12 @@ class ExplorerApp(ShowBase):
 
         return labyrinth_np, labyrinth
 
-    def update_orthographic_lens(self, windowX: int, windowY: int):
-        """Set the orthographic lens' parameters with respect to the window size."""
-        # TODO: this also depends on the camera zoom... should we bother with that?
-        self.camera_orthographic_lens.setFilmSize(30 * max(windowX / windowY, 1))   # Why? no clue
-        self.camera_orthographic_lens.setAspectRatio(windowX / windowY)
+
 
     def windowResized(self):
         newX, newY = self.win.getSize()
         self.quad_filter.setShaderInput('u_resolution', (newX, newY))
-        self.update_orthographic_lens(newX, newY)
+        update_orthographic_lens(self.camera_orthographic_lens,newX, newY)
 
     def setupShaders(self):
         # Plenty of features, including normal maps and per-pixel lighting
