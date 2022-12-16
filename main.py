@@ -23,8 +23,10 @@ PLAYER_JUMP_SPEED = 0.35
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
 # If power-of-2 textures is enforced, then the code has to deal with the texture padding.
 # We want so simplify the shader code so they are disabled. There is already wide support for non-power-of-2 textures (https://discourse.panda3d.org/t/cg-glsl-filtermanager-texpad-x/14694/8)
+# Additionally, set the number of bits used for the depth buffer so that the orthographic projection's visual artifacts are reduced
 loadPrcFileData('', '''
 textures-power-2 none
+depth-bits 24
 ''')
 
 
@@ -172,9 +174,9 @@ class ExplorerApp(ShowBase):
         if isDown(KeyboardButton.asciiKey("d")):
             self.camera_pos[0] += 1
         if isDown(KeyboardButton.asciiKey("w")):
-            self.camera_pos[1] -= 1
+            self.camera_pos[1] = max(95, self.camera_pos[1] - 1)
         if isDown(KeyboardButton.asciiKey("s")):
-            self.camera_pos[1] += 1
+            self.camera_pos[1] = min(265, self.camera_pos[1] + 1)
         if isDown(KeyboardButton.asciiKey("e")):
             self.camera_zoom -= 1
         if isDown(KeyboardButton.asciiKey("q")):
@@ -216,7 +218,6 @@ class ExplorerApp(ShowBase):
         self.flashlight_flicker = 1 - self.flashlight_flicker
         self.quad_filter.setShaderInput('lightFlickerRatio', self.flashlight_flicker)
 
-    # TODO: orthographical lens shows visual artifacts in geometry?
     def toggle_perspective(self):
         if isinstance(self.cam.node().getLens(), PerspectiveLens):
             self.cam.node().setLens(self.camera_orthographic_lens)
