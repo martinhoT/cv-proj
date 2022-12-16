@@ -315,8 +315,8 @@ class Parallelepiped:
         object.__setattr__(self, 'width', width)
         object.__setattr__(self, 'depth', depth)
         
-        if color is not None:
-            object.__setattr__(self, 'color', color)
+        # if color is not None:
+        #     object.__setattr__(self, 'color', color)
             
 
         r, g, b, a = color

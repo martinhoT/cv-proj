@@ -11,6 +11,7 @@ from panda3d.core import *
 
 from CustomObject3D import CustomObject3D
 from Player import Player
+from spider import Spider
 from labyrinth import Parallelepiped, Labyrinth
 
 from common import *
@@ -134,26 +135,24 @@ class ExplorerApp(ShowBase):
         # Create collision node
         player_collider_node = CollisionNode("Player")
         
-        
         player_collider_node.addSolid(CollisionCapsule(4, 3, 2, 4, 1, 2, 1))
         player_collider = player_model.attachNewNode(player_collider_node)
         if self.DEBUG_COLLISIONS:
             player_collider.show()
 
-        self.player = Player(player_model, player_position, self.labyrinth_np, scale=player_scale, speed=PLAYER_SPEED)
+        self.player = Player(player_model, player_position, self.labyrinth_np, scale=player_scale)
         self.player_position = player_position
         
         spider_model = self.loader.loadModel(self.path_p3d / 'models/spider/SM_Japanise_Krab.obj')
         spider_scale = [0.01 * 1 for _ in range(3)]
         
-        self.spider = CustomObject3D(spider_model, [player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, scale=spider_scale)
+        # self.spider = CustomObject3D(spider_model, [player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, scale=spider_scale)
+        self.spider = Spider([player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, self, scale=spider_scale)
         
         self.pusher.addCollider(player_collider, self.player.model)
         self.cTrav.addCollider(player_collider, self.pusher)
         move_camera(self.camera, self.camera_zoom, self.camera_pos)
         
-
-    
     def player_hit_ground(self, entity):
         is_bellow_player = entity.getSurfacePoint(self.player.model).getY() < 0
         self.player.velocity[2] = 0
@@ -283,8 +282,6 @@ class ExplorerApp(ShowBase):
         )
 
         return labyrinth_np, labyrinth
-
-
 
     def windowResized(self):
         newX, newY = self.win.getSize()
