@@ -15,7 +15,10 @@ in vec2 texcoord;
 
 out vec4 p3d_FragColor;
 
-
+const float lightRadius = 0.4;
+const float lightBorder = 0.5;
+const int fbmNFuncs = 6;
+const float fbmFreq = .5;
 
 // From the book of shaders: https://thebookofshaders.com/10/
 float random(vec2 st) {
@@ -51,14 +54,11 @@ float noise(vec2 st, float interval) {
 }
 
 float fbm(vec2 st) {
-    const int nFuncs = 6;
-    float freq = .5;
-
     float res = 0.;
-    for (int i = 0; i < nFuncs; i++) {
-        res = res + noise(st, pow(freq, float(i)));
+    for (int i = 0; i < fbmNFuncs; i++) {
+        res = res + noise(st, pow(fbmFreq, float(i)));
     }
-    return res - .5 * float(nFuncs - 1);
+    return res - .5 * float(fbmNFuncs - 1);
 }
 
 vec3 filledCircle(in vec2 center, in float radius, in vec2 point, in float borderSmoothness) {
@@ -81,9 +81,9 @@ void main() {
     // How much is the light affected by the distance to the camera. 0 means full fog.
     float fogDisturbance = 1 - pow(depth, 50);
 
-    vec4 flashlightColor = vec4(filledCircle(u_mouse, 0.4, st, 0.5), 1.0);
-
     float lightFlicker = mix(1.0, fbm(vec2(u_time)), lightFlickerRatio);
+
+    vec4 flashlightColor = vec4(filledCircle(u_mouse, lightRadius, st, lightBorder), 1.0);
 
     // TODO: Make depth affect the flashlight radius & smoothness instead?
     // TODO: Deferred lighting?
