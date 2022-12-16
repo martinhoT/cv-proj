@@ -70,8 +70,6 @@ class ExplorerApp(ShowBase):
         )
 
         # Load the environment model
-        # table_model = self.loader.loadModel(self.path_p3d / 'models/table-old/o_table_old_01_a.obj')
-        # simplepbr.init()
         player_model = self.loader.loadModel(self.path_p3d / 'models/player/amongus.obj')
         # rotate player model vertically
         player_model.setHpr(0, 90, 0)
@@ -89,23 +87,6 @@ class ExplorerApp(ShowBase):
         self.player_position = player_position
 
         # Lighting
-        self.flashlight_pos = [0, 10, 0]
-        self.flashlight = Spotlight('flashlight')
-        self.flashlight.setColor((1, 1, 1, 1))
-        
-        self.flashlight.setShadowCaster(True, 512, 512)   # enable shadows
-
-        lens = PerspectiveLens()
-        self.flashlight.setLens(lens)
-
-        self.flashlight_np = self.render.attachNewNode(self.flashlight)
-        self.flashlight_np.setPos(0, 10, 0)
-        self.flashlight_np.lookAt(self.player.model)
-        self.render.setLight(self.flashlight_np)
-
-        flashlight_cube = generateGeometry(Parallelepiped(2, 2, 2), 'flashlight')
-        self.flashlight_np.attachNewNode(flashlight_cube)
-
         # Create Ambient Light
         ambient_light_intensity = 0.3
         ambient_light = AmbientLight('ambient_light')
@@ -127,7 +108,6 @@ class ExplorerApp(ShowBase):
         self.taskMgr.add(self.read_inputs_task, 'read_inputs_task')
         if not self.DEBUG_MOUSE_CAMERA:
             self.taskMgr.add(self.move_camera_task, 'move_camera_task')
-        self.taskMgr.add(self.move_flashlight_task, 'move_flashlight_task')
         self.taskMgr.add(self.move_player_task, 'move_player_task')
 
         self.quad_filter = None
@@ -271,7 +251,7 @@ class ExplorerApp(ShowBase):
     def windowResized(self):
         newX, newY = self.win.getSize()
         self.quad_filter.setShaderInput('u_resolution', (newX, newY))
-        update_orthographic_lens(self.camera_orthographic_lens,newX, newY)
+        update_orthographic_lens(self.camera_orthographic_lens, newX, newY)
 
     def setupShaders(self):
         # Plenty of features, including normal maps and per-pixel lighting
@@ -355,11 +335,6 @@ class ExplorerApp(ShowBase):
         )
 
         self.camera.lookAt((0,0,0))
-        return Task.cont
-
-    def move_flashlight_task(self, task):
-        self.flashlight_np.setPos(*self.flashlight_pos)
-        self.flashlight_np.lookAt((0,0,0))
         return Task.cont
 
     def move_player_task(self, task):
