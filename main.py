@@ -35,11 +35,11 @@ class ExplorerApp(ShowBase):
     def __init__(self, labyrinth_file: str, debug_opts: dict):
         ShowBase.__init__(self)
 
-        self.DEBUG_LOG = debug_opts.get('debug_log', False)
-        self.DEBUG_MAP = debug_opts.get('debug_map', False)
-        self.DEBUG_3D_AXIS = debug_opts.get('debug_3d_axis', False)
-        self.DEBUG_COLLISIONS = debug_opts.get('debug_collisions', False)
-        self.DEBUG_MOUSE_CAMERA = debug_opts.get('debug_mouse_camera', False)
+        self.DEBUG_LOG = debug_opts.get('log', False)
+        self.DEBUG_MAP = debug_opts.get('map', False)
+        self.DEBUG_3D_AXIS = debug_opts.get('3d_axis', False)
+        self.DEBUG_COLLISIONS = debug_opts.get('collisions', False)
+        self.DEBUG_MOUSE_CAMERA = debug_opts.get('mouse_camera', False)
 
         # set window size
         props = WindowProperties()
@@ -376,31 +376,33 @@ parser.add_argument('--map', '-m',
     help='the labyrinth map file to be loaded (default=\'test1.map\')')
 
 parser_debug = parser.add_argument_group('debug', 'Add debug info to the game.')
-parser_debug.add_argument('--debug_map',
+parser_debug.add_argument('--debug.map',
     action='store_true',
     help='activate the debug environment for the labyrinth scene (colored walls, for instance)')
-parser_debug.add_argument('--debug_mouse-camera',
+parser_debug.add_argument('--debug.mouse-camera',
     action='store_true',
     help='let the camera be controllable with the mouse')
-parser_debug.add_argument('--debug_3d-axis',
+parser_debug.add_argument('--debug.3d-axis',
     action='store_true',
     help='place a 3D axis in the scene at the origin')
-parser_debug.add_argument('--debug_collisions',
+parser_debug.add_argument('--debug.collisions',
     action='store_true',
     help='show the collision boundaries')
-parser_debug.add_argument('--debug_fps',
+parser_debug.add_argument('--debug.fps',
     action='store_true',
     help='show an FPS counter at the top right')
-parser_debug.add_argument('--debug_log',
+parser_debug.add_argument('--debug.log',
     action='store_true',
     help='print debug messages (reduces performance)')
 
 
 args = parser.parse_args()
 
+debug_opts = {k.split('.')[1]: v for k, v in args._get_kwargs() if k.startswith('debug.')}
+
 app = ExplorerApp(
     labyrinth_file=args.map,
-    debug_opts={k: v for k, v in args._get_kwargs() if k.startswith('debug_')},
+    debug_opts=debug_opts,
 )
-app.setFrameRateMeter(args.debug_fps)
+app.setFrameRateMeter(debug_opts['fps'])
 app.run()
