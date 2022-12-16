@@ -105,7 +105,7 @@ class ExplorerApp(ShowBase):
         self.flashlight_np.attachNewNode(flashlight_cube)
 
         # Create Ambient Light
-        ambient_light_intensity = 0.3
+        ambient_light_intensity = 0.5
         ambient_light = AmbientLight('ambient_light')
         ambient_light.setColor((ambient_light_intensity, ambient_light_intensity, ambient_light_intensity, 1))
         ambient_light_np = self.render.attachNewNode(ambient_light)
@@ -151,9 +151,7 @@ class ExplorerApp(ShowBase):
         
         if is_bellow_player:
             if self.DEBUG_LOG: print("Hit ground", entity)
-            self.player.is_on_ground = True
-
-            
+            self.player.is_on_ground = True       
     
     def player_out_ground(self, entity):
         # print("Out of ground", entity)]
@@ -172,9 +170,11 @@ class ExplorerApp(ShowBase):
         if isDown(KeyboardButton.asciiKey("d")):
             self.camera_pos[0] += 1
         if isDown(KeyboardButton.asciiKey("w")):
-            self.camera_pos[1] -= 1
+            if self.camera_pos[1] > 120:
+                self.camera_pos[1] -= 1
         if isDown(KeyboardButton.asciiKey("s")):
-            self.camera_pos[1] += 1
+            if self.camera_pos[1] < 230:
+                self.camera_pos[1] += 1
         if isDown(KeyboardButton.asciiKey("e")):
             self.camera_zoom -= 1
         if isDown(KeyboardButton.asciiKey("q")):
