@@ -26,7 +26,7 @@ class Player(CustomObject3D):
     def generate_light(self):
         pl = PointLight('plight')
         pl.setColor(LIGHT_COLOR)
-        pl.setShadowCaster(True, 64, 64)
+        # pl.setShadowCaster(True, 64, 64)
         light_cube = generateGeometry(Parallelepiped(0.5, 0.5, 0.5, color=LIGHT_COLOR), 'flashlight')
         pn = self.parent.attachNewNode(pl)
         return light_cube, pn

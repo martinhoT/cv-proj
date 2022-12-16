@@ -1,0 +1,8 @@
+newmtl M_Japanice_Krab
+Kd 1.000000 1.000000 1.000000
+Ks 1.000000 1.000000 1.000000
+Ns 32.000000
+map_Kd T_Japanice_crab_D.png
+map_Ks T_Japanice_crab_R.png
+map_bump T_Japanice_crab_N.png
+bump T_Japanice_crab_N.png

@@ -55,7 +55,7 @@ class ExplorerApp(ShowBase):
 
         self.path = os.path.dirname(os.path.abspath(__file__))
         self.path_p3d = Filename.fromOsSpecific(self.path)
-
+        
         if not self.DEBUG_MOUSE_CAMERA:
             self.disableMouse()
 
@@ -77,6 +77,8 @@ class ExplorerApp(ShowBase):
         player_position = self.labyrinth.start_pos if self.labyrinth.start_pos is not None else [self.labyrinth.width / 2, self.labyrinth.depth / 2, self.labyrinth.height]
         # Create collision node
         player_collider_node = CollisionNode("Player")
+        
+        
 
         player_collider_node.addSolid(CollisionCapsule(4, 3, 2, 4, 1, 2, 1))
         player_collider = player_model.attachNewNode(player_collider_node)
@@ -85,6 +87,11 @@ class ExplorerApp(ShowBase):
 
         self.player = Player(player_model, player_position, self.labyrinth_np, scale=player_scale, speed=PLAYER_SPEED)
         self.player_position = player_position
+        
+        spider_model = self.loader.loadModel(self.path_p3d / 'models/spider/SM_Japanise_Krab.obj')
+        spider_scale = [0.01 * 1 for _ in range(3)]
+        
+        self.spider = CustomObject3D(spider_model, [player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, scale=spider_scale)
 
         # Lighting
         self.flashlight_pos = [0, 10, 0]
