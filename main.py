@@ -204,7 +204,7 @@ class ExplorerApp(ShowBase):
                 self.player.velocity[2] = PLAYER_JUMP_SPEED
                 self.player.is_on_ground = False
         if isDown(KeyboardButton.asciiKey("o")):
-            self.player.create_light()
+            self.player.put_light()
         
         self.player.update()
 
