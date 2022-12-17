@@ -11,6 +11,7 @@ from panda3d.core import *
 
 from CustomObject3D import CustomObject3D
 from Player import Player
+from spider import Spider
 from labyrinth import Floor, Parallelepiped, Labyrinth, Wall, Window
 
 from common import *
@@ -57,58 +58,38 @@ class ExplorerApp(ShowBase):
 
         self.path = os.path.dirname(os.path.abspath(__file__))
         self.path_p3d = Filename.fromOsSpecific(self.path)
-
+        
         if not self.DEBUG_MOUSE_CAMERA:
             self.disableMouse()
 
         if self.DEBUG_3D_AXIS:
             self.create3dAxis()
 
+        # Load the environment model
         self.labyrinth_np, self.labyrinth = self.generateLabyrinth(
             parent_node=self.render,
             labyrinth_file=labyrinth_file,
         )
 
-        # Load the environment model
-        player_model = self.loader.loadModel(self.path_p3d / 'models/player/amongus.obj')
-        # rotate player model vertically
-        player_model.setHpr(0, 90, 0)
-        player_scale = (0.5, 0.5, 0.5)
-        player_position = self.labyrinth.start_pos if self.labyrinth.start_pos is not None else [self.labyrinth.width / 2, self.labyrinth.depth / 2, self.labyrinth.height]
-        # Create collision node
-        player_collider_node = CollisionNode("Player")
-
-        player_collider_node.addSolid(CollisionCapsule(4, 3, 2, 4, 1, 2, 1))
-        player_collider = player_model.attachNewNode(player_collider_node)
-        if self.DEBUG_COLLISIONS:
-            player_collider.show()
-
-        self.player = Player(player_model, player_position, self.labyrinth_np, scale=player_scale, speed=PLAYER_SPEED)
-        self.player_position = player_position
+        # Collision stuff
+        self.cTrav = CollisionTraverser()
+        self.pusher = CollisionHandlerPusher()
+        
+        self.init_models()
 
         # Lighting
         # Create Ambient Light
-        ambient_light_intensity = 0.3
+        ambient_light_intensity = 0.5
         ambient_light = AmbientLight('ambient_light')
         ambient_light.setColor((ambient_light_intensity, ambient_light_intensity, ambient_light_intensity, 1))
         ambient_light_np = self.render.attachNewNode(ambient_light)
         self.render.setLight(ambient_light_np)
-
-        # Collision stuff
-        self.cTrav = CollisionTraverser()
-        self.pusher = CollisionHandlerPusher()
-
-        self.pusher.addCollider(player_collider, self.player.model)
-        self.cTrav.addCollider(player_collider, self.pusher)
 
         # Task management
         self.mouse_coords = [0, 0]
 
         self.taskMgr.add(self.update_mouse_coords_task, 'update_mouse_coords_task')
         self.taskMgr.add(self.read_inputs_task, 'read_inputs_task')
-        if not self.DEBUG_MOUSE_CAMERA:
-            self.taskMgr.add(self.move_camera_task, 'move_camera_task')
-        self.taskMgr.add(self.move_player_task, 'move_player_task')
 
         self.quad_filter = None
         self.flashlight_power = 1
@@ -127,15 +108,40 @@ class ExplorerApp(ShowBase):
         self.accept("Player-into-Ground", self.player_hit_ground)
         self.accept("Player-again-Ground", self.player_hit_ground)
         
+    def init_models(self):
+        player_model = self.loader.loadModel(self.path_p3d / 'models/player/amongus.obj')
+        # rotate player model vertically
+        player_model.setHpr(0, 90, 0)
+        player_scale = (0.5, 0.5, 0.5)
+        player_position = self.labyrinth.start_pos if self.labyrinth.start_pos is not None else [self.labyrinth.width / 2, self.labyrinth.depth / 2, self.labyrinth.height]
+        # Create collision node
+        player_collider_node = CollisionNode("Player")
+        
+        player_collider_node.addSolid(CollisionCapsule(4, 3, 2, 4, 1, 2, 1))
+        player_collider = player_model.attachNewNode(player_collider_node)
+        if self.DEBUG_COLLISIONS:
+            player_collider.show()
+
+        self.player = Player(player_model, player_position, self.labyrinth_np, scale=player_scale)
+        self.player_position = player_position
+        
+        spider_model = self.loader.loadModel(self.path_p3d / 'models/spider/SM_Japanise_Krab.obj')
+        spider_scale = [0.01 * 1 for _ in range(3)]
+        
+        # self.spider = CustomObject3D(spider_model, [player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, scale=spider_scale)
+        self.spider = Spider([player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, self, scale=spider_scale)
+        
+        self.pusher.addCollider(player_collider, self.player.model)
+        self.cTrav.addCollider(player_collider, self.pusher)
+        move_camera(self.camera, self.camera_zoom, self.camera_pos)
+        
     def player_hit_ground(self, entity):
         is_bellow_player = entity.getSurfacePoint(self.player.model).getY() < 0
         self.player.velocity[2] = 0
         
         if is_bellow_player:
             if self.DEBUG_LOG: print("Hit ground", entity)
-            self.player.is_on_ground = True
-
-            
+            self.player.is_on_ground = True       
     
     def player_out_ground(self, entity):
         # print("Out of ground", entity)]
@@ -149,18 +155,30 @@ class ExplorerApp(ShowBase):
         isDown = self.mouseWatcherNode.is_button_down
 
         # Camera
+        has_camera_moved = False
         if isDown(KeyboardButton.asciiKey("a")):
             self.camera_pos[0] -= 1
+            has_camera_moved = True
         if isDown(KeyboardButton.asciiKey("d")):
             self.camera_pos[0] += 1
+            has_camera_moved = True
         if isDown(KeyboardButton.asciiKey("w")):
-            self.camera_pos[1] = max(95, self.camera_pos[1] - 1)
+            if self.camera_pos[1] > 120:
+                self.camera_pos[1] -= 1
+                has_camera_moved = True
         if isDown(KeyboardButton.asciiKey("s")):
-            self.camera_pos[1] = min(265, self.camera_pos[1] + 1)
+            if self.camera_pos[1] < 230:
+                self.camera_pos[1] += 1
+                has_camera_moved = True
         if isDown(KeyboardButton.asciiKey("e")):
             self.camera_zoom -= 1
+            has_camera_moved = True
         if isDown(KeyboardButton.asciiKey("q")):
             self.camera_zoom += 1
+            has_camera_moved = True
+        
+        if has_camera_moved:
+            move_camera(self.camera, self.camera_zoom, self.camera_pos)
 
         # Flashlight
         if isDown(KeyboardButton.left()):
@@ -246,8 +264,6 @@ class ExplorerApp(ShowBase):
 
         return labyrinth_np, labyrinth
 
-
-
     def windowResized(self):
         newX, newY = self.win.getSize()
         self.quad_filter.setShaderInput('u_resolution', (newX, newY))
@@ -319,26 +335,6 @@ class ExplorerApp(ShowBase):
         
         self.quad_filter.setShaderInput('u_mouse', self.mouse_coords)
 
-        return Task.cont
-
-    def move_camera_task(self, task):
-        multiplier = self.camera_zoom
-        angle_x_degrees = self.camera_pos[0] * 1
-        angle_y_degrees = self.camera_pos[1] * 1
-        angle_x_radians = angle_x_degrees * (math.pi / 180.0)
-        angle_y_radians = angle_y_degrees * (math.pi / 180.0)
-
-        self.camera.setPos(
-            math.sin(angle_x_radians) * multiplier,
-            -math.cos(angle_x_radians) * multiplier * -math.cos(angle_y_radians),
-            math.sin(angle_y_radians) * multiplier
-        )
-
-        self.camera.lookAt((0,0,0))
-        return Task.cont
-
-    def move_player_task(self, task):
-        # self.player.model.setPos(*self.player_position)
         return Task.cont
 
 

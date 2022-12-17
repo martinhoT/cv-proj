@@ -1,5 +1,6 @@
 from panda3d.core import *
 from typing import Tuple
+import math
 
 from labyrinth import Parallelepiped, Labyrinth
 
@@ -48,4 +49,17 @@ def update_orthographic_lens(camera_orthographic_lens, windowX: int, windowY: in
     camera_orthographic_lens.setAspectRatio(windowX / windowY)
     
     
-    
+def move_camera(camera, camera_zoom, camera_pos):
+    multiplier = camera_zoom
+    angle_x_degrees = camera_pos[0] * 1
+    angle_y_degrees = camera_pos[1] * 1
+    angle_x_radians = angle_x_degrees * (math.pi / 180.0)
+    angle_y_radians = angle_y_degrees * (math.pi / 180.0)
+
+    camera.setPos(
+        math.sin(angle_x_radians) * multiplier,
+        -math.cos(angle_x_radians) * multiplier * -math.cos(angle_y_radians),
+        math.sin(angle_y_radians) * multiplier
+    )
+
+    camera.lookAt((0,0,0))
