@@ -6,7 +6,7 @@ uniform vec2 u_resolution;
 uniform vec2 u_mouse;
 uniform float u_time;
 
-const int fbmNFuncs = 25;
+const int fbmNFuncs = 10;
 
 /*
 Test code for fractional brownian motion.
@@ -61,7 +61,7 @@ float fbm(vec2 st, float lacunarity, float gain) {
     float amplitude = 1.;
 
     for (int i = 0; i < fbmNFuncs; i++) {
-        res += amplitude * (noise(st, 1. / frequency) - .5);
+        res += amplitude * (noise(st, 1. / frequency));
         frequency *= lacunarity;
         amplitude *= gain;
     }
@@ -72,5 +72,5 @@ float fbm(vec2 st, float lacunarity, float gain) {
 void main() {
     vec2 st = gl_FragCoord.xy / u_resolution.xy;
     // gl_FragColor = vec4(noise(st, 0.1));
-    gl_FragColor = vec4(fbm(st, 3.0, 0.85));
+    gl_FragColor = vec4(fbm(st, 8.0, .3));
 }
