@@ -11,7 +11,7 @@ from panda3d.core import *
 
 from CustomObject3D import CustomObject3D
 from Player import Player
-from labyrinth import Parallelepiped, Labyrinth
+from labyrinth import Floor, Parallelepiped, Labyrinth, Wall, Window
 
 from common import *
 
@@ -214,7 +214,7 @@ class ExplorerApp(ShowBase):
         if self.DEBUG_LOG: print('Number of walls:', len(labyrinth_walls))
         for idx, wall in enumerate(labyrinth_walls):
             wall_obj = labyrinth.blocks[idx]
-            is_ground = wall_obj.otype == Labyrinth.TYPE_FLOOR
+            is_ground = isinstance(wall_obj, Floor)
             wall_node = labyrinth_np.attachNewNode(wall)
             if wall_obj.texture not in textures:
                 textures[wall_obj.texture] = self.loader.loadTexture(self.path_p3d / wall_obj.texture)
@@ -223,7 +223,7 @@ class ExplorerApp(ShowBase):
             node_name = "Ground" if is_ground else "Wall"
             wall_collider_node = CollisionNode(node_name)
             
-            if labyrinth.is_window(wall_obj):
+            if isinstance(wall_obj, Window):
                 wall_node.setTransparency(True)
 
             # Collisions

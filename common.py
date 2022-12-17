@@ -12,7 +12,7 @@ def generateGeometry(parallelepiped: Parallelepiped, name: str) -> GeomNode:
     vertex_format = GeomVertexFormat.getV3n3c4t2()
     vertex_data = GeomVertexData('v_' + name, vertex_format, Geom.UHStatic)
 
-    vertices = parallelepiped.vertices
+    vertices = parallelepiped.get_vertices()
     vertex_data.setNumRows(len(vertices))
 
     vertex_writer = GeomVertexWriter(vertex_data, 'vertex')

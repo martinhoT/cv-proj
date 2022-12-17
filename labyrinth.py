@@ -5,6 +5,9 @@ from dataclasses import dataclass
 
 
 
+TEXTURE_WALL = 'textures/wall.png'
+TEXTURE_WINDOW = 'textures/glass.png'
+
 @dataclass(frozen=True)
 class Labyrinth:
     blocks:         List['Parallelepiped']
@@ -13,15 +16,12 @@ class Labyrinth:
     depth:          float
     start_pos:      Tuple[float, float, float]
     finish_pos:     Tuple[float, float, float]
+    
+    walls:          List['Wall']
+    windows:        List['Window']
+    floors:         List['Floor']
+    pillars:        List['Pillar']
 
-
-    TEXTURE_WALL = 'textures/wall.png'
-    TEXTURE_WINDOW = 'textures/glass.png'
-
-    TYPE_FLOOR = 'floor'
-    TYPE_WALL = 'wall'
-    TYPE_WINDOW = 'window'
-    TYPE_PILLAR = 'pillar'
 
     NODE_WALL_H = '-'
     NODE_WALL_V = '|'
@@ -38,54 +38,47 @@ class Labyrinth:
     NODES_WINDOW = {NODE_WINDOW_H, NODE_WINDOW_V}
     NODES_H = {NODE_WALL_H, NODE_WINDOW_H}
     NODES_V = {NODE_WALL_V, NODE_WINDOW_V}
+    NODES_INSIDE = {NODE_FLOOR, NODE_HOLE, NODE_START}   # Nodes that are inside the labyrinth (not walls, pillars etc.), with walkable space
 
     DIMS_FLOOR_HEIGHT = 1
     DIMS_WALL_LENGTH = 5
     DIMS_WALL_HEIGHT = 5
     DIMS_WALL_THIN = 1
 
-    # TODO: rework to use subclasses / inheritance, this is unreadable...
     ATTRIBUTES_WALL_H = {
         'width': DIMS_WALL_LENGTH,
         'height': DIMS_FLOOR_HEIGHT + DIMS_WALL_HEIGHT,
         'depth': DIMS_WALL_THIN,
-        'otype': TYPE_WALL,
     }
     ATTRIBUTES_WALL_V = {
         'width': DIMS_WALL_THIN,
         'height': DIMS_FLOOR_HEIGHT + DIMS_WALL_HEIGHT,
         'depth': DIMS_WALL_LENGTH,
-        'otype': TYPE_WALL,
     }
     ATTRIBUTES_PILLAR = {
         'width': DIMS_WALL_THIN,
         'height': DIMS_FLOOR_HEIGHT + DIMS_WALL_HEIGHT,
         'depth': DIMS_WALL_THIN,
-        'otype': TYPE_PILLAR,
     }
     ATTRIBUTES_FLOOR_MIDDLE = {
         'width': DIMS_WALL_LENGTH,
         'height': DIMS_FLOOR_HEIGHT,
         'depth': DIMS_WALL_LENGTH,
-        'otype': TYPE_FLOOR,
     }
     ATTRIBUTES_FLOOR_WALL_H = {
         'width': DIMS_WALL_LENGTH,
         'height': DIMS_FLOOR_HEIGHT,
         'depth': DIMS_WALL_THIN,
-        'otype': TYPE_FLOOR,
     }
     ATTRIBUTES_FLOOR_WALL_V = {
         'width': DIMS_WALL_THIN,
         'height': DIMS_FLOOR_HEIGHT,
         'depth': DIMS_WALL_LENGTH,
-        'otype': TYPE_FLOOR,
     }
     ATTRIBUTES_FLOOR_PILLAR = {
         'width': DIMS_WALL_THIN,
         'height': DIMS_FLOOR_HEIGHT,
         'depth': DIMS_WALL_THIN,
-        'otype': TYPE_FLOOR,
     }
 
 
@@ -150,123 +143,112 @@ class Labyrinth:
         for idx, floor_layout in enumerate(floor_layouts):
             for y_idx, row in enumerate(floor_layout):
                 for x_idx, object_type in enumerate(row):
-                    block_kwargs = None
+                    block = None
 
-                    # Horizontal wall
-                    if object_type in cls.NODES_H:
-                        block_kwargs = {
-                            **cls.ATTRIBUTES_WALL_H,
-                            'color': wall_color,
-                        }
+                    if object_type in cls.NODE_WALL_H:
+                        block = Wall(**cls.ATTRIBUTES_WALL_H, color=wall_color)
 
-                    # Vertical wall
-                    elif object_type in cls.NODES_V:
-                        block_kwargs = {
-                            **cls.ATTRIBUTES_WALL_V,
-                            'color': wall_color,
-                        }
+                    elif object_type == cls.NODE_WINDOW_H:
+                        block = Window(**cls.ATTRIBUTES_WALL_H)
 
-                    # Pillar
-                    elif object_type == cls.NODE_PILLAR:
-                        block_kwargs = {
-                            **cls.ATTRIBUTES_PILLAR,
-                            'color': pillar_color,
-                        }
+                    elif object_type in cls.NODE_WALL_V:
+                        block = Wall(**cls.ATTRIBUTES_WALL_V, color=wall_color)
                     
-                    # Floor
+                    elif object_type in cls.NODE_WINDOW_V:
+                        block = Window(**cls.ATTRIBUTES_WALL_V)
+
+                    elif object_type == cls.NODE_PILLAR:
+                        block = Pillar(**cls.ATTRIBUTES_PILLAR, color=pillar_color)
+                    
                     elif object_type == cls.NODE_FLOOR \
                             or (object_type != cls.NODE_HOLE and previous_layout and previous_layout[y_idx][x_idx] != cls.NODE_EMPTY):
                         
                         # Middle floor
                         if (x_idx % 2) == 1 and (y_idx % 2) == 1:
-                            block_kwargs = cls.ATTRIBUTES_FLOOR_MIDDLE.copy()
+                            block = Floor(**cls.ATTRIBUTES_FLOOR_MIDDLE)
 
                         # Horizontal floor
                         elif (x_idx % 2) == 1:
-                            block_kwargs = cls.ATTRIBUTES_FLOOR_WALL_H.copy()
+                            block = Floor(**cls.ATTRIBUTES_FLOOR_WALL_H)
 
                         # Vertical floor
                         elif (y_idx % 2) == 1:
-                            block_kwargs = cls.ATTRIBUTES_FLOOR_WALL_V.copy()
+                            block = Floor(**cls.ATTRIBUTES_FLOOR_WALL_V)
 
                         # Pillar floor
                         else:
-                            block_kwargs = cls.ATTRIBUTES_FLOOR_PILLAR.copy()
+                            block = Floor(**cls.ATTRIBUTES_FLOOR_PILLAR)
 
-                        block_kwargs['color'] = floor_color
+                        block.color = floor_color
                     
                     elif object_type == cls.NODE_START:
                         position = get_position(x_idx, y_idx, idx)
                         length_to_center = (cls.DIMS_WALL_LENGTH + 2 * cls.DIMS_WALL_THIN) / 2
                         start_pos = (position[0], position[1] + length_to_center, position[2] + cls.DIMS_FLOOR_HEIGHT)   # not sure why only center Y, but works
                         # Create a floor underneath
-                        block_kwargs = {
-                            **cls.ATTRIBUTES_FLOOR_MIDDLE,
-                            'color': floor_color,
-                        }
+                        block = Floor(**cls.ATTRIBUTES_FLOOR_MIDDLE, color=floor_color)
                     
                     elif object_type == cls.NODE_FINISH:
                         finish_pos = get_position(x_idx, y_idx, idx)
 
-                    if block_kwargs:
-                        position = get_position(x_idx, y_idx, idx)
-                        block_kwargs['position'] = position
-                        if object_type in cls.NODES_WINDOW:
-                            block_kwargs['texture'] = cls.TEXTURE_WINDOW
 
-                            # Add an extra floor block below the window to look better
+                    if block is not None:
+                        position = get_position(x_idx, y_idx, idx)
+                        block.position = position
+                        
+                        # Add an extra floor block below windows to look better
+                        if object_type in cls.NODES_WINDOW:
                             attrs = cls.ATTRIBUTES_FLOOR_WALL_H if object_type == cls.NODE_WINDOW_H else cls.ATTRIBUTES_FLOOR_WALL_V
-                            base_floor_kwargs = {
+                            rampart_block = Floor(
                                 **attrs,
-                                'color': floor_color,
-                                'position': position,
-                                'texture': cls.TEXTURE_WALL,
-                                'tiling_factors': (1.0, 0.5),
-                            }
-                            blocks.append( Parallelepiped(**base_floor_kwargs) )
+                                color=floor_color,
+                                position=position,
+                                tiling_factors=(1.0, 0.5),
+                            )
+                            blocks.append(rampart_block)
 
                             # Account for the fact that there is now floor below
-                            block_kwargs['height'] -= cls.DIMS_FLOOR_HEIGHT
-                            block_kwargs['position'] = (position[0], position[1], position[2] + cls.DIMS_FLOOR_HEIGHT)
-                            block_kwargs['otype'] = cls.TYPE_WINDOW
-                        else:
-                            block_kwargs['texture'] = cls.TEXTURE_WALL
-                            block_kwargs['tiling_factors'] = (1.0, 0.5)
-                        blocks.append( Parallelepiped(**block_kwargs) )
+                            block.height -= cls.DIMS_FLOOR_HEIGHT
+                            block.position = (position[0], position[1], position[2] + cls.DIMS_FLOOR_HEIGHT)
+                        
+                        # Determine which sides of the wall are facing inside the labyrinth
+                        if isinstance(block, Wall):
+                            block.right_inside  = x_idx < len(row) - 1          and row[x_idx + 1] in cls.NODES_INSIDE
+                            block.left_inside   = x_idx > 0                     and row[x_idx - 1] in cls.NODES_INSIDE
+                            block.down_inside   = y_idx < len(floor_layout) - 1 and floor_layout[y_idx + 1][x_idx] in cls.NODES_INSIDE
+                            block.up_inside     = y_idx > 0                     and floor_layout[y_idx - 1][x_idx] in cls.NODES_INSIDE
+
+                        blocks.append(block)
 
             previous_layout = floor_layout
         
         # Roof
         for y_idx, row in enumerate(previous_layout):
             for x_idx, object_type in enumerate(row):
-                block_kwargs = None
+                block = None
 
-                # Floor
+                # Cover any node with roof
                 if object_type != cls.NODE_EMPTY:
                    
                     # Middle floor
                     if (x_idx % 2) == 1 and (y_idx % 2) == 1:
-                        block_kwargs = cls.ATTRIBUTES_FLOOR_MIDDLE.copy()
+                        block = Floor(**cls.ATTRIBUTES_FLOOR_MIDDLE, color=floor_color)
 
                     # Horizontal floor
                     elif (x_idx % 2) == 1:
-                        block_kwargs = cls.ATTRIBUTES_FLOOR_WALL_H.copy()
+                        block = Floor(**cls.ATTRIBUTES_FLOOR_WALL_H, color=floor_color)
 
                     # Vertical floor
                     elif (y_idx % 2) == 1:
-                        block_kwargs = cls.ATTRIBUTES_FLOOR_WALL_V.copy()
+                        block = Floor(**cls.ATTRIBUTES_FLOOR_WALL_V, color=floor_color)
 
                     # Pillar floor
                     else:
-                        block_kwargs = cls.ATTRIBUTES_FLOOR_PILLAR.copy()
-
-                    block_kwargs['color'] = floor_color
+                        block = Floor(**cls.ATTRIBUTES_FLOOR_PILLAR, color=floor_color)
                 
-                if block_kwargs:
-                    block_kwargs['position'] = get_position(x_idx, y_idx, idx + 1)   # evil usage of 'idx' left from the previous loop
-                    block_kwargs['texture'] = cls.TEXTURE_WALL
-                    block_kwargs['tiling_factors'] = (1.0, 0.5)
-                    blocks.append( Parallelepiped(**block_kwargs) )
+                if block is not None:
+                    block.position = get_position(x_idx, y_idx, idx + 1)   # evil usage of 'idx' left from the previous loop
+                    blocks.append(block)
 
         return Labyrinth(
             blocks=blocks,
@@ -275,6 +257,10 @@ class Labyrinth:
             depth=labyrinth_depth,
             start_pos=start_pos,
             finish_pos=finish_pos,
+            walls=[block for block in blocks if isinstance(block, Wall)],
+            windows=[block for block in blocks if isinstance(block, Window)],
+            floors=[block for block in blocks if isinstance(block, Floor)],
+            pillars=[block for block in blocks if isinstance(block, Pillar)],
         )
 
 
@@ -287,19 +273,13 @@ class Labyrinth:
         return Labyrinth.from_map_string(content, debug)
 
 
-    def is_window(self, obj: 'Parallelepiped') -> bool:
-        return obj.otype == self.TYPE_WINDOW
 
-
-
-@dataclass(init=False, frozen=True)
 class Parallelepiped:
     width:      float
     height:     float
     depth:      float
     vertices:   np.ndarray
     position:   Tuple[float, float, float]
-    otype:      str                         # Generic string that describes this object (to identify walls, floor, etc.)
     texture:    str
 
 
@@ -307,28 +287,30 @@ class Parallelepiped:
                 color: Tuple[float, float, float, float]=(1.0, 1.0, 1.0, 1.0),
                 tiling_factors: Tuple[float, float]=None,
                 position: Tuple[float, float, float]=None,
-                texture: str=None,
-                otype: str=None):
+                texture: str=None):
 
-        # Required, since it's frozen...
-        object.__setattr__(self, 'height', height)
-        object.__setattr__(self, 'width', width)
-        object.__setattr__(self, 'depth', depth)
-        
-        if color is not None:
-            object.__setattr__(self, 'color', color)
-            
+        self.height = height
+        self.width = width
+        self.depth = depth
+        self.position = position
+        self.texture = texture
+        self.color = color
+        self.tiling_factors = tiling_factors
+    
+        self._vertices = None
 
-        r, g, b, a = color
+
+    def generate_vertices(self) -> np.ndarray:
+        r, g, b, a = self.color
         # Panda3D uses the geographical coordinate system, where XY is on the floor and Z is the height
         # (https://docs.panda3d.org/1.10/python/introduction/tutorial/loading-the-grassy-scenery)
-        x, y, z = width, depth, height
+        x, y, z = self.width, self.depth, self.height
         
         # Determine how textures should be tiled.
         # If the tiling factors are not specified, then the whole texture is mapped to the face.
         # Otherwise, the UVs are a factor of the object's dimensions.
-        if tiling_factors is not None:
-            u, v = tiling_factors
+        if self.tiling_factors is not None:
+            u, v = self.tiling_factors
             ux, uy = u*x, u*y
             vy, vz = v*y, v*z
         else:
@@ -406,11 +388,65 @@ class Parallelepiped:
         ]
         normal_cols = np.vstack( [np.repeat([normal], 6, axis=0) for normal in normals] )
 
-        object.__setattr__(self, 'vertices', np.hstack([ vertices, color_cols, normal_cols ]))
-        object.__setattr__(self, 'position', position)
-        object.__setattr__(self, 'texture', texture)
-        object.__setattr__(self, 'otype', otype)
+        self._vertices = np.hstack([ vertices, color_cols, normal_cols ])
+
+
+    def get_vertices(self) -> np.ndarray:
+        if self._vertices is None:
+            self.generate_vertices()
+        return self._vertices
     
+
+class Floor(Parallelepiped):
+    
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('tiling_factors', (1.0, 0.5))
+        kwargs.setdefault('texture', TEXTURE_WALL)
+
+        super().__init__(*args, **kwargs)
+
+
+class Wall(Parallelepiped):
+    right_inside: bool
+    left_inside: bool
+    down_inside: bool
+    up_inside: bool
+
+    def __init__(self,
+            right_inside: bool=False,
+            left_inside: bool=False,
+            down_inside: bool=False,
+            up_inside: bool=False,
+            *args, **kwargs):
+
+        kwargs.setdefault('tiling_factors', (1.0, 0.5))
+        kwargs.setdefault('texture', TEXTURE_WALL)
+
+        super().__init__(*args, **kwargs)
+        
+        self.right_inside = right_inside
+        self.left_inside = left_inside
+        self.down_inside = down_inside
+        self.up_inside = up_inside
+
+
+class Pillar(Parallelepiped):
+    
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('tiling_factors', (1.0, 0.5))
+        kwargs.setdefault('texture', TEXTURE_WALL)
+
+        super().__init__(*args, **kwargs)
+
+
+class Window(Wall):
+    
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('tiling_factors', None)
+        kwargs.setdefault('texture', TEXTURE_WINDOW)
+
+        super().__init__(*args, **kwargs)
+
 
 
 if __name__ == '__main__':
