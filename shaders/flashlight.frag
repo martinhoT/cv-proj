@@ -17,8 +17,9 @@ out vec4 p3d_FragColor;
 
 const float lightRadius = 0.4;
 const float lightBorder = 0.5;
-const int fbmNFuncs = 6;
-const float fbmFreq = .5;
+const int fbmNFuncs = 5;
+const float fbmLacunarity = 3.0;
+const float fbmGain = 0.85;
 
 // From the book of shaders: https://thebookofshaders.com/10/
 float random(vec2 st) {
@@ -40,6 +41,7 @@ float bilinearInterpolation(float v00, float v10, float v01, float v11, vec2 st)
     return mix(vx0, vx1, smoothstep(f1, f2, st.y));
 }
 
+// Value noise: https://en.wikipedia.org/wiki/Value_noise
 float noise(vec2 st, float interval) {
 
     vec2 stStep = interval * floor(st / interval);
@@ -53,12 +55,18 @@ float noise(vec2 st, float interval) {
     return bilinearInterpolation(random00, random10, random01, random11, noiseInterp);
 }
 
-float fbm(vec2 st) {
+float fbm(vec2 st, float lacunarity, float gain) {
     float res = 0.;
+    float frequency = 1.;
+    float amplitude = 1.;
+
     for (int i = 0; i < fbmNFuncs; i++) {
-        res = res + noise(st, pow(fbmFreq, float(i)));
+        res += amplitude * (noise(st, 1. / frequency) - .5);
+        frequency *= lacunarity;
+        amplitude *= gain;
     }
-    return res - .5 * float(fbmNFuncs - 1);
+
+    return res;
 }
 
 vec3 filledCircle(in vec2 center, in float radius, in vec2 point, in float borderSmoothness) {
@@ -81,7 +89,7 @@ void main() {
     // How much is the light affected by the distance to the camera. 0 means full fog.
     float fogDisturbance = 1 - pow(depth, 50);
 
-    float lightFlicker = mix(1.0, fbm(vec2(u_time)), lightFlickerRatio);
+    float lightFlicker = mix(1.0, fbm(vec2(u_time, 0), fbmLacunarity, fbmGain), lightFlickerRatio);
 
     vec4 flashlightColor = vec4(filledCircle(u_mouse, lightRadius, st, lightBorder), 1.0);
 

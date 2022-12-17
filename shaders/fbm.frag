@@ -6,7 +6,7 @@ uniform vec2 u_resolution;
 uniform vec2 u_mouse;
 uniform float u_time;
 
-
+const int fbmNFuncs = 25;
 
 /*
 Test code for fractional brownian motion.
@@ -23,6 +23,7 @@ float random(vec2 st) {
 // Formula from: https://en.wikipedia.org/wiki/Bilinear_interpolation
 float bilinearInterpolation(float v00, float v10, float v01, float v11, vec2 st) {
     float f = .01;
+    // f = mix(0.0, 0.49, .5 + .5*sin(u_time));
     float f1 = f;
     float f2 = 1.-f;
     
@@ -32,6 +33,7 @@ float bilinearInterpolation(float v00, float v10, float v01, float v11, vec2 st)
     return mix(vx0, vx1, smoothstep(f1, f2, st.y));
 }
 
+// Value noise: https://en.wikipedia.org/wiki/Value_noise
 float noise(vec2 st, float interval) {
 
     vec2 stStep = interval * floor(st / interval);
@@ -42,21 +44,33 @@ float noise(vec2 st, float interval) {
     float random01 = random(vec2(stStep.x, stStep.y + interval));
     float random11 = random(stStep + interval);
     
+    // return mix(random00, random10, smoothstep(.2, .8, .5 + .5*sin(4.*u_time)));
+    // return stStep.x*.5 + stStep.y*.5;
+    // return bilinearInterpolation(
+    //     .5*(stStep.x + stStep.y),
+    //     .5*(stStep.x + interval + stStep.y),
+    //     .5*(stStep.x + stStep.y + interval),
+    //     .5*(stStep.x + stStep.y + 2.*interval),
+    //     noiseInterp);
     return bilinearInterpolation(random00, random10, random01, random11, noiseInterp);
 }
 
-float fbm(vec2 st) {
-    const int nFuncs = 25;
-    float freq = .5;
-
+float fbm(vec2 st, float lacunarity, float gain) {
     float res = 0.;
-    for (int i = 0; i < nFuncs; i++) {
-        res = res + noise(st, pow(freq, float(i)));
+    float frequency = 1.;
+    float amplitude = 1.;
+
+    for (int i = 0; i < fbmNFuncs; i++) {
+        res += amplitude * (noise(st, 1. / frequency) - .5);
+        frequency *= lacunarity;
+        amplitude *= gain;
     }
-    return res - .5 * float(nFuncs - 1);
+
+    return res;
 }
 
 void main() {
     vec2 st = gl_FragCoord.xy / u_resolution.xy;
-    gl_FragColor = vec4(fbm(st));
+    // gl_FragColor = vec4(noise(st, 0.1));
+    gl_FragColor = vec4(fbm(st, 3.0, 0.85));
 }
