@@ -183,8 +183,8 @@ class Labyrinth:
                     
                     elif object_type == cls.NODE_START:
                         position = get_position(x_idx, y_idx, idx)
-                        length_to_center = (cls.DIMS_WALL_LENGTH + 2 * cls.DIMS_WALL_THIN) / 2
-                        start_pos = (position[0], position[1] + length_to_center, position[2] + cls.DIMS_FLOOR_HEIGHT)   # not sure why only center Y, but works
+                        length_to_center = cls.DIMS_WALL_LENGTH / 2
+                        start_pos = (position[0] + length_to_center, position[1] + length_to_center, position[2] + cls.DIMS_FLOOR_HEIGHT)   # not sure why only center Y, but works
                         # Create a floor underneath
                         block = Floor(**cls.ATTRIBUTES_FLOOR_MIDDLE, color=floor_color)
                     
