@@ -20,7 +20,7 @@ WIDTH = 800
 HEIGHT = 600
 PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
-AMBIENT_LIGHT_INTENSITY = 0.5
+AMBIENT_LIGHT_INTENSITY = 0.4
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.

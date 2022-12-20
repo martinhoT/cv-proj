@@ -20,7 +20,7 @@ const float lightBorder = 0.3;
 const int fbmNFuncs = 10;
 const float fbmLacunarity = 8.0;
 const float fbmGain = 0.5;
-const float fbmOffset = 0.6;
+const float fbmOffset = 0.9;
 
 // From the book of shaders: https://thebookofshaders.com/10/
 float random(vec2 st) {
@@ -123,5 +123,6 @@ void main() {
     // p3d_FragColor = vec4(.5 + .5*sin(u_time));
     // p3d_FragColor = vec4(luminance);
     // p3d_FragColor = vec4(smoothstep(0.35, 1.0, luminance) * 2.0);
+    // p3d_FragColor = vec4(useBaseColor);
     // p3d_FragColor = vec4(base);
 }
