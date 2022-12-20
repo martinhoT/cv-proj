@@ -79,7 +79,7 @@ vec3 filledCircle(in vec2 center, in float radius, in vec2 point, in float borde
 
 void main() {
     vec2 st = 2 * (gl_FragCoord.xy/u_resolution) - 1;
-    vec4 backgroundColor = vec4(0.0, 0.0, 0.1, 0.0);
+    vec4 backgroundColor = vec4(0.1, 0.1, 0.1, 0.0);
 
     // Equal to just picking the y normal
     vec3 normal = texture2D(ntex, texcoord).rgb;

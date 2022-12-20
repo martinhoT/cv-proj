@@ -20,6 +20,7 @@ WIDTH = 800
 HEIGHT = 600
 PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
+SKY_COLOR = (0.0, 0.0, 0.5)
 
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
 # If power-of-2 textures is enforced, then the code has to deal with the texture padding.
@@ -37,6 +38,8 @@ class ExplorerApp(ShowBase):
 
     def __init__(self, labyrinth_file: str, debug_opts: dict):
         ShowBase.__init__(self)
+
+        self.set_background_color(*SKY_COLOR)
 
         self.DEBUG_LOG = debug_opts.get('log', False)
         self.DEBUG_MAP = debug_opts.get('map', False)
