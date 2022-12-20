@@ -109,16 +109,19 @@ class ExplorerApp(ShowBase):
         self.accept("Player-again-Ground", self.player_hit_ground)
         
     def init_models(self):
-        player_model = self.loader.loadModel(self.path_p3d / 'models/player/amongus.glb')
+        player_model: NodePath = self.loader.loadModel(self.path_p3d / 'models/player/amongus_corrected.obj')
+        for material in player_model.find_all_materials():
+            material.set_ambient(material.get_diffuse())
         # rotate player model vertically
-        player_model.setHpr(0, 0, 0)
-        player_scale = (0.5, 0.5, 0.5)
+        player_model.setHpr(0, 90, 0)
+        player_scale = (.5,) * 3
         player_position = self.labyrinth.start_pos if self.labyrinth.start_pos is not None else [self.labyrinth.width / 2, self.labyrinth.depth / 2, self.labyrinth.height]
         # Create collision node
         player_collider_node = CollisionNode("Player")
         
         player_collider_node.addSolid(CollisionCapsule(0, 0, 1, 0, 0, 2, 1))
         player_collider = player_model.attachNewNode(player_collider_node)
+        player_collider.setHpr(0, -90, 0)
         if self.DEBUG_COLLISIONS:
             player_collider.show()
 
