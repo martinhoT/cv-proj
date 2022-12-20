@@ -88,22 +88,40 @@ void main() {
     float normalDiff = 1.0 - max(normal.g, 0.0);
 
     float depth = texture2D(dtex, texcoord).x;
+    // TODO: use panda3d setFog() instead?
     // How much is the light affected by the distance to the camera. 0 means full fog.
     float fogDisturbance = 1 - pow(depth, 50);
 
     float lightFlicker = mix(1.0, fbm(vec2(u_time, 0), fbmLacunarity, fbmGain) - fbmOffset, lightFlickerRatio);
 
-    vec4 flashlightColor = vec4(filledCircle(u_mouse, lightRadius, st, lightBorder), 1.0);
+    vec4 flashlightCircle = vec4(filledCircle(u_mouse, lightRadius, st, lightBorder), 1.0);
 
     // TODO: Make depth affect the flashlight radius & smoothness instead?
-    // TODO: Deferred lighting?
-    vec4 base = texture2D(tex, texcoord);
-    vec4 flashlightLit = max(backgroundColor, fogDisturbance * lightPower * normalDiff * lightFlicker * flashlightColor);
+    vec4 flashlightColor = fogDisturbance * lightPower * normalDiff * lightFlicker * flashlightCircle;
+    vec4 flashlightLit = max(backgroundColor, flashlightColor);
 
-    p3d_FragColor = base * flashlightLit;
+    vec4 base = texture2D(tex, texcoord);
+    
+    // TODO: can make creepy effect! checkout the test values below
+    // Get luminance of the color buffer using the YCoCg color space
+    float luminance = 0.25 * base.r + 0.5 * base.g + 0.25 * base.b;
+    
+    // How should lit should a color be considered, and thus not need the flashlight light?
+    // In this case we take the strongest color component
+    float lightnessFactor = max(max(base.r, base.g), base.b);
+    // Determine how much of the base color to keep based on the previous lightness factor
+    float useBaseColor = smoothstep(0.4, 1.0, lightnessFactor);
+    // Use the flashlight if the base color is not too lit, and keep the base lighting otherwise
+    
+    p3d_FragColor = mix(base * flashlightLit, base * lightFlicker, useBaseColor);
+    
+    // Test values
     // p3d_FragColor = vec4(depth);   // Depth buffer
     // p3d_FragColor = vec4(normal, 1.0);   // Normal buffer
     // p3d_FragColor = vec4(fogDisturbance);
     // p3d_FragColor = vec4(normalDiff);
     // p3d_FragColor = vec4(.5 + .5*sin(u_time));
+    // p3d_FragColor = vec4(luminance);
+    // p3d_FragColor = vec4(smoothstep(0.35, 1.0, luminance) * 2.0);
+    // p3d_FragColor = vec4(base);
 }

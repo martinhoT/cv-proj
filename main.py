@@ -20,7 +20,8 @@ WIDTH = 800
 HEIGHT = 600
 PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
-SKY_COLOR = (0.0, 0.0, 0.5)
+AMBIENT_LIGHT_INTENSITY = 0.5
+SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
 # If power-of-2 textures is enforced, then the code has to deal with the texture padding.
@@ -82,7 +83,7 @@ class ExplorerApp(ShowBase):
 
         # Lighting
         # Create Ambient Light
-        ambient_light_intensity = 0.5
+        ambient_light_intensity = AMBIENT_LIGHT_INTENSITY
         ambient_light = AmbientLight('ambient_light')
         ambient_light.setColor((ambient_light_intensity, ambient_light_intensity, ambient_light_intensity, 1))
         ambient_light_np = self.render.attachNewNode(ambient_light)
@@ -279,7 +280,8 @@ class ExplorerApp(ShowBase):
         # Plenty of features, including normal maps and per-pixel lighting
         # (https://docs.panda3d.org/1.10/python/programming/shaders/shader-generator)
         self.render.setShaderAuto()
-
+        
+        # Apply the flashlight effect, and others, using deferred lighting
         flashlight_shader = Shader.load(Shader.SL_GLSL,
             vertex='shaders/flashlight.vert',
             fragment='shaders/flashlight.frag')
