@@ -39,6 +39,8 @@ class Player(CustomObject3D):
         pn.attachNewNode(light_cube)
         pn.setPos(self.position)
        
+        # TODO: use camera mask to determine which objects of the scene graph should be affected?
+        # TODO: add glow effect to the lights?
         self.parent.setLight(pn)
         
         
