@@ -213,10 +213,10 @@ class Labyrinth:
                         
                         # Determine which sides of the wall are facing inside the labyrinth
                         if isinstance(block, Wall):
-                            block.right_inside  = x_idx < len(row) - 1          and row[x_idx + 1] in cls.NODES_INSIDE
-                            block.left_inside   = x_idx > 0                     and row[x_idx - 1] in cls.NODES_INSIDE
-                            block.down_inside   = y_idx < len(floor_layout) - 1 and floor_layout[y_idx + 1][x_idx] in cls.NODES_INSIDE
-                            block.up_inside     = y_idx > 0                     and floor_layout[y_idx - 1][x_idx] in cls.NODES_INSIDE
+                            block.east_inside  = x_idx < len(row) - 1          and row[x_idx + 1] in cls.NODES_INSIDE
+                            block.west_inside   = x_idx > 0                     and row[x_idx - 1] in cls.NODES_INSIDE
+                            block.south_inside   = y_idx < len(floor_layout) - 1 and floor_layout[y_idx + 1][x_idx] in cls.NODES_INSIDE
+                            block.north_inside     = y_idx > 0                     and floor_layout[y_idx - 1][x_idx] in cls.NODES_INSIDE
 
                         blocks.append(block)
 
@@ -407,10 +407,10 @@ class Floor(Parallelepiped):
 
 
 class Wall(Parallelepiped):
-    right_inside: bool
-    left_inside: bool
-    down_inside: bool
-    up_inside: bool
+    east_inside: bool
+    west_inside: bool
+    south_inside: bool
+    north_inside: bool
 
     def __init__(self,
             right_inside: bool=False,
@@ -424,10 +424,10 @@ class Wall(Parallelepiped):
 
         super().__init__(*args, **kwargs)
         
-        self.right_inside = right_inside
-        self.left_inside = left_inside
-        self.down_inside = down_inside
-        self.up_inside = up_inside
+        self.east_inside = right_inside
+        self.west_inside = left_inside
+        self.south_inside = down_inside
+        self.north_inside = up_inside
 
 
 class Pillar(Parallelepiped):

@@ -141,19 +141,19 @@ class ExplorerApp(ShowBase):
         self.cTrav.addCollider(player_collider, self.pusher)
         move_camera(self.camera, self.camera_zoom, self.camera_pos)
     
-    def init_spider(self, wall_obj, labyrinth_np):
+    def init_spider(self, wall_obj: Wall, labyrinth_np: NodePath):
         spider_scale = [Spider.SCALE * 1 for _ in range(3)]
         spiders = []
-        if wall_obj.right_inside:
+        if wall_obj.east_inside:
             self.spawn_spider(wall_obj.position[0] + wall_obj.width, wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2] + wall_obj.height / 2, -90, -90, 0, labyrinth_np, spider_scale, (0,1,1), wall_obj)
 
-        if wall_obj.left_inside:
+        if wall_obj.west_inside:
             self.spawn_spider(wall_obj.position[0], wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2] + wall_obj.height / 2, 90, -90, 0, labyrinth_np, spider_scale, (0,1,1), wall_obj)
 
-        if wall_obj.down_inside:
+        if wall_obj.south_inside:
             self.spawn_spider(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1] + wall_obj.width / 2, wall_obj.position[2] + wall_obj.height - 0.5, 0, 0, -180, labyrinth_np, spider_scale, (1,1,0), wall_obj)
 
-        if wall_obj.up_inside:
+        if wall_obj.north_inside:
             self.spawn_spider(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1] - wall_obj.width / 2 , wall_obj.position[2] + wall_obj.depth + 0.5, 0, 0, 0, labyrinth_np, spider_scale, (1,1,0), wall_obj)
 
         self.spiders += spiders
