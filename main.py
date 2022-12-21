@@ -22,7 +22,7 @@ PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
 AMBIENT_LIGHT_INTENSITY = 0.4
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
-SPIDER_SPAWN_CHANCE = 0.5
+SPIDER_SPAWN_CHANCE = 1
 
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
 # If power-of-2 textures is enforced, then the code has to deal with the texture padding.
@@ -145,23 +145,23 @@ class ExplorerApp(ShowBase):
         spider_scale = [Spider.SCALE * 1 for _ in range(3)]
         spiders = []
         if wall_obj.right_inside:
-            self.spawn_spider(wall_obj.position[0] + wall_obj.width, wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2] + wall_obj.height / 2, -90, -90, 0, labyrinth_np, spider_scale)
+            self.spawn_spider(wall_obj.position[0] + wall_obj.width, wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2] + wall_obj.height / 2, -90, -90, 0, labyrinth_np, spider_scale, (0,1,1))
 
         if wall_obj.left_inside:
-            self.spawn_spider(wall_obj.position[0], wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2] + wall_obj.height / 2, 90, -90, 0, labyrinth_np, spider_scale)
+            self.spawn_spider(wall_obj.position[0], wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2] + wall_obj.height / 2, 90, -90, 0, labyrinth_np, spider_scale, (0,1,1))
 
         if wall_obj.down_inside:
-            self.spawn_spider(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1] + wall_obj.width / 2, wall_obj.position[2] + wall_obj.height - 0.5, 0, 0, -180, labyrinth_np, spider_scale)
+            self.spawn_spider(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1] + wall_obj.width / 2, wall_obj.position[2] + wall_obj.height - 0.5, 0, 0, -180, labyrinth_np, spider_scale, (1,1,0))
 
         if wall_obj.up_inside:
-            self.spawn_spider(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1] + wall_obj.width / 2, wall_obj.position[2] + 0.5, 0, 0, 0, labyrinth_np, spider_scale)
+            self.spawn_spider(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1] + wall_obj.width / 2, wall_obj.position[2] + 0.5, 0, 0, 0, labyrinth_np, spider_scale, (1,1,0))
 
         self.spiders += spiders
             
-    def spawn_spider(self, x, y, z, h, p, r, labyrinth_np, scale):
+    def spawn_spider(self, x, y, z, h, p, r, labyrinth_np, scale, movement_axis):
         spawn_chance = random.random()
         if spawn_chance < SPIDER_SPAWN_CHANCE:
-            spider = Spider([x, y, z], labyrinth_np, self, scale=scale)
+            spider = Spider([x, y, z], labyrinth_np, self, scale=scale, movement_axis=movement_axis)
             spider.model.setHpr(h, p, r)
             self.spiders.append(spider)
             return spider
@@ -239,7 +239,12 @@ class ExplorerApp(ShowBase):
         if isDown(KeyboardButton.asciiKey("o")):
             self.player.put_light()
         
+        # Update entities
+        
         self.player.update()
+        
+        for spider in self.spiders:
+            spider.update()
 
         return Task.cont
 
