@@ -1,6 +1,6 @@
 import numpy as np
 
-from typing import Tuple, List
+from typing import Dict, Tuple, List
 from dataclasses import dataclass
 
 
@@ -49,17 +49,17 @@ class Labyrinth:
 
     ATTRIBUTES_WALL_H = {
         'width': DIMS_WALL_LENGTH,
-        'height': DIMS_FLOOR_HEIGHT + DIMS_WALL_HEIGHT,
+        'height': DIMS_WALL_HEIGHT,
         'depth': DIMS_WALL_THIN,
     }
     ATTRIBUTES_WALL_V = {
         'width': DIMS_WALL_THIN,
-        'height': DIMS_FLOOR_HEIGHT + DIMS_WALL_HEIGHT,
+        'height': DIMS_WALL_HEIGHT,
         'depth': DIMS_WALL_LENGTH,
     }
     ATTRIBUTES_PILLAR = {
         'width': DIMS_WALL_THIN,
-        'height': DIMS_FLOOR_HEIGHT + DIMS_WALL_HEIGHT,
+        'height': DIMS_WALL_HEIGHT,
         'depth': DIMS_WALL_THIN,
     }
     ATTRIBUTES_FLOOR_MIDDLE = {
@@ -198,24 +198,33 @@ class Labyrinth:
                         position = get_position(x_idx, y_idx, idx)
                         block.position = position
                         
-                        # Add an extra floor block below windows to look better
-                        if object_type in cls.NODES_WINDOW:
-                            attrs = cls.ATTRIBUTES_FLOOR_WALL_H if object_type == cls.NODE_WINDOW_H else cls.ATTRIBUTES_FLOOR_WALL_V
+                        if isinstance(block, Pillar):
+                            # Add an extra floor block below
+                            blocks.append(Floor(
+                                **cls.ATTRIBUTES_FLOOR_PILLAR,
+                                index=idx,
+                                color=floor_color,
+                                position=position,
+                            ))
+
+                            # Account for the fact that there is floor below
+                            block.position = (position[0], position[1], position[2] + cls.DIMS_FLOOR_HEIGHT)
+
+                        if isinstance(block, Wall):
+                            # Add an extra floor block below
+                            attrs = cls.ATTRIBUTES_FLOOR_WALL_H if object_type in cls.NODES_H else cls.ATTRIBUTES_FLOOR_WALL_V
                             rampart_block = Floor(
                                 **attrs,
                                 index=idx,
                                 color=floor_color,
                                 position=position,
-                                tiling_factors=(1.0, 0.5),
                             )
                             blocks.append(rampart_block)
 
-                            # Account for the fact that there is now floor below
-                            block.height -= cls.DIMS_FLOOR_HEIGHT
+                            # Account for the fact that there is floor below
                             block.position = (position[0], position[1], position[2] + cls.DIMS_FLOOR_HEIGHT)
-                        
-                        # Determine which sides of the wall are facing inside the labyrinth
-                        if isinstance(block, Wall):
+
+                            # Determine which sides of the wall are facing inside the labyrinth
                             block.east_inside  = x_idx < len(row) - 1          and row[x_idx + 1] in cls.NODES_INSIDE
                             block.west_inside  = x_idx > 0                     and row[x_idx - 1] in cls.NODES_INSIDE
                             block.south_inside = y_idx < len(floor_layout) - 1 and floor_layout[y_idx + 1][x_idx] in cls.NODES_INSIDE
@@ -253,6 +262,10 @@ class Labyrinth:
                     block.position = get_position(x_idx, y_idx, idx + 1)   # evil usage of 'idx' left from the previous loop
                     blocks.append(block)
 
+        # Optimize the blocks, to avoid many unnecessary repetitions
+        blocks = cls.merge_blocks(blocks)
+        print('Number of blocks:', len(blocks))
+
         return Labyrinth(
             blocks=blocks,
             width=labyrinth_width,
@@ -275,6 +288,68 @@ class Labyrinth:
             content = map_file.read()
 
         return Labyrinth.from_map_string(content, debug)
+
+
+    @classmethod
+    def merge_blocks(cls, blocks: List['Parallelepiped']) -> List['Parallelepiped']:
+        merged = []
+
+        # Merge the floors
+        floors: Dict[int, List[Floor]] = {}
+        for block in blocks:
+            if isinstance(block, Floor):
+                floors.setdefault(block.index, []).append(block)
+
+        for floor, floor_blocks in floors.items():
+            # Just a block from which to derive non-trivial attributes, but which are assumed to be the same for all blocks in this floor
+            model_block = floor_blocks[0]
+
+            # Try to create horizontal strips
+            horizontal_strips = []
+            horizontal_spans = {}
+            for block in floor_blocks:
+                x, y, z = block.position
+                horizontal_spans.setdefault(y, set()).add(x)
+            
+            horizontal_spans = {y: (min(xs), max(xs)) for y, xs in horizontal_spans.items()}
+            
+            can_merge = set()
+            prev_span = None
+            for y, x_span in sorted(horizontal_spans.items()):
+                if prev_span is None or prev_span == x_span:
+                    can_merge.add(y)
+                else:
+                    y_span = (min(can_merge), max(can_merge))
+                    horizontal_strips.append(Floor(
+                        width=x_span[1] - x_span[0] + cls.DIMS_WALL_THIN,
+                        depth=y_span[1] - y_span[0] + cls.DIMS_WALL_THIN,
+                        position=(x_span[0], y_span[0], model_block.position[2]),
+                        height=model_block.height,
+                        index=model_block.index,
+                        color=model_block.color
+                    ))
+                    can_merge.clear()
+            
+            y_span = (min(can_merge), max(can_merge))
+            horizontal_strips.append(Floor(
+                width=x_span[1] - x_span[0] + cls.DIMS_WALL_THIN,
+                depth=y_span[1] - y_span[0] + cls.DIMS_WALL_THIN,
+                position=(x_span[0], y_span[0], model_block.position[2]),
+                height=model_block.height,
+                index=model_block.index,
+                color=model_block.color
+            ))
+
+            # TODO: create vertical strips and compare to see which should be used
+            
+            merged.extend(horizontal_strips)
+
+        # Merge the rest
+        for block in blocks:
+            if not isinstance(block, Floor):
+                merged.append(block)
+
+        return merged
 
 
 
