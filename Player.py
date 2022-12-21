@@ -1,11 +1,13 @@
 from CustomObject3D import CustomObject3D
 from panda3d.core import *
-from typing import Tuple, List
+from typing import Generator, Iterable, Tuple, List
 from labyrinth import Parallelepiped
 from common import *
 
 N_LIGHTS = 3
 LIGHT_COLOR = (1, 0.05, 0.5, 1)
+LIGHT_POWER = 50
+LIGHT_DISTANCE_THRESHOLD = 15
 SHADOW_RESOLUTION = 128
 
 class Player(CustomObject3D):
@@ -25,8 +27,10 @@ class Player(CustomObject3D):
 
     def generate_light(self):
         pl = PointLight('plight')
-        pl.setColor(LIGHT_COLOR)
+
+        pl.setColor((LIGHT_COLOR[0] * LIGHT_POWER, LIGHT_COLOR[1] * LIGHT_POWER, LIGHT_COLOR[2] * LIGHT_POWER, LIGHT_COLOR[3]))
         pl.setShadowCaster(True, SHADOW_RESOLUTION, SHADOW_RESOLUTION)
+        pl.setAttenuation((1, 0, 1))
         light_cube = generateGeometry(Parallelepiped(0.5, 0.5, 0.5, color=LIGHT_COLOR), 'flashlight')
         pn = self.parent.attachNewNode(pl)
         return light_cube, pn
@@ -39,9 +43,14 @@ class Player(CustomObject3D):
         pn.attachNewNode(light_cube)
         pn.setPos(self.position)
        
-        # TODO: use camera mask to determine which objects of the scene graph should be affected?
         # TODO: add glow effect to the lights?
-        self.parent.setLight(pn)
+        for node_to_illuminate in self.get_light_surroundings(distance_threshold=LIGHT_DISTANCE_THRESHOLD):
+            node_to_illuminate.setLight(pn)
         
-        
-            
+    def get_light_surroundings(self, distance_threshold: float) -> Generator[NodePath, None, None]:
+        for child in self.parent.children:
+            # To make sure that the light only affects objects within the same floor
+            # This also assumes the objects to be lit are above the light (the light is on the floor)
+            height_difference = child.getZ() - self.model.getZ()
+            if self.model.get_distance(child) < distance_threshold and height_difference <= Labyrinth.DIMS_WALL_HEIGHT and height_difference >= -Labyrinth.DIMS_FLOOR_HEIGHT:
+                yield child
