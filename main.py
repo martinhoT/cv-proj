@@ -143,7 +143,6 @@ class ExplorerApp(ShowBase):
     
     def init_spider(self, wall_obj: Wall, labyrinth_np: NodePath):
         spider_scale = [Spider.SCALE * 1 for _ in range(3)]
-        spiders = []
         if wall_obj.east_inside:
             self.spawn_spider(wall_obj.position[0] + wall_obj.width, wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2] + wall_obj.height / 2, -90, -90, 0, labyrinth_np, spider_scale, (0,1,1), wall_obj)
 
@@ -151,13 +150,11 @@ class ExplorerApp(ShowBase):
             self.spawn_spider(wall_obj.position[0], wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2] + wall_obj.height / 2, 90, -90, 0, labyrinth_np, spider_scale, (0,1,1), wall_obj)
 
         if wall_obj.south_inside:
-            self.spawn_spider(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1] + wall_obj.width / 2, wall_obj.position[2] + wall_obj.height - 0.5, 0, 0, -180, labyrinth_np, spider_scale, (1,1,0), wall_obj)
+            self.spawn_spider(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1] + wall_obj.depth, wall_obj.position[2] + wall_obj.height / 2, 0, -90, 0, labyrinth_np, spider_scale, (1,0,1), wall_obj)
 
         if wall_obj.north_inside:
-            self.spawn_spider(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1] - wall_obj.width / 2 , wall_obj.position[2] + wall_obj.depth + 0.5, 0, 0, 0, labyrinth_np, spider_scale, (1,1,0), wall_obj)
+            self.spawn_spider(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1], wall_obj.position[2] + wall_obj.height / 2, 180, -90, 0, labyrinth_np, spider_scale, (1,0,1), wall_obj)
 
-        self.spiders += spiders
-            
     def spawn_spider(self, x, y, z, h, p, r, labyrinth_np, scale, movement_axis, wall):
         spawn_chance = random.random()
         if spawn_chance < SPIDER_SPAWN_CHANCE:
