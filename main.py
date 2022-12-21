@@ -156,7 +156,7 @@ class ExplorerApp(ShowBase):
             
         
     def player_hit_ground(self, entity):
-        is_bellow_player = entity.getSurfacePoint(self.player.model).getZ() <= 0
+        is_bellow_player = entity.getSurfacePoint(self.player.model).getY() <= 0
         self.player.velocity[2] = 0
         
         if is_bellow_player:
