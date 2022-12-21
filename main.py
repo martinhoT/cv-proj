@@ -262,32 +262,32 @@ class ExplorerApp(ShowBase):
         self.spiders = []
         labyrinth_np = parent_node.attachNewNode('Labyrinth')
         labyrinth = Labyrinth.from_map_file(labyrinth_file, self.DEBUG_MAP)
-        labyrinth_walls = [generateGeometry(obj, f'wall_{idx}') for idx, obj in enumerate(labyrinth.blocks)]
-        if self.DEBUG_LOG: print('Number of walls:', len(labyrinth_walls))
-        for idx, wall in enumerate(labyrinth_walls):
-            wall_obj = labyrinth.blocks[idx]
-            is_ground = isinstance(wall_obj, Floor)
+        labyrinth_blocks = [generateGeometry(obj, f'wall_{idx}') for idx, obj in enumerate(labyrinth.blocks)]
+        if self.DEBUG_LOG: print('Number of walls:', len(labyrinth_blocks))
+        for idx, wall in enumerate(labyrinth_blocks):
+            block = labyrinth.blocks[idx]
+            is_ground = isinstance(block, Floor)
             wall_node = labyrinth_np.attachNewNode(wall)
-            if wall_obj.texture not in textures:
-                textures[wall_obj.texture] = self.loader.loadTexture(self.path_p3d / wall_obj.texture)
-            wall_node.setTexture(textures[wall_obj.texture])
-            wall_node.setPos(wall_obj.position)
+            if block.texture not in textures:
+                textures[block.texture] = self.loader.loadTexture(self.path_p3d / block.texture)
+            wall_node.setTexture(textures[block.texture])
+            wall_node.setPos(block.position)
             node_name = "Ground" if is_ground else "Wall"
             wall_collider_node = CollisionNode(node_name)
             
-            if isinstance(wall_obj, Window):
+            if isinstance(block, Window):
                 wall_node.setTransparency(True)
             
-            if isinstance(wall_obj, Wall):
-                self.init_spider(wall_obj, labyrinth_np)
+            if isinstance(block, Wall):
+                self.init_spider(block, labyrinth_np)
             
             # Collisions
             # get center of the wall
-            wall_center = Point3(wall_obj.width / 2, wall_obj.depth / 2, wall_obj.height / 2)
+            wall_center = Point3(block.width / 2, block.depth / 2, block.height / 2)
             wall_collider_node.addSolid(CollisionBox(wall_center,
-                                                     wall_obj.width / 2,
-                                                     wall_obj.depth / 2,
-                                                     wall_obj.height / 2))
+                                                     block.width / 2,
+                                                     block.depth / 2,
+                                                     block.height / 2))
             wall_collider = wall_node.attachNewNode(wall_collider_node)
             if self.DEBUG_COLLISIONS:
                 wall_collider.show()

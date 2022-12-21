@@ -22,6 +22,8 @@ class Labyrinth:
     floors:         List['Floor']
     pillars:        List['Pillar']
 
+    n_floors:       int
+
 
     NODE_WALL_H = '-'
     NODE_WALL_V = '|'
@@ -165,19 +167,19 @@ class Labyrinth:
                         
                         # Middle floor
                         if (x_idx % 2) == 1 and (y_idx % 2) == 1:
-                            block = Floor(**cls.ATTRIBUTES_FLOOR_MIDDLE)
+                            block = Floor(**cls.ATTRIBUTES_FLOOR_MIDDLE, index=idx)
 
                         # Horizontal floor
                         elif (x_idx % 2) == 1:
-                            block = Floor(**cls.ATTRIBUTES_FLOOR_WALL_H)
+                            block = Floor(**cls.ATTRIBUTES_FLOOR_WALL_H, index=idx)
 
                         # Vertical floor
                         elif (y_idx % 2) == 1:
-                            block = Floor(**cls.ATTRIBUTES_FLOOR_WALL_V)
+                            block = Floor(**cls.ATTRIBUTES_FLOOR_WALL_V, index=idx)
 
                         # Pillar floor
                         else:
-                            block = Floor(**cls.ATTRIBUTES_FLOOR_PILLAR)
+                            block = Floor(**cls.ATTRIBUTES_FLOOR_PILLAR, index=idx)
 
                         block.color = floor_color
                     
@@ -186,7 +188,7 @@ class Labyrinth:
                         length_to_center = cls.DIMS_WALL_LENGTH / 2
                         start_pos = (position[0] + length_to_center, position[1] + length_to_center, position[2] + cls.DIMS_FLOOR_HEIGHT)   # not sure why only center Y, but works
                         # Create a floor underneath
-                        block = Floor(**cls.ATTRIBUTES_FLOOR_MIDDLE, color=floor_color)
+                        block = Floor(**cls.ATTRIBUTES_FLOOR_MIDDLE, index=idx, color=floor_color)
                     
                     elif object_type == cls.NODE_FINISH:
                         finish_pos = get_position(x_idx, y_idx, idx)
@@ -201,6 +203,7 @@ class Labyrinth:
                             attrs = cls.ATTRIBUTES_FLOOR_WALL_H if object_type == cls.NODE_WINDOW_H else cls.ATTRIBUTES_FLOOR_WALL_V
                             rampart_block = Floor(
                                 **attrs,
+                                index=idx,
                                 color=floor_color,
                                 position=position,
                                 tiling_factors=(1.0, 0.5),
@@ -214,9 +217,9 @@ class Labyrinth:
                         # Determine which sides of the wall are facing inside the labyrinth
                         if isinstance(block, Wall):
                             block.east_inside  = x_idx < len(row) - 1          and row[x_idx + 1] in cls.NODES_INSIDE
-                            block.west_inside   = x_idx > 0                     and row[x_idx - 1] in cls.NODES_INSIDE
-                            block.south_inside   = y_idx < len(floor_layout) - 1 and floor_layout[y_idx + 1][x_idx] in cls.NODES_INSIDE
-                            block.north_inside     = y_idx > 0                     and floor_layout[y_idx - 1][x_idx] in cls.NODES_INSIDE
+                            block.west_inside  = x_idx > 0                     and row[x_idx - 1] in cls.NODES_INSIDE
+                            block.south_inside = y_idx < len(floor_layout) - 1 and floor_layout[y_idx + 1][x_idx] in cls.NODES_INSIDE
+                            block.north_inside = y_idx > 0                     and floor_layout[y_idx - 1][x_idx] in cls.NODES_INSIDE
 
                         blocks.append(block)
 
@@ -232,19 +235,19 @@ class Labyrinth:
                    
                     # Middle floor
                     if (x_idx % 2) == 1 and (y_idx % 2) == 1:
-                        block = Floor(**cls.ATTRIBUTES_FLOOR_MIDDLE, color=floor_color)
+                        block = Floor(**cls.ATTRIBUTES_FLOOR_MIDDLE, index=idx + 1, color=floor_color)
 
                     # Horizontal floor
                     elif (x_idx % 2) == 1:
-                        block = Floor(**cls.ATTRIBUTES_FLOOR_WALL_H, color=floor_color)
+                        block = Floor(**cls.ATTRIBUTES_FLOOR_WALL_H, index=idx + 1, color=floor_color)
 
                     # Vertical floor
                     elif (y_idx % 2) == 1:
-                        block = Floor(**cls.ATTRIBUTES_FLOOR_WALL_V, color=floor_color)
+                        block = Floor(**cls.ATTRIBUTES_FLOOR_WALL_V, index=idx + 1, color=floor_color)
 
                     # Pillar floor
                     else:
-                        block = Floor(**cls.ATTRIBUTES_FLOOR_PILLAR, color=floor_color)
+                        block = Floor(**cls.ATTRIBUTES_FLOOR_PILLAR, index=idx + 1, color=floor_color)
                 
                 if block is not None:
                     block.position = get_position(x_idx, y_idx, idx + 1)   # evil usage of 'idx' left from the previous loop
@@ -261,6 +264,7 @@ class Labyrinth:
             windows=[block for block in blocks if isinstance(block, Window)],
             floors=[block for block in blocks if isinstance(block, Floor)],
             pillars=[block for block in blocks if isinstance(block, Pillar)],
+            n_floors=idx + 1,
         )
 
 
@@ -398,12 +402,18 @@ class Parallelepiped:
     
 
 class Floor(Parallelepiped):
-    
-    def __init__(self, *args, **kwargs):
+    index:  int
+
+    def __init__(self, 
+            index: int,
+            *args, **kwargs):
+
         kwargs.setdefault('tiling_factors', (1.0, 0.5))
         kwargs.setdefault('texture', TEXTURE_WALL)
 
         super().__init__(*args, **kwargs)
+
+        self.index = index
 
 
 class Wall(Parallelepiped):
