@@ -37,10 +37,10 @@ class Player(CustomObject3D):
         
         light_cube, pn = self.lights.pop()
         pn.attachNewNode(light_cube)
-        pn_mult = 5
-        pn_position = (self.position[0] + pn_mult * self.scale[0], self.position[1] - pn_mult * self.scale[1]/2, self.position[2])
-        pn.setPos(pn_position)
+        pn.setPos(self.position)
        
+        # TODO: use camera mask to determine which objects of the scene graph should be affected?
+        # TODO: add glow effect to the lights?
         self.parent.setLight(pn)
         
         

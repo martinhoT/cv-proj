@@ -20,6 +20,8 @@ WIDTH = 800
 HEIGHT = 600
 PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
+AMBIENT_LIGHT_INTENSITY = 0.4
+SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
 # If power-of-2 textures is enforced, then the code has to deal with the texture padding.
@@ -37,6 +39,8 @@ class ExplorerApp(ShowBase):
 
     def __init__(self, labyrinth_file: str, debug_opts: dict):
         ShowBase.__init__(self)
+
+        self.set_background_color(*SKY_COLOR)
 
         self.DEBUG_LOG = debug_opts.get('log', False)
         self.DEBUG_MAP = debug_opts.get('map', False)
@@ -79,7 +83,7 @@ class ExplorerApp(ShowBase):
 
         # Lighting
         # Create Ambient Light
-        ambient_light_intensity = 0.5
+        ambient_light_intensity = AMBIENT_LIGHT_INTENSITY
         ambient_light = AmbientLight('ambient_light')
         ambient_light.setColor((ambient_light_intensity, ambient_light_intensity, ambient_light_intensity, 1))
         ambient_light_np = self.render.attachNewNode(ambient_light)
@@ -109,16 +113,19 @@ class ExplorerApp(ShowBase):
         self.accept("Player-again-Ground", self.player_hit_ground)
         
     def init_models(self):
-        player_model = self.loader.loadModel(self.path_p3d / 'models/player/amongus.glb')
+        player_model: NodePath = self.loader.loadModel(self.path_p3d / 'models/player/amongus_corrected.obj')
+        for material in player_model.find_all_materials():
+            material.set_ambient(material.get_diffuse())
         # rotate player model vertically
-        player_model.setHpr(0, 0, 0)
-        player_scale = (0.5, 0.5, 0.5)
+        player_model.setHpr(0, 90, 0)
+        player_scale = (.5,) * 3
         player_position = self.labyrinth.start_pos if self.labyrinth.start_pos is not None else [self.labyrinth.width / 2, self.labyrinth.depth / 2, self.labyrinth.height]
         # Create collision node
         player_collider_node = CollisionNode("Player")
         
         player_collider_node.addSolid(CollisionCapsule(0, 0, 1, 0, 0, 2, 1))
         player_collider = player_model.attachNewNode(player_collider_node)
+        player_collider.setHpr(0, -90, 0)
         if self.DEBUG_COLLISIONS:
             player_collider.show()
 
@@ -289,7 +296,8 @@ class ExplorerApp(ShowBase):
         # Plenty of features, including normal maps and per-pixel lighting
         # (https://docs.panda3d.org/1.10/python/programming/shaders/shader-generator)
         self.render.setShaderAuto()
-
+        
+        # Apply the flashlight effect, and others, using deferred lighting
         flashlight_shader = Shader.load(Shader.SL_GLSL,
             vertex='shaders/flashlight.vert',
             fragment='shaders/flashlight.frag')
