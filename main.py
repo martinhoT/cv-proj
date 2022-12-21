@@ -70,16 +70,16 @@ class ExplorerApp(ShowBase):
         if self.DEBUG_3D_AXIS:
             self.create3dAxis()
 
+        # Collision stuff
+        self.cTrav = CollisionTraverser()
+        self.pusher = CollisionHandlerPusher()
+
         # Load the environment model
         self.labyrinth_np, self.labyrinth = self.generateLabyrinth(
             parent_node=self.render,
             labyrinth_file=labyrinth_file,
         )
 
-        # Collision stuff
-        self.cTrav = CollisionTraverser()
-        self.pusher = CollisionHandlerPusher()
-        
         self.init_models()
 
         # Lighting
@@ -145,24 +145,25 @@ class ExplorerApp(ShowBase):
         spider_scale = [Spider.SCALE * 1 for _ in range(3)]
         spiders = []
         if wall_obj.right_inside:
-            self.spawn_spider(wall_obj.position[0] + wall_obj.width, wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2] + wall_obj.height / 2, -90, -90, 0, labyrinth_np, spider_scale, (0,1,1))
+            self.spawn_spider(wall_obj.position[0] + wall_obj.width, wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2] + wall_obj.height / 2, -90, -90, 0, labyrinth_np, spider_scale, (0,1,1), wall_obj)
 
         if wall_obj.left_inside:
-            self.spawn_spider(wall_obj.position[0], wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2] + wall_obj.height / 2, 90, -90, 0, labyrinth_np, spider_scale, (0,1,1))
+            self.spawn_spider(wall_obj.position[0], wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2] + wall_obj.height / 2, 90, -90, 0, labyrinth_np, spider_scale, (0,1,1), wall_obj)
 
         if wall_obj.down_inside:
-            self.spawn_spider(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1] + wall_obj.width / 2, wall_obj.position[2] + wall_obj.height - 0.5, 0, 0, -180, labyrinth_np, spider_scale, (1,1,0))
+            self.spawn_spider(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1] + wall_obj.width / 2, wall_obj.position[2] + wall_obj.height - 0.5, 0, 0, -180, labyrinth_np, spider_scale, (1,1,0), wall_obj)
 
         if wall_obj.up_inside:
-            self.spawn_spider(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1] + wall_obj.width / 2, wall_obj.position[2] + 0.5, 0, 0, 0, labyrinth_np, spider_scale, (1,1,0))
+            self.spawn_spider(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1] - wall_obj.width / 2 , wall_obj.position[2] + wall_obj.depth + 0.5, 0, 0, 0, labyrinth_np, spider_scale, (1,1,0), wall_obj)
 
         self.spiders += spiders
             
-    def spawn_spider(self, x, y, z, h, p, r, labyrinth_np, scale, movement_axis):
+    def spawn_spider(self, x, y, z, h, p, r, labyrinth_np, scale, movement_axis, wall):
         spawn_chance = random.random()
         if spawn_chance < SPIDER_SPAWN_CHANCE:
-            spider = Spider([x, y, z], labyrinth_np, self, scale=scale, movement_axis=movement_axis)
+            spider = Spider([x, y, z], labyrinth_np, self, scale=scale, movement_axis=movement_axis, wall_dimensions=(wall.width, wall.depth, wall.height))
             spider.model.setHpr(h, p, r)
+
             self.spiders.append(spider)
             return spider
             

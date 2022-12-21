@@ -11,6 +11,7 @@ class CustomObject3D:
                 #  collision: CollisionNode = None, speed: float = 0.0):
         self.model = model
         self.position = position
+        self.relative_position = [0, 0, 0]
         # self.rotation = rotation
         self.scale = scale
         self.parent = parent
@@ -34,6 +35,7 @@ class CustomObject3D:
         new_pos = self.model.getPos() + LPoint3f(*offset)
         self.model.setPos(new_pos)
         self.position = self.model.getPos()
+        self.relative_position = [self.relative_position[i] + offset[i] for i in range(3)]
 
     def update(self):
         self.move()
