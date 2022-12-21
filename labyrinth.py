@@ -147,20 +147,20 @@ class Labyrinth:
                 for x_idx, object_type in enumerate(row):
                     block = None
 
-                    if object_type in cls.NODE_WALL_H:
-                        block = Wall(**cls.ATTRIBUTES_WALL_H, color=wall_color)
+                    if object_type == cls.NODE_WALL_H:
+                        block = Wall(**cls.ATTRIBUTES_WALL_H, floor_index=idx, color=wall_color)
 
                     elif object_type == cls.NODE_WINDOW_H:
-                        block = Window(**cls.ATTRIBUTES_WALL_H)
+                        block = Window(**cls.ATTRIBUTES_WALL_H, floor_index=idx)
 
-                    elif object_type in cls.NODE_WALL_V:
-                        block = Wall(**cls.ATTRIBUTES_WALL_V, color=wall_color)
+                    elif object_type == cls.NODE_WALL_V:
+                        block = Wall(**cls.ATTRIBUTES_WALL_V, floor_index=idx, color=wall_color)
                     
-                    elif object_type in cls.NODE_WINDOW_V:
-                        block = Window(**cls.ATTRIBUTES_WALL_V)
+                    elif object_type == cls.NODE_WINDOW_V:
+                        block = Window(**cls.ATTRIBUTES_WALL_V, floor_index=idx)
 
                     elif object_type == cls.NODE_PILLAR:
-                        block = Pillar(**cls.ATTRIBUTES_PILLAR, color=pillar_color)
+                        block = Pillar(**cls.ATTRIBUTES_PILLAR, floor_index=idx, color=pillar_color)
                     
                     elif object_type == cls.NODE_FLOOR \
                             or (object_type != cls.NODE_HOLE and previous_layout and previous_layout[y_idx][x_idx] != cls.NODE_EMPTY):
@@ -417,12 +417,14 @@ class Floor(Parallelepiped):
 
 
 class Wall(Parallelepiped):
+    floor_index: int
     east_inside: bool
     west_inside: bool
     south_inside: bool
     north_inside: bool
 
     def __init__(self,
+            floor_index: int,
             right_inside: bool=False,
             left_inside: bool=False,
             down_inside: bool=False,
@@ -434,6 +436,7 @@ class Wall(Parallelepiped):
 
         super().__init__(*args, **kwargs)
         
+        self.floor_index = floor_index
         self.east_inside = right_inside
         self.west_inside = left_inside
         self.south_inside = down_inside
@@ -441,12 +444,18 @@ class Wall(Parallelepiped):
 
 
 class Pillar(Parallelepiped):
-    
-    def __init__(self, *args, **kwargs):
+    floor_index: int
+
+    def __init__(self,
+            floor_index: int,
+            *args, **kwargs):
+
         kwargs.setdefault('tiling_factors', (1.0, 0.5))
         kwargs.setdefault('texture', TEXTURE_WALL)
 
         super().__init__(*args, **kwargs)
+
+        self.floor_index = floor_index
 
 
 class Window(Wall):
