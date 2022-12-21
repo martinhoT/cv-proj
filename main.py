@@ -262,12 +262,11 @@ class ExplorerApp(ShowBase):
         self.spiders = []
         labyrinth_np = parent_node.attachNewNode('Labyrinth')
         labyrinth = Labyrinth.from_map_file(labyrinth_file, self.DEBUG_MAP)
-        labyrinth_blocks = [generateGeometry(obj, f'wall_{idx}') for idx, obj in enumerate(labyrinth.blocks)]
+        labyrinth_blocks = [(block, generateGeometry(block, f'labyrinth_block_{idx}')) for idx, block in enumerate(labyrinth.blocks)]
         if self.DEBUG_LOG: print('Number of walls:', len(labyrinth_blocks))
-        for idx, wall in enumerate(labyrinth_blocks):
-            block = labyrinth.blocks[idx]
+        for block, block_geom in labyrinth_blocks:
             is_ground = isinstance(block, Floor)
-            wall_node = labyrinth_np.attachNewNode(wall)
+            wall_node = labyrinth_np.attachNewNode(block_geom)
             if block.texture not in textures:
                 textures[block.texture] = self.loader.loadTexture(self.path_p3d / block.texture)
             wall_node.setTexture(textures[block.texture])
