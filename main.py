@@ -125,15 +125,28 @@ class ExplorerApp(ShowBase):
         self.player = Player(player_model, player_position, self.labyrinth_np, scale=player_scale)
         self.player_position = player_position
         
-        spider_model = self.loader.loadModel(self.path_p3d / 'models/spider/SM_Japanise_Krab.obj')
-        spider_scale = [0.01 * 1 for _ in range(3)]
+        # spider_scale = [0.01 * 1 for _ in range(3)]
         
-        # self.spider = CustomObject3D(spider_model, [player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, scale=spider_scale)
-        self.spider = Spider([player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, self, scale=spider_scale)
+        # self.spider = Spider([player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, self, scale=spider_scale)
         
         self.pusher.addCollider(player_collider, self.player.model)
         self.cTrav.addCollider(player_collider, self.pusher)
         move_camera(self.camera, self.camera_zoom, self.camera_pos)
+    
+    def init_spider(self, wall_obj, labyrinth_np):
+        spider_scale = [Spider.SCALE * 1 for _ in range(3)]
+        spiders = []
+        if wall_obj.right_inside:
+            spider = Spider([wall_obj.position[0], wall_obj.position[1] + 1, wall_obj.position[2] + wall_obj.height / 2], labyrinth_np, self, scale=spider_scale)
+            spider.model.setP(-90)
+            spiders.append(spider)
+        if wall_obj.left_inside:
+            spider = Spider([wall_obj.position[0] - 1, wall_obj.position[1] - 0.5, wall_obj.position[2] + wall_obj.height / 2], labyrinth_np, self, scale=spider_scale)
+            spider.model.setP(-90)
+            spiders.append(spider)
+        
+        self.spiders += spiders
+            
         
     def player_hit_ground(self, entity):
         is_bellow_player = entity.getSurfacePoint(self.player.model).getZ() <= 0
@@ -224,8 +237,8 @@ class ExplorerApp(ShowBase):
 
     def generateLabyrinth(self, parent_node: NodePath, labyrinth_file: str) -> Tuple[NodePath, Labyrinth]:
         # Keep track of textures used by the labyrinth's blocks, so we don't have to tell Panda3D to repeatedly load them
-        textures = {}
-
+        textures = {} 
+        self.spiders = []
         labyrinth_np = parent_node.attachNewNode('Labyrinth')
         labyrinth = Labyrinth.from_map_file(labyrinth_file, self.DEBUG_MAP)
         labyrinth_walls = [generateGeometry(obj, f'wall_{idx}') for idx, obj in enumerate(labyrinth.blocks)]
@@ -243,7 +256,10 @@ class ExplorerApp(ShowBase):
             
             if isinstance(wall_obj, Window):
                 wall_node.setTransparency(True)
-
+            
+            if isinstance(wall_obj, Wall):
+                self.init_spider(wall_obj, labyrinth_np)
+            
             # Collisions
             # get center of the wall
             wall_center = Point3(wall_obj.width / 2, wall_obj.depth / 2, wall_obj.height / 2)
