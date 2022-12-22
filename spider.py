@@ -31,7 +31,7 @@ class Spider(CustomObject3D):
         
         # If the spider is close to the wall, remake movement
         for i in range(len(self.velocity)):
-            if abs(self.relative_position[i] + self.velocity[i]) > abs(self.wall_dimensions[i] / 3):
+            if abs(self.relative_position[i] + self.velocity[i]) > abs(self.wall_dimensions[i] / 4):
                 self.velocity = [0, 0, 0]
                 break
         super().update()

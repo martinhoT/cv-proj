@@ -22,6 +22,7 @@ HEIGHT = 600
 PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
 AMBIENT_LIGHT_INTENSITY = 0.4
+DIRECTIONAL_LIGHT_INTENSITY = 0.32
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 SPIDER_SPAWN_CHANCE = 1
 
@@ -90,6 +91,13 @@ class ExplorerApp(ShowBase):
         ambient_light.setColor((ambient_light_intensity, ambient_light_intensity, ambient_light_intensity, 1))
         ambient_light_np = self.render.attachNewNode(ambient_light)
         self.render.setLight(ambient_light_np)
+        
+        # Create Directional Light
+        directional_light = DirectionalLight('directional_light')
+        directional_light.setColor((DIRECTIONAL_LIGHT_INTENSITY, DIRECTIONAL_LIGHT_INTENSITY, DIRECTIONAL_LIGHT_INTENSITY, 1))
+        directional_light.direction = Vec3(0, 0, -0.5)
+        dlnp = self.render.attachNewNode(directional_light)
+        self.render.setLight(dlnp)
 
         # Task management
         self.mouse_coords = [0, 0]
