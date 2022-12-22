@@ -11,6 +11,7 @@ from panda3d.core import *
 
 from CustomObject3D import CustomObject3D
 from Player import Player
+from bird import Bird
 from spider import Spider
 from labyrinth import Floor, Parallelepiped, Labyrinth, Wall, Window
 
@@ -133,13 +134,19 @@ class ExplorerApp(ShowBase):
         self.player = Player(player_model, player_position, self.labyrinth_np, scale=player_scale)
         self.player_position = player_position
         
+        self.pusher.addCollider(player_collider, self.player.model)
+        self.cTrav.addCollider(player_collider, self.pusher)
+        move_camera(self.camera, self.camera_zoom, self.camera_pos)
+    
+        # create bird
+        self.bird = Bird([player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, self)
+        
         # spider_scale = [0.01 * 1 for _ in range(3)]
         
         # self.spider = Spider([player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, self, scale=spider_scale)
         
-        self.pusher.addCollider(player_collider, self.player.model)
-        self.cTrav.addCollider(player_collider, self.pusher)
-        move_camera(self.camera, self.camera_zoom, self.camera_pos)
+    
+    
     
     def init_spider(self, wall_obj: Wall, labyrinth_np: NodePath):
         spider_scale = [Spider.SCALE * 1 for _ in range(3)]
