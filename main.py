@@ -26,6 +26,8 @@ DIRECTIONAL_LIGHT_INTENSITY = 0.32
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 SPIDER_SPAWN_CHANCE = 1
 
+MOON_PATH = "models/moon/moon2.obj"
+
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
 # If power-of-2 textures is enforced, then the code has to deal with the texture padding.
 # We want so simplify the shader code so they are disabled. There is already wide support for non-power-of-2 textures (https://discourse.panda3d.org/t/cg-glsl-filtermanager-texpad-x/14694/8)
@@ -148,6 +150,12 @@ class ExplorerApp(ShowBase):
     
         # create bird
         self.bird = Bird([player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, self)
+        
+        # create moon
+        moon_model = self.loader.loadModel(self.path_p3d / MOON_PATH)
+        moon_position = (0, 100, 100)
+        moon_scale = [5 for _ in range(3)]
+        self.moon = CustomObject3D(moon_model, moon_position, self.labyrinth_np, scale=moon_scale)
         
     
     def init_spider(self, wall_obj: Wall, labyrinth_np: NodePath):
