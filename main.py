@@ -141,12 +141,6 @@ class ExplorerApp(ShowBase):
         # create bird
         self.bird = Bird([player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, self)
         
-        # spider_scale = [0.01 * 1 for _ in range(3)]
-        
-        # self.spider = Spider([player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, self, scale=spider_scale)
-        
-    
-    
     
     def init_spider(self, wall_obj: Wall, labyrinth_np: NodePath):
         spider_scale = [Spider.SCALE * 1 for _ in range(3)]
@@ -250,6 +244,8 @@ class ExplorerApp(ShowBase):
         
         for spider in self.spiders:
             spider.update()
+        
+        self.bird.update(task.time)
 
         return Task.cont
 
