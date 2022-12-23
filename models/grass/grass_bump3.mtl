@@ -9,4 +9,4 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Kd C:/Vinicius/blender/textures/grass/everytexture.com-stock-nature-grass-texture-00004-diffuse.jpg
+map_Kd ./everytexture.com-stock-nature-grass-texture-00004-diffuse.jpg

@@ -124,6 +124,9 @@ class ExplorerApp(ShowBase):
             if floor.strictly_roof:
                 self.labyrinth_block_nodes[floor].setLight(dlnp)
         self.bird.model.setLight(dlnp)
+        
+        for grass in self.grasses:
+            grass.model.setLight(dlnp)
 
         # test
         # self.test = PointLight('plightt')
@@ -217,7 +220,7 @@ class ExplorerApp(ShowBase):
         
         # grass_position = (self.labyrinth.width/2, self.labyrinth.depth/2, -50)
         
-        
+        self.grasses = []
         
         for i in range(-10, 10):
             for j in range(-10,10):
@@ -230,6 +233,8 @@ class ExplorerApp(ShowBase):
                 
                 if GRASS_LIGHT:
                     grass.model.setLight(self.testnp)
+                
+                self.grasses.append(grass)
         
     
     def init_spider(self, wall_obj: Wall, labyrinth_np: NodePath):
