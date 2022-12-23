@@ -27,6 +27,7 @@ AMBIENT_LIGHT_INTENSITY = 0.4
 DIRECTIONAL_LIGHT_INTENSITY = 0.4
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 SPIDER_SPAWN_CHANCE = 1
+CAMERA_SENSIBILITY = 90
 
 MOON_PATH = "models/moon/moon2.obj"
 GRASS_PATH = "models/grass/grass.glb"
@@ -49,7 +50,7 @@ class ExplorerApp(ShowBase):
         ShowBase.__init__(self)
 
         # simplepbr.init()
-
+        self.previous_mouse_pos = None
         self.set_background_color(*SKY_COLOR)
 
         self.DEBUG_LOG = debug_opts.get('log', False)
@@ -129,10 +130,12 @@ class ExplorerApp(ShowBase):
         self.accept("Player-into-Ground", self.player_hit_ground)
         self.accept("Player-again-Ground", self.player_hit_ground)
         
-        self.accept("q", self.move_camera, [(-1, 0, 0)]) 
-        self.accept("e", self.move_camera, [(1, 0, 0)])      
+        self.is_mouse_holded = False
+        
+        self.accept("mouse1", self.left_click)
+        self.accept("mouse1-up", self.left_release)
           
-               
+        self.taskMgr.add(self.update_camera_rotation_task, 'update_camera_rotation_task')
         
         
     def init_models(self):
@@ -214,16 +217,11 @@ class ExplorerApp(ShowBase):
     def move_entity(self, entity, direction):
         entity.move(*direction)
 
-    def move_camera(self, direction):
-        self.camera_pos[0] += direction[0] * 90
-        self.player.model.setH(self.camera_pos[0])
+    def left_click(self):
+        self.is_mouse_holded = True
         
-        # TODO: not used ig?
-        if direction[1] < 0 and self.camera_pos[1] > 120 or direction[1] > 0 and self.camera_pos[1] < 230:
-            self.camera_pos[1] += direction[1] * 90
-        
-        move_camera(self.camera, self.camera_zoom, self.camera_pos)
-
+    def left_release(self):
+        self.is_mouse_holded = False
 
     def read_inputs_task(self, task):
         isDown = self.mouseWatcherNode.is_button_down
@@ -232,21 +230,6 @@ class ExplorerApp(ShowBase):
         # Camera
         has_camera_moved = False
     
-        if isDown(KeyboardButton.asciiKey("j")):
-            self.camera_pos[0] -= 1
-            has_camera_moved = True
-        if isDown(KeyboardButton.asciiKey("l")):
-            self.camera_pos[0] += 1
-            has_camera_moved = True
-        if isDown(KeyboardButton.asciiKey("i")):
-            if self.camera_pos[1] > 120:
-                self.camera_pos[1] -= 1
-                has_camera_moved = True
-        if isDown(KeyboardButton.asciiKey("k")):
-            if self.camera_pos[1] < 230:
-                self.camera_pos[1] += 1
-                has_camera_moved = True
-
         if isDown(KeyboardButton.asciiKey("x")):
             self.camera_zoom -= 1
             has_camera_moved = True
@@ -269,7 +252,7 @@ class ExplorerApp(ShowBase):
         vertical_idx = 1
         rev_vertical_idx = 0
         
-        if isDown(KeyboardButton.asciiKey("a")): # 0 -> 0, 90 -> 1, 180 -> 0, 270 -> 1
+        if isDown(KeyboardButton.asciiKey("a")):
             self.player.velocity[horizontal_idx] -= PLAYER_SPEED * player_cos
             self.player.velocity[rev_horizontal_idx] -= PLAYER_SPEED * player_sin
         if isDown(KeyboardButton.asciiKey("d")):
@@ -427,6 +410,27 @@ class ExplorerApp(ShowBase):
 
         return Task.cont
 
+    def update_camera_rotation_task(self, task):
+        if self.mouseWatcherNode.hasMouse() and self.is_mouse_holded:
+            mouse_x = self.mouseWatcherNode.getMouseX()
+            mouse_y = self.mouseWatcherNode.getMouseY()
+            if self.previous_mouse_pos is None:
+                self.previous_mouse_pos = [mouse_x, mouse_y]
+                
+            mouse_offset = [mouse_x - self.previous_mouse_pos[0], mouse_y - self.previous_mouse_pos[1]]
+            self.camera_pos[0] -= mouse_offset[0] * CAMERA_SENSIBILITY
+            self.camera_pos[1] += mouse_offset[1] * CAMERA_SENSIBILITY
+            self.camera_pos[1] = max(120, self.camera_pos[1])
+            self.camera_pos[1] = min(230, self.camera_pos[1])	
+        
+            self.player.model.setH(self.camera_pos[0])
+            move_camera(self.camera, self.camera_zoom, self.camera_pos)
+            self.previous_mouse_pos = [mouse_x, mouse_y]
+            
+        elif not self.is_mouse_holded and self.previous_mouse_pos is not None:
+            self.previous_mouse_pos = None
+
+        return Task.cont
 
 
 parser = argparse.ArgumentParser('cv-proj')
