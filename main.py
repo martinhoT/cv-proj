@@ -24,7 +24,7 @@ HEIGHT = 600
 PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
 AMBIENT_LIGHT_INTENSITY = 0.4
-DIRECTIONAL_LIGHT_INTENSITY = 0.2
+DIRECTIONAL_LIGHT_INTENSITY = 0.4
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 SPIDER_SPAWN_CHANCE = 1
 CAMERA_SENSIBILITY = 90
@@ -32,8 +32,8 @@ ZOOM_SENSIBILITY = 5
 
 MOON_PATH = "models/moon/moon2.obj"
 MOON_LIGHT_INTENSITY = .25
-GRASS_PATH = "models/grass/grass.obj"
-GRASS_SCALE = 100
+GRASS_PATH = "models/grass/grass_bump3.obj"
+GRASS_SCALE = 50
 
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
 # If power-of-2 textures is enforced, then the code has to deal with the texture padding.
@@ -51,6 +51,7 @@ class ExplorerApp(ShowBase):
 
     def __init__(self, labyrinth_file: str, debug_opts: dict):
         ShowBase.__init__(self)
+
 
         # simplepbr.init()
         self.previous_mouse_pos = None
@@ -109,6 +110,12 @@ class ExplorerApp(ShowBase):
         directional_light.direction = Vec3(0, 0, -0.5)
         dlnp = self.render.attachNewNode(directional_light)
         self.render.setLight(dlnp)
+        
+        # test
+        # self.test = PointLight('plightt')
+        # self.test.setColor((.6,.6,.6,1))
+        # self.testnp = self.render.attach_new_node(self.test)
+        # self.testnp.setPos((0, 0, 0))
 
         # Task management
         self.mouse_coords = [0, 0]
@@ -142,7 +149,14 @@ class ExplorerApp(ShowBase):
         
           
         self.taskMgr.add(self.update_camera_rotation_task, 'update_camera_rotation_task')
+        # self.taskMgr.add(self.move_grasslight_task, 'move_grasslight_task')
         
+
+        
+    def move_grasslight_task(self, task):
+        angle = task.time / 2
+        self.testnp.setPos(100 * math.sin(angle), -100.0 * math.cos(angle), 3)
+        return task.cont
         
     def init_models(self):
         player_model: NodePath = self.loader.loadModel(self.path_p3d / 'models/player/amongus_corrected.obj')
@@ -180,7 +194,6 @@ class ExplorerApp(ShowBase):
         pl = PointLight('plight')
         pl.setColor((MOON_LIGHT_INTENSITY, MOON_LIGHT_INTENSITY, MOON_LIGHT_INTENSITY, 1))
         pn = self.moon.model.attachNewNode(pl)
-        # pn.attachNewNode(self.moon.model)
         pn.setPos((0, 0, 0))
         
         self.moon.model.setLight(pn)
@@ -190,13 +203,18 @@ class ExplorerApp(ShowBase):
         
         # grass_position = (self.labyrinth.width/2, self.labyrinth.depth/2, -50)
         
+        
+        
         for i in range(-10, 10):
             for j in range(-10,10):
                 # grass_position = (self.labyrinth.width/2 + i*GRASS_SCALE*2, self.labyrinth.depth/2 + j*GRASS_SCALE*2, -50)
-                model_size = .896673 * GRASS_SCALE
+                model_size = 1 * GRASS_SCALE
                 grass_model = self.loader.loadModel(self.path_p3d / GRASS_PATH)
-                grass_position = [i*model_size*2, j*model_size*2, -75]
+                # grass_model.setHpr(0, 90, 0)
+                grass_position = [i*model_size*2, j*model_size*2, -50]
                 grass = CustomObject3D(grass_model, grass_position.copy(), self.labyrinth_np, scale=grass_scale)
+                
+                # grass.model.setLight(self.testnp)
         
     
     def init_spider(self, wall_obj: Wall, labyrinth_np: NodePath):
