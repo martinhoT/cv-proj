@@ -15,7 +15,7 @@ from CustomObject3D import CustomObject3D
 from Player import Player
 from bird import Bird
 from spider import Spider
-from labyrinth import Floor, Parallelepiped, Labyrinth, Wall, Window
+from labyrinth import Floor, Parallelepiped, Labyrinth, Pillar, Wall, Window
 
 from common import *
 
@@ -108,7 +108,10 @@ class ExplorerApp(ShowBase):
         directional_light.setColor((DIRECTIONAL_LIGHT_INTENSITY, DIRECTIONAL_LIGHT_INTENSITY, DIRECTIONAL_LIGHT_INTENSITY, 1))
         directional_light.direction = Vec3(0, 0, -0.5)
         dlnp = self.render.attachNewNode(directional_light)
-        self.render.setLight(dlnp)
+        for floor in self.labyrinth.floors:
+            if floor.strictly_roof:
+                self.labyrinth_block_nodes[floor].setLight(dlnp)
+        self.bird.model.setLight(dlnp)
 
         # Task management
         self.mouse_coords = [0, 0]
