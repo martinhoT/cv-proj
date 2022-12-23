@@ -24,7 +24,7 @@ HEIGHT = 600
 PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
 AMBIENT_LIGHT_INTENSITY = 0.4
-DIRECTIONAL_LIGHT_INTENSITY = 0.4
+DIRECTIONAL_LIGHT_INTENSITY = 0.2
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 SPIDER_SPAWN_CHANCE = 1
 CAMERA_SENSIBILITY = 90
@@ -34,6 +34,8 @@ MOON_PATH = "models/moon/moon2.obj"
 MOON_LIGHT_INTENSITY = .25
 GRASS_PATH = "models/grass/grass_bump3.obj"
 GRASS_SCALE = 50
+
+GRASS_LIGHT = False
 
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
 # If power-of-2 textures is enforced, then the code has to deal with the texture padding.
@@ -94,6 +96,12 @@ class ExplorerApp(ShowBase):
             labyrinth_file=labyrinth_file,
         )
 
+        # test
+        self.test = PointLight('plightt')
+        self.test.setColor((.6,.6,.6,1))
+        self.testnp = self.render.attach_new_node(self.test)
+        self.testnp.setPos((0, 0, 0))
+
         self.init_models()
 
         # Lighting
@@ -111,11 +119,7 @@ class ExplorerApp(ShowBase):
         dlnp = self.render.attachNewNode(directional_light)
         self.render.setLight(dlnp)
         
-        # test
-        # self.test = PointLight('plightt')
-        # self.test.setColor((.6,.6,.6,1))
-        # self.testnp = self.render.attach_new_node(self.test)
-        # self.testnp.setPos((0, 0, 0))
+
 
         # Task management
         self.mouse_coords = [0, 0]
@@ -149,7 +153,7 @@ class ExplorerApp(ShowBase):
         
           
         self.taskMgr.add(self.update_camera_rotation_task, 'update_camera_rotation_task')
-        # self.taskMgr.add(self.move_grasslight_task, 'move_grasslight_task')
+        self.taskMgr.add(self.move_grasslight_task, 'move_grasslight_task')
         
 
         
@@ -214,7 +218,8 @@ class ExplorerApp(ShowBase):
                 grass_position = [i*model_size*2, j*model_size*2, -50]
                 grass = CustomObject3D(grass_model, grass_position.copy(), self.labyrinth_np, scale=grass_scale)
                 
-                # grass.model.setLight(self.testnp)
+                if GRASS_LIGHT:
+                    grass.model.setLight(self.testnp)
         
     
     def init_spider(self, wall_obj: Wall, labyrinth_np: NodePath):
