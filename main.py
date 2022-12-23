@@ -31,6 +31,7 @@ CAMERA_SENSIBILITY = 90
 ZOOM_SENSIBILITY = 5
 
 MOON_PATH = "models/moon/moon2.obj"
+MOON_LIGHT_INTENSITY = .25
 GRASS_PATH = "models/grass/grass.obj"
 GRASS_SCALE = 100
 
@@ -175,6 +176,14 @@ class ExplorerApp(ShowBase):
         moon_position = (-125, 300, 75)
         moon_scale = [5 for _ in range(3)]
         self.moon = CustomObject3D(moon_model, moon_position, self.labyrinth_np, scale=moon_scale)
+        
+        pl = PointLight('plight')
+        pl.setColor((MOON_LIGHT_INTENSITY, MOON_LIGHT_INTENSITY, MOON_LIGHT_INTENSITY, 1))
+        pn = self.moon.model.attachNewNode(pl)
+        # pn.attachNewNode(self.moon.model)
+        pn.setPos((0, 0, 0))
+        
+        self.moon.model.setLight(pn)
         
         # create grass
         grass_scale = [GRASS_SCALE for _ in range(2)] + [1]
