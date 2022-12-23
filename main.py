@@ -5,7 +5,7 @@ import random
 
 import simplepbr
 
-from typing import Tuple
+from typing import Dict, Tuple
 from direct.showbase.ShowBase import ShowBase
 from direct.filter.FilterManager import FilterManager
 from direct.task import Task
@@ -46,6 +46,8 @@ depth-bits 24
 # TODO: consistent case style? camelCase, snake_case...
 # TODO: to consider: temporary lights (like candles)? fixed literal spotlights?
 class ExplorerApp(ShowBase):
+
+    labyrinth_block_nodes: Dict[Parallelepiped, NodePath] = {}
 
     def __init__(self, labyrinth_file: str, debug_opts: dict):
         ShowBase.__init__(self)
@@ -288,6 +290,7 @@ class ExplorerApp(ShowBase):
             self.cam.node().setLens(self.camera_perspective_lens)
 
     def generateLabyrinth(self, parent_node: NodePath, labyrinth_file: str) -> Tuple[NodePath, Labyrinth]:
+        self.labyrinth_block_nodes.clear()
         # Keep track of textures used by the labyrinth's blocks, so we don't have to tell Panda3D to repeatedly load them
         textures = {} 
         self.spiders = []
@@ -296,29 +299,31 @@ class ExplorerApp(ShowBase):
         labyrinth_blocks = [(block, generateGeometry(block, f'labyrinth_block_{idx}')) for idx, block in enumerate(labyrinth.blocks)]
         if self.DEBUG_LOG: print('Number of walls:', len(labyrinth_blocks))
         for block, block_geom in labyrinth_blocks:
-            is_ground = isinstance(block, Floor)
-            wall_node = labyrinth_np.attachNewNode(block_geom)
+            block_node = labyrinth_np.attachNewNode(block_geom)
+            self.labyrinth_block_nodes[block] = block_node
+            
             if block.texture not in textures:
                 textures[block.texture] = self.loader.loadTexture(self.path_p3d / block.texture)
-            wall_node.setTexture(textures[block.texture])
-            wall_node.setPos(block.position)
-            node_name = "Ground" if is_ground else "Wall"
-            wall_collider_node = CollisionNode(node_name)
+            block_node.setTexture(textures[block.texture])
+            block_node.setPos(block.position)
             
             if isinstance(block, Window):
-                wall_node.setTransparency(True)
+                block_node.setTransparency(True)
             
             if isinstance(block, Wall):
                 self.init_spider(block, labyrinth_np)
             
             # Collisions
+            is_ground = isinstance(block, Floor)
+            node_name = "Ground" if is_ground else "Wall"
+            wall_collider_node = CollisionNode(node_name)
             # get center of the wall
             wall_center = Point3(block.width / 2, block.depth / 2, block.height / 2)
             wall_collider_node.addSolid(CollisionBox(wall_center,
                                                      block.width / 2,
                                                      block.depth / 2,
                                                      block.height / 2))
-            wall_collider = wall_node.attachNewNode(wall_collider_node)
+            wall_collider = block_node.attachNewNode(wall_collider_node)
             if self.DEBUG_COLLISIONS:
                 wall_collider.show()
         
