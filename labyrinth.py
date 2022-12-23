@@ -1,6 +1,8 @@
+import copy
+from functools import reduce
 import numpy as np
 
-from typing import Dict, Tuple, List
+from typing import Any, Callable, Dict, Set, Tuple, List
 from dataclasses import dataclass
 
 
@@ -10,19 +12,20 @@ TEXTURE_WINDOW = 'textures/glass.png'
 
 @dataclass(frozen=True)
 class Labyrinth:
-    blocks:         List['Parallelepiped']
+    blocks:         List['LabyrinthBlock']
     width:          float
     height:         float
     depth:          float
     start_pos:      Tuple[float, float, float]
     finish_pos:     Tuple[float, float, float]
+    n_floors:       int
     
+    # Convenience attributes
     walls:          List['Wall']
     windows:        List['Window']
     floors:         List['Floor']
     pillars:        List['Pillar']
 
-    n_floors:       int
 
 
     NODE_WALL_H = '-'
@@ -146,40 +149,44 @@ class Labyrinth:
             for y_idx, row in enumerate(floor_layout):
                 for x_idx, object_type in enumerate(row):
                     block = None
+                    block_args = {
+                        'cell': (x_idx, y_idx),
+                        'floor_index': idx,
+                    }
 
                     if object_type == cls.NODE_WALL_H:
-                        block = Wall(**cls.ATTRIBUTES_WALL_H, floor_index=idx, color=wall_color)
+                        block = Wall(**block_args, **cls.ATTRIBUTES_WALL_H, color=wall_color)
 
                     elif object_type == cls.NODE_WINDOW_H:
-                        block = Window(**cls.ATTRIBUTES_WALL_H, floor_index=idx)
+                        block = Window(**block_args, **cls.ATTRIBUTES_WALL_H)
 
                     elif object_type == cls.NODE_WALL_V:
-                        block = Wall(**cls.ATTRIBUTES_WALL_V, floor_index=idx, color=wall_color)
+                        block = Wall(**block_args, **cls.ATTRIBUTES_WALL_V, color=wall_color)
                     
                     elif object_type == cls.NODE_WINDOW_V:
-                        block = Window(**cls.ATTRIBUTES_WALL_V, floor_index=idx)
+                        block = Window(**block_args, **cls.ATTRIBUTES_WALL_V)
 
                     elif object_type == cls.NODE_PILLAR:
-                        block = Pillar(**cls.ATTRIBUTES_PILLAR, floor_index=idx, color=pillar_color)
+                        block = Pillar(**block_args, **cls.ATTRIBUTES_PILLAR, color=pillar_color)
                     
                     elif object_type == cls.NODE_FLOOR \
                             or (object_type != cls.NODE_HOLE and previous_layout and previous_layout[y_idx][x_idx] != cls.NODE_EMPTY):
                         
                         # Middle floor
                         if (x_idx % 2) == 1 and (y_idx % 2) == 1:
-                            block = Floor(**cls.ATTRIBUTES_FLOOR_MIDDLE, index=idx)
+                            block = Floor(**block_args, **cls.ATTRIBUTES_FLOOR_MIDDLE)
 
                         # Horizontal floor
                         elif (x_idx % 2) == 1:
-                            block = Floor(**cls.ATTRIBUTES_FLOOR_WALL_H, index=idx)
+                            block = Floor(**block_args, **cls.ATTRIBUTES_FLOOR_WALL_H)
 
                         # Vertical floor
                         elif (y_idx % 2) == 1:
-                            block = Floor(**cls.ATTRIBUTES_FLOOR_WALL_V, index=idx)
+                            block = Floor(**block_args, **cls.ATTRIBUTES_FLOOR_WALL_V)
 
                         # Pillar floor
                         else:
-                            block = Floor(**cls.ATTRIBUTES_FLOOR_PILLAR, index=idx)
+                            block = Floor(**block_args, **cls.ATTRIBUTES_FLOOR_PILLAR)
 
                         block.color = floor_color
                     
@@ -188,7 +195,7 @@ class Labyrinth:
                         length_to_center = cls.DIMS_WALL_LENGTH / 2
                         start_pos = (position[0] + length_to_center, position[1] + length_to_center, position[2] + cls.DIMS_FLOOR_HEIGHT)   # not sure why only center Y, but works
                         # Create a floor underneath
-                        block = Floor(**cls.ATTRIBUTES_FLOOR_MIDDLE, index=idx, color=floor_color)
+                        block = Floor(**block_args, **cls.ATTRIBUTES_FLOOR_MIDDLE, color=floor_color)
                     
                     elif object_type == cls.NODE_FINISH:
                         finish_pos = get_position(x_idx, y_idx, idx)
@@ -201,10 +208,10 @@ class Labyrinth:
                         if isinstance(block, Pillar):
                             # Add an extra floor block below
                             blocks.append(Floor(
+                                **block_args,
                                 **cls.ATTRIBUTES_FLOOR_PILLAR,
-                                index=idx,
-                                color=floor_color,
                                 position=position,
+                                color=floor_color,
                             ))
 
                             # Account for the fact that there is floor below
@@ -214,10 +221,10 @@ class Labyrinth:
                             # Add an extra floor block below
                             attrs = cls.ATTRIBUTES_FLOOR_WALL_H if object_type in cls.NODES_H else cls.ATTRIBUTES_FLOOR_WALL_V
                             rampart_block = Floor(
+                                **block_args,
                                 **attrs,
-                                index=idx,
-                                color=floor_color,
                                 position=position,
+                                color=floor_color,
                             )
                             blocks.append(rampart_block)
 
@@ -238,25 +245,29 @@ class Labyrinth:
         for y_idx, row in enumerate(previous_layout):
             for x_idx, object_type in enumerate(row):
                 block = None
+                block_args = {
+                    'cell': (x_idx, y_idx),
+                    'floor_index': idx + 1,
+                }
 
                 # Cover any node with roof
                 if object_type != cls.NODE_EMPTY:
                    
                     # Middle floor
                     if (x_idx % 2) == 1 and (y_idx % 2) == 1:
-                        block = Floor(**cls.ATTRIBUTES_FLOOR_MIDDLE, index=idx + 1, color=floor_color)
+                        block = Floor(**block_args, **cls.ATTRIBUTES_FLOOR_MIDDLE, color=floor_color)
 
                     # Horizontal floor
                     elif (x_idx % 2) == 1:
-                        block = Floor(**cls.ATTRIBUTES_FLOOR_WALL_H, index=idx + 1, color=floor_color)
+                        block = Floor(**block_args, **cls.ATTRIBUTES_FLOOR_WALL_H, color=floor_color)
 
                     # Vertical floor
                     elif (y_idx % 2) == 1:
-                        block = Floor(**cls.ATTRIBUTES_FLOOR_WALL_V, index=idx + 1, color=floor_color)
+                        block = Floor(**block_args, **cls.ATTRIBUTES_FLOOR_WALL_V, color=floor_color)
 
                     # Pillar floor
                     else:
-                        block = Floor(**cls.ATTRIBUTES_FLOOR_PILLAR, index=idx + 1, color=floor_color)
+                        block = Floor(**block_args, **cls.ATTRIBUTES_FLOOR_PILLAR, color=floor_color)
                 
                 if block is not None:
                     block.position = get_position(x_idx, y_idx, idx + 1)   # evil usage of 'idx' left from the previous loop
@@ -273,11 +284,11 @@ class Labyrinth:
             depth=labyrinth_depth,
             start_pos=start_pos,
             finish_pos=finish_pos,
+            n_floors=idx + 1,
             walls=[block for block in blocks if isinstance(block, Wall)],
             windows=[block for block in blocks if isinstance(block, Window)],
             floors=[block for block in blocks if isinstance(block, Floor)],
             pillars=[block for block in blocks if isinstance(block, Pillar)],
-            n_floors=idx + 1,
         )
 
 
@@ -291,63 +302,136 @@ class Labyrinth:
 
 
     @classmethod
-    def merge_blocks(cls, blocks: List['Parallelepiped']) -> List['Parallelepiped']:
+    def merge_blocks(cls, blocks: List['LabyrinthBlock']) -> List['LabyrinthBlock']:
         merged = []
 
         # Merge the floors
         floors: Dict[int, List[Floor]] = {}
         for block in blocks:
             if isinstance(block, Floor):
-                floors.setdefault(block.index, []).append(block)
+                floors.setdefault(block.floor_index, []).append(block)
 
         for floor, floor_blocks in floors.items():
-            # Just a block from which to derive non-trivial attributes, but which are assumed to be the same for all blocks in this floor
-            model_block = floor_blocks[0]
-
+            # Just blocks for each Y from which to derive non-trivial attributes, but which are assumed to be the same for all blocks in that row
+            row_model_blocks = {block.cell[1]: block for block in floor_blocks}
+            
             # Try to create horizontal strips
             horizontal_strips = []
+
             horizontal_spans = {}
             for block in floor_blocks:
-                x, y, z = block.position
-                horizontal_spans.setdefault(y, set()).add(x)
+                x, y = block.cell
+                horizontal_spans.setdefault(y, []).append(x)
+
+            # Resolve breaks, as there may be holes in the spans
+            for y, xs in horizontal_spans.items():
+                horizontal_spans[y] = cls.merge_values(
+                    values=xs,
+                    sort_key=lambda x: x,
+                    merge_key=lambda x1, x0: (x1 - x0) == 1,
+                    merge_method=lambda lst: set(lst),
+                )
+
+            # NOTE: this code is attempting to also merge along the Y axis, but it's not working properly and I don't know how to correctly handle the problem
+            # TODO: merge along y but don't accomodate for the holes, forget it
+            # def will_merge_consecutive_y_spans(y_spans1: Tuple[int, List[Set[int]]], y_spans0: Tuple[int, List[Set[int]]]) -> bool:
+            #     x_spans1 = y_spans1[1]
+            #     x_spans0 = y_spans0[1]
+
+            #     return min(x_spans1[0]) == min(x_spans0[0]) and max(x_spans1[-1]) == max(x_spans0[-1])
+
+            # def merge_consecutive_y_spans(y_spans: List[Tuple[int, List[Set[int]]]]) -> List[Tuple[Tuple[int, int], Tuple[int, int]]]:
+            #     x_span_max = ...
+            #     x_span_min = ...
+            #     x_span_total = set(range(x_span_min, x_span_max + 1))
+                
+            #     y_holes = [(y, x_span_total - reduce(lambda a, b: a | b, x_spans, set())) for y, x_spans in y_spans]
+
+
+            # horizontal_strips = cls.merge_values(
+            #     values=horizontal_spans.items(),
+            #     sort_key=tuple.__le__,
+            #     merge_key=will_merge_consecutive_y_spans,
+            #     merge_method=merge_consecutive_y_spans,
+            # )
+
+            # # Merge the spans along the y axis
+            # can_merge = set()
+            # prev_span = None
+            # for y, x_span in sorted(horizontal_spans.items()):    
+            #     if prev_span is not None and can_merge and prev_span != x_span:
+            #         print(can_merge)
+            #         print(x_span)
+            #         min_y = min(can_merge)
+            #         horizontal_strips.append(Floor(
+            #             width=prev_span[1] - prev_span[0] + cls.DIMS_WALL_THIN,
+            #             depth=y - min_y,
+            #             position=(prev_span[0], min_y, model_block.position[2]),
+            #             height=model_block.height,
+            #             index=model_block.index,
+            #             color=model_block.color
+            #         ))
+            #         can_merge.clear()
+                
+            #     can_merge.add(y)
+            #     prev_span = x_span
             
-            horizontal_spans = {y: (min(xs), max(xs)) for y, xs in horizontal_spans.items()}
-            
-            can_merge = set()
-            prev_span = None
-            for y, x_span in sorted(horizontal_spans.items()):
-                if prev_span is None or prev_span == x_span:
-                    can_merge.add(y)
-                else:
-                    y_span = (min(can_merge), max(can_merge))
-                    horizontal_strips.append(Floor(
-                        width=x_span[1] - x_span[0] + cls.DIMS_WALL_THIN,
-                        depth=y_span[1] - y_span[0] + cls.DIMS_WALL_THIN,
-                        position=(x_span[0], y_span[0], model_block.position[2]),
-                        height=model_block.height,
-                        index=model_block.index,
-                        color=model_block.color
-                    ))
-                    can_merge.clear()
-            
-            y_span = (min(can_merge), max(can_merge))
-            horizontal_strips.append(Floor(
-                width=x_span[1] - x_span[0] + cls.DIMS_WALL_THIN,
-                depth=y_span[1] - y_span[0] + cls.DIMS_WALL_THIN,
-                position=(x_span[0], y_span[0], model_block.position[2]),
-                height=model_block.height,
-                index=model_block.index,
-                color=model_block.color
-            ))
+            # # Leftover
+            # print(can_merge)
+            # y_span = (min(can_merge), max(can_merge))
+            # horizontal_strips.append(Floor(
+            #     width=x_span[1] - x_span[0] + cls.DIMS_WALL_THIN,
+            #     depth=y_span[1] - y_span[0] + cls.DIMS_WALL_THIN,
+            #     position=(x_span[0], y_span[0], model_block.position[2]),
+            #     height=model_block.height,
+            #     index=model_block.index,
+            #     color=model_block.color
+            # ))
 
             # TODO: create vertical strips and compare to see which should be used
-            
+
+            for y, x_spans in horizontal_spans.items():
+                model_block = row_model_blocks[y]
+                for x_span in x_spans:
+                    floor_blocks_at_span = [block for block in floor_blocks if block.cell[0] in x_span and block.cell[1] == y]
+
+                    merged_floor = copy.copy(model_block)
+                    merged_floor.width = sum(block.width for block in floor_blocks_at_span)
+                    merged_floor.position = (min(block.position[0] for block in floor_blocks_at_span), model_block.position[1], model_block.position[2])
+                    horizontal_strips.append(merged_floor)
+
             merged.extend(horizontal_strips)
 
         # Merge the rest
         for block in blocks:
             if not isinstance(block, Floor):
                 merged.append(block)
+
+        return merged
+
+
+    @classmethod
+    def merge_values(cls, values: List[Any],
+            sort_key: Callable[[Any, Any], bool],
+            merge_key: Callable[[Any, Any], bool],
+            merge_method: Callable[[List[Any]], Any]) -> List[Any]:
+        """
+        Merge a continuous stream of values sorted according to `sort_key`.
+        Values are considered mergeable according to `merge_key`, and each list of values to merge will be merged according to `merge_method`.
+        """
+        
+        merged = []
+        to_merge = []
+        prev_v = None
+        for v in sorted(values, key=sort_key):
+            if prev_v is not None and not merge_key(v, prev_v):
+                merged.append(merge_method(to_merge))
+                to_merge.clear()
+            to_merge.append(v)
+            prev_v = v
+        
+        # Leftover
+        merged.append(merge_method(to_merge))
 
         return merged
 
@@ -476,11 +560,24 @@ class Parallelepiped:
         return self._vertices
     
 
-class Floor(Parallelepiped):
-    index:  int
+class LabyrinthBlock(Parallelepiped):
+    cell:           Tuple[int, int]
+    floor_index:    int
+
+    def __init__(self,
+            cell: Tuple[int, int],
+            floor_index: int,
+            *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        self.cell = cell
+        self.floor_index = floor_index
+
+
+class Floor(LabyrinthBlock):
 
     def __init__(self, 
-            index: int,
             *args, **kwargs):
 
         kwargs.setdefault('tiling_factors', (1.0, 0.5))
@@ -488,18 +585,14 @@ class Floor(Parallelepiped):
 
         super().__init__(*args, **kwargs)
 
-        self.index = index
 
-
-class Wall(Parallelepiped):
-    floor_index: int
-    east_inside: bool
-    west_inside: bool
-    south_inside: bool
-    north_inside: bool
+class Wall(LabyrinthBlock):
+    east_inside:    bool
+    west_inside:    bool
+    south_inside:   bool
+    north_inside:   bool
 
     def __init__(self,
-            floor_index: int,
             right_inside: bool=False,
             left_inside: bool=False,
             down_inside: bool=False,
@@ -511,18 +604,15 @@ class Wall(Parallelepiped):
 
         super().__init__(*args, **kwargs)
         
-        self.floor_index = floor_index
         self.east_inside = right_inside
         self.west_inside = left_inside
         self.south_inside = down_inside
         self.north_inside = up_inside
 
 
-class Pillar(Parallelepiped):
-    floor_index: int
+class Pillar(LabyrinthBlock):
 
     def __init__(self,
-            floor_index: int,
             *args, **kwargs):
 
         kwargs.setdefault('tiling_factors', (1.0, 0.5))
@@ -530,11 +620,9 @@ class Pillar(Parallelepiped):
 
         super().__init__(*args, **kwargs)
 
-        self.floor_index = floor_index
-
 
 class Window(Wall):
-    
+
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('tiling_factors', None)
         kwargs.setdefault('texture', TEXTURE_WINDOW)
