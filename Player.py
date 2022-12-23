@@ -44,6 +44,7 @@ class Player(CustomObject3D):
         pn.setPos(self.position)
        
         # TODO: add glow effect to the lights?
+        # TODO: not affecting floor
         for node_to_illuminate in self.get_light_surroundings(distance_threshold=LIGHT_DISTANCE_THRESHOLD):
             node_to_illuminate.setLight(pn)
         

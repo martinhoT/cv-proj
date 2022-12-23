@@ -8,6 +8,7 @@ uniform sampler2D ntex;
 uniform vec2 u_mouse;
 uniform vec2 u_resolution;
 uniform float u_time;
+uniform float lightRadius;
 uniform float lightPower;
 uniform float lightFlickerRatio;
 
@@ -15,7 +16,6 @@ in vec2 texcoord;
 
 out vec4 p3d_FragColor;
 
-const float lightRadius = 0.2;
 const float lightBorder = 0.3;
 const int fbmNFuncs = 10;
 const float fbmLacunarity = 8.0;

@@ -29,9 +29,13 @@ SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 SPIDER_SPAWN_CHANCE = 1
 CAMERA_SENSIBILITY = 90
 ZOOM_SENSIBILITY = 5
+FLASHLIGHT_RADIUS = 0.2
+LIGHTNING_STRIKE_INTENSITY = 1.0
+LIGHTNING_STRIKE_DURATION = 0.05   # in seconds
 
 MOON_PATH = "models/moon/moon2.obj"
 MOON_LIGHT_INTENSITY = .25
+MOON_SELF_LIGHT_INTENSITY = 0.9
 GRASS_PATH = "models/grass/grass_bump4.obj"
 GRASS_SCALE = 50
 
@@ -47,6 +51,7 @@ depth-bits 24
 ''')
 
 
+# TODO: set fog for the grass? so that we can't see the horizon?
 # TODO: consistent case style? camelCase, snake_case...
 # TODO: to consider: temporary lights (like candles)? fixed literal spotlights?
 class ExplorerApp(ShowBase):
@@ -107,8 +112,8 @@ class ExplorerApp(ShowBase):
         ambient_light_intensity = AMBIENT_LIGHT_INTENSITY
         ambient_light = AmbientLight('ambient_light')
         ambient_light.setColor((ambient_light_intensity, ambient_light_intensity, ambient_light_intensity, 1))
-        ambient_light_np = self.render.attachNewNode(ambient_light)
-        self.render.setLight(ambient_light_np)
+        self.ambient_light_np = self.render.attachNewNode(ambient_light)
+        self.labyrinth_np.setLight(self.ambient_light_np)
         
         # Create Directional Light
         directional_light = DirectionalLight('directional_light')
@@ -146,6 +151,7 @@ class ExplorerApp(ShowBase):
         # inputs
         self.accept('v', self.toggle_light)
         self.accept('c', self.toggle_perspective)
+        self.accept('b', self.lightning_strike)
         self.pusher.addInPattern('%fn-into-%in')
         self.pusher.addOutPattern('%fn-out-%in')
         self.pusher.addAgainPattern('%fn-again-%in')
@@ -203,8 +209,14 @@ class ExplorerApp(ShowBase):
         moon_model = self.loader.loadModel(self.path_p3d / MOON_PATH)
         moon_position = (-125, 300, 75)
         moon_scale = [5 for _ in range(3)]
-        self.moon = CustomObject3D(moon_model, moon_position, self.labyrinth_np, scale=moon_scale)
+        self.moon = CustomObject3D(moon_model, moon_position, self.render, scale=moon_scale)
         
+        # TODO: add glow to the moon?
+        # create ambient light only for the moon
+        moon_self_light = AmbientLight('Moon self light')
+        moon_self_light.setColor((MOON_SELF_LIGHT_INTENSITY, MOON_SELF_LIGHT_INTENSITY, MOON_SELF_LIGHT_INTENSITY, 1))
+        self.moon.model.setLight( self.moon.model.attachNewNode(moon_self_light) )
+
         pl = PointLight('plight')
         pl.setColor((MOON_LIGHT_INTENSITY, MOON_LIGHT_INTENSITY, MOON_LIGHT_INTENSITY, 1))
         pn = self.moon.model.attachNewNode(pl)
@@ -338,6 +350,17 @@ class ExplorerApp(ShowBase):
         else:
             self.cam.node().setLens(self.camera_perspective_lens)
 
+    def lightning_strike(self):
+        self.ambient_light_np.node().setColor((LIGHTNING_STRIKE_INTENSITY, LIGHTNING_STRIKE_INTENSITY, LIGHTNING_STRIKE_INTENSITY, 1))
+        self.quad_filter.setShaderInput('lightRadius', 2.0)
+        self.taskMgr.doMethodLater(LIGHTNING_STRIKE_DURATION, self.lightning_strike_stop, 'Stop lightning strike')
+
+    def lightning_strike_stop(self, task):
+        self.ambient_light_np.node().setColor((AMBIENT_LIGHT_INTENSITY, AMBIENT_LIGHT_INTENSITY, AMBIENT_LIGHT_INTENSITY, 1))
+        self.quad_filter.setShaderInput('lightRadius', FLASHLIGHT_RADIUS)
+
+        return Task.done
+
     def generateLabyrinth(self, parent_node: NodePath, labyrinth_file: str) -> Tuple[NodePath, Labyrinth]:
         self.labyrinth_block_nodes.clear()
         # Keep track of textures used by the labyrinth's blocks, so we don't have to tell Panda3D to repeatedly load them
@@ -416,6 +439,7 @@ class ExplorerApp(ShowBase):
             u_mouse=self.mouse_coords,
             u_resolution=(WIDTH, HEIGHT),
             u_time=time.time() - self.start_time,
+            lightRadius=FLASHLIGHT_RADIUS,
             lightPower=self.flashlight_power,
             lightFlickerRatio=self.flashlight_flicker,
         )
