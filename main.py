@@ -3,6 +3,8 @@ import time
 import argparse
 import random
 
+import simplepbr
+
 from typing import Tuple
 from direct.showbase.ShowBase import ShowBase
 from direct.filter.FilterManager import FilterManager
@@ -11,6 +13,7 @@ from panda3d.core import *
 
 from CustomObject3D import CustomObject3D
 from Player import Player
+from bird import Bird
 from spider import Spider
 from labyrinth import Floor, Parallelepiped, Labyrinth, Wall, Window
 
@@ -21,8 +24,12 @@ HEIGHT = 600
 PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
 AMBIENT_LIGHT_INTENSITY = 0.4
+DIRECTIONAL_LIGHT_INTENSITY = 0.32
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 SPIDER_SPAWN_CHANCE = 1
+
+MOON_PATH = "models/moon/moon2.obj"
+GRASS_PATH = "models/grass/grass.glb"
 
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
 # If power-of-2 textures is enforced, then the code has to deal with the texture padding.
@@ -40,6 +47,8 @@ class ExplorerApp(ShowBase):
 
     def __init__(self, labyrinth_file: str, debug_opts: dict):
         ShowBase.__init__(self)
+
+        # simplepbr.init()
 
         self.set_background_color(*SKY_COLOR)
 
@@ -89,6 +98,13 @@ class ExplorerApp(ShowBase):
         ambient_light.setColor((ambient_light_intensity, ambient_light_intensity, ambient_light_intensity, 1))
         ambient_light_np = self.render.attachNewNode(ambient_light)
         self.render.setLight(ambient_light_np)
+        
+        # Create Directional Light
+        directional_light = DirectionalLight('directional_light')
+        directional_light.setColor((DIRECTIONAL_LIGHT_INTENSITY, DIRECTIONAL_LIGHT_INTENSITY, DIRECTIONAL_LIGHT_INTENSITY, 1))
+        directional_light.direction = Vec3(0, 0, -0.5)
+        dlnp = self.render.attachNewNode(directional_light)
+        self.render.setLight(dlnp)
 
         # Task management
         self.mouse_coords = [0, 0]
@@ -113,6 +129,7 @@ class ExplorerApp(ShowBase):
         self.accept("Player-into-Ground", self.player_hit_ground)
         self.accept("Player-again-Ground", self.player_hit_ground)
         
+        
     def init_models(self):
         player_model: NodePath = self.loader.loadModel(self.path_p3d / 'models/player/amongus_corrected.obj')
         for material in player_model.find_all_materials():
@@ -133,13 +150,25 @@ class ExplorerApp(ShowBase):
         self.player = Player(player_model, player_position, self.labyrinth_np, scale=player_scale)
         self.player_position = player_position
         
-        # spider_scale = [0.01 * 1 for _ in range(3)]
-        
-        # self.spider = Spider([player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, self, scale=spider_scale)
-        
         self.pusher.addCollider(player_collider, self.player.model)
         self.cTrav.addCollider(player_collider, self.pusher)
         move_camera(self.camera, self.camera_zoom, self.camera_pos)
+    
+        # create bird
+        self.bird = Bird([player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, self)
+        
+        # create moon
+        moon_model = self.loader.loadModel(self.path_p3d / MOON_PATH)
+        moon_position = (0, 100, 100)
+        moon_scale = [5 for _ in range(3)]
+        self.moon = CustomObject3D(moon_model, moon_position, self.labyrinth_np, scale=moon_scale)
+        
+        # create grass
+        grass_model = self.loader.loadModel(self.path_p3d / GRASS_PATH)
+        grass_position = player_position
+        grass_scale = [2 for _ in range(3)]
+        self.grass = CustomObject3D(grass_model, grass_position, self.labyrinth_np, scale=grass_scale)
+        
     
     def init_spider(self, wall_obj: Wall, labyrinth_np: NodePath):
         spider_scale = [Spider.SCALE * 1 for _ in range(3)]
@@ -243,6 +272,8 @@ class ExplorerApp(ShowBase):
         
         for spider in self.spiders:
             spider.update()
+        
+        self.bird.update(task.time)
 
         return Task.cont
 
