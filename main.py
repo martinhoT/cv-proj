@@ -24,14 +24,16 @@ HEIGHT = 600
 PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
 AMBIENT_LIGHT_INTENSITY = 0.4
-DIRECTIONAL_LIGHT_INTENSITY = 0.32
+DIRECTIONAL_LIGHT_INTENSITY = 0.2
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 SPIDER_SPAWN_CHANCE = 1
 CAMERA_SENSIBILITY = 90
 ZOOM_SENSIBILITY = 5
 
 MOON_PATH = "models/moon/moon2.obj"
-GRASS_PATH = "models/grass/grass.glb"
+MOON_LIGHT_INTENSITY = .25
+GRASS_PATH = "models/grass/grass.obj"
+GRASS_SCALE = 100
 
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
 # If power-of-2 textures is enforced, then the code has to deal with the texture padding.
@@ -180,11 +182,26 @@ class ExplorerApp(ShowBase):
         moon_scale = [5 for _ in range(3)]
         self.moon = CustomObject3D(moon_model, moon_position, self.labyrinth_np, scale=moon_scale)
         
+        pl = PointLight('plight')
+        pl.setColor((MOON_LIGHT_INTENSITY, MOON_LIGHT_INTENSITY, MOON_LIGHT_INTENSITY, 1))
+        pn = self.moon.model.attachNewNode(pl)
+        # pn.attachNewNode(self.moon.model)
+        pn.setPos((0, 0, 0))
+        
+        self.moon.model.setLight(pn)
+        
         # create grass
-        grass_model = self.loader.loadModel(self.path_p3d / GRASS_PATH)
-        grass_position = player_position
-        grass_scale = [2 for _ in range(3)]
-        # self.grass = CustomObject3D(grass_model, grass_position, self.labyrinth_np, scale=grass_scale)
+        grass_scale = [GRASS_SCALE for _ in range(2)] + [1]
+        
+        # grass_position = (self.labyrinth.width/2, self.labyrinth.depth/2, -50)
+        
+        for i in range(-10, 10):
+            for j in range(-10,10):
+                # grass_position = (self.labyrinth.width/2 + i*GRASS_SCALE*2, self.labyrinth.depth/2 + j*GRASS_SCALE*2, -50)
+                model_size = .896673 * GRASS_SCALE
+                grass_model = self.loader.loadModel(self.path_p3d / GRASS_PATH)
+                grass_position = [i*model_size*2, j*model_size*2, -75]
+                grass = CustomObject3D(grass_model, grass_position.copy(), self.labyrinth_np, scale=grass_scale)
         
     
     def init_spider(self, wall_obj: Wall, labyrinth_np: NodePath):
@@ -235,6 +252,7 @@ class ExplorerApp(ShowBase):
     def on_mouse_wheel(self, delta):
         self.camera_zoom -= delta
         self.camera_zoom = max(self.camera_zoom, 10)
+        self.camera_zoom = min(self.camera_zoom, 150)
         move_camera(self.camera, self.camera_zoom, self.camera_pos)
 
     def read_inputs_task(self, task):
