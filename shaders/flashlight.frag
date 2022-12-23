@@ -113,7 +113,9 @@ void main() {
     float useBaseColor = smoothstep(0.4, 1.0, lightnessFactor);
     // Use the flashlight if the base color is not too lit, and keep the base lighting otherwise
     
-    p3d_FragColor = mix(base * flashlightLit, base * lightFlicker, useBaseColor);
+    // Let all other lights flicker as well (affects the moon too...)
+    // p3d_FragColor = mix(base * flashlightLit, base * lightFlicker, useBaseColor);
+    p3d_FragColor = mix(base * flashlightLit, base, useBaseColor);
     
     // Test values
     // p3d_FragColor = vec4(depth);   // Depth buffer
