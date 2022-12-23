@@ -172,7 +172,7 @@ class ExplorerApp(ShowBase):
         grass_model = self.loader.loadModel(self.path_p3d / GRASS_PATH)
         grass_position = player_position
         grass_scale = [2 for _ in range(3)]
-        self.grass = CustomObject3D(grass_model, grass_position, self.labyrinth_np, scale=grass_scale)
+        # self.grass = CustomObject3D(grass_model, grass_position, self.labyrinth_np, scale=grass_scale)
         
     
     def init_spider(self, wall_obj: Wall, labyrinth_np: NodePath):
@@ -231,6 +231,21 @@ class ExplorerApp(ShowBase):
 
         # Camera
         has_camera_moved = False
+    
+        if isDown(KeyboardButton.asciiKey("j")):
+            self.camera_pos[0] -= 1
+            has_camera_moved = True
+        if isDown(KeyboardButton.asciiKey("l")):
+            self.camera_pos[0] += 1
+            has_camera_moved = True
+        if isDown(KeyboardButton.asciiKey("i")):
+            if self.camera_pos[1] > 120:
+                self.camera_pos[1] -= 1
+                has_camera_moved = True
+        if isDown(KeyboardButton.asciiKey("k")):
+            if self.camera_pos[1] < 230:
+                self.camera_pos[1] += 1
+                has_camera_moved = True
 
         if isDown(KeyboardButton.asciiKey("x")):
             self.camera_zoom -= 1
@@ -240,22 +255,33 @@ class ExplorerApp(ShowBase):
             has_camera_moved = True
         
         if has_camera_moved:
+            self.player.model.setH(self.camera_pos[0])
             move_camera(self.camera, self.camera_zoom, self.camera_pos)
 
         #Player
         self.player.velocity[0] = 0
         self.player.velocity[1] = 0
         player_radians = math.radians(self.player.model.getH())
-        horizontal_idx = int(math.sin(player_radians))
-        vertical_idx = int(math.cos(player_radians))
+        player_sin = math.sin(player_radians)
+        player_cos = math.cos(player_radians)
+        horizontal_idx = 0
+        rev_horizontal_idx = 1
+        vertical_idx = 1
+        rev_vertical_idx = 0
+        
         if isDown(KeyboardButton.asciiKey("a")): # 0 -> 0, 90 -> 1, 180 -> 0, 270 -> 1
-            self.player.velocity[abs(horizontal_idx)] -= PLAYER_SPEED * horizontal_idx if horizontal_idx != 0 else PLAYER_SPEED
+            self.player.velocity[horizontal_idx] -= PLAYER_SPEED * player_cos
+            self.player.velocity[rev_horizontal_idx] -= PLAYER_SPEED * player_sin
         if isDown(KeyboardButton.asciiKey("d")):
-            self.player.velocity[abs(horizontal_idx)] += PLAYER_SPEED * horizontal_idx if horizontal_idx != 0 else PLAYER_SPEED
+            self.player.velocity[horizontal_idx] += PLAYER_SPEED * player_cos 
+            self.player.velocity[rev_horizontal_idx] += PLAYER_SPEED * player_sin
         if isDown(KeyboardButton.asciiKey("w")):
-            self.player.velocity[abs(vertical_idx)] += PLAYER_SPEED * -horizontal_idx if vertical_idx == 0 else PLAYER_SPEED
+            self.player.velocity[vertical_idx] += PLAYER_SPEED * player_cos 
+            self.player.velocity[rev_vertical_idx] -= PLAYER_SPEED * player_sin
         if isDown(KeyboardButton.asciiKey("s")):
-            self.player.velocity[abs(vertical_idx)] -= PLAYER_SPEED * -horizontal_idx if vertical_idx == 0 else PLAYER_SPEED
+            self.player.velocity[vertical_idx] -= PLAYER_SPEED * player_cos 
+            self.player.velocity[rev_vertical_idx] += PLAYER_SPEED * player_sin
+            
         if isDown(KeyboardButton.space()):
             if self.player.is_on_ground:
                 self.player.velocity[2] = PLAYER_JUMP_SPEED
@@ -264,7 +290,6 @@ class ExplorerApp(ShowBase):
             self.player.put_light()
         
         # Update entities
-        
         self.player.update()
         
         for spider in self.spiders:
