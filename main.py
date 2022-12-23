@@ -32,7 +32,7 @@ ZOOM_SENSIBILITY = 5
 
 MOON_PATH = "models/moon/moon2.obj"
 MOON_LIGHT_INTENSITY = .25
-GRASS_PATH = "models/grass/grass_bump3.obj"
+GRASS_PATH = "models/grass/grass_bump4.obj"
 GRASS_SCALE = 50
 
 GRASS_LIGHT = False
@@ -221,10 +221,8 @@ class ExplorerApp(ShowBase):
         
         for i in range(-10, 10):
             for j in range(-10,10):
-                # grass_position = (self.labyrinth.width/2 + i*GRASS_SCALE*2, self.labyrinth.depth/2 + j*GRASS_SCALE*2, -50)
                 model_size = 1 * GRASS_SCALE
                 grass_model = self.loader.loadModel(self.path_p3d / GRASS_PATH)
-                # grass_model.setHpr(0, 90, 0)
                 grass_position = [i*model_size*2, j*model_size*2, -50]
                 grass = CustomObject3D(grass_model, grass_position.copy(), self.labyrinth_np, scale=grass_scale)
                 
