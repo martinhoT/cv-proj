@@ -24,10 +24,11 @@ HEIGHT = 600
 PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
 AMBIENT_LIGHT_INTENSITY = 0.4
-DIRECTIONAL_LIGHT_INTENSITY = 0.4
+DIRECTIONAL_LIGHT_INTENSITY = 0.32
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 SPIDER_SPAWN_CHANCE = 1
 CAMERA_SENSIBILITY = 90
+ZOOM_SENSIBILITY = 5
 
 MOON_PATH = "models/moon/moon2.obj"
 GRASS_PATH = "models/grass/grass.glb"
@@ -130,10 +131,13 @@ class ExplorerApp(ShowBase):
         self.accept("Player-into-Ground", self.player_hit_ground)
         self.accept("Player-again-Ground", self.player_hit_ground)
         
+        # Mouse inputs
         self.is_mouse_holded = False
-        
         self.accept("mouse1", self.left_click)
         self.accept("mouse1-up", self.left_release)
+        self.accept("wheel_up", self.on_mouse_wheel, [ZOOM_SENSIBILITY])
+        self.accept("wheel_down", self.on_mouse_wheel, [-ZOOM_SENSIBILITY])
+        
           
         self.taskMgr.add(self.update_camera_rotation_task, 'update_camera_rotation_task')
         
@@ -222,24 +226,15 @@ class ExplorerApp(ShowBase):
         
     def left_release(self):
         self.is_mouse_holded = False
+    
+    def on_mouse_wheel(self, delta):
+        self.camera_zoom -= delta
+        self.camera_zoom = max(self.camera_zoom, 10)
+        move_camera(self.camera, self.camera_zoom, self.camera_pos)
 
     def read_inputs_task(self, task):
         isDown = self.mouseWatcherNode.is_button_down
         MouseWatcher
-
-        # Camera
-        has_camera_moved = False
-    
-        if isDown(KeyboardButton.asciiKey("x")):
-            self.camera_zoom -= 1
-            has_camera_moved = True
-        if isDown(KeyboardButton.asciiKey("z")):
-            self.camera_zoom += 1
-            has_camera_moved = True
-        
-        if has_camera_moved:
-            self.player.model.setH(self.camera_pos[0])
-            move_camera(self.camera, self.camera_zoom, self.camera_pos)
 
         #Player
         self.player.velocity[0] = 0
