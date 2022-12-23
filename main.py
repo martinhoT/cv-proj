@@ -24,7 +24,7 @@ HEIGHT = 600
 PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
 AMBIENT_LIGHT_INTENSITY = 0.4
-DIRECTIONAL_LIGHT_INTENSITY = 0.32
+DIRECTIONAL_LIGHT_INTENSITY = 0.4
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 SPIDER_SPAWN_CHANCE = 1
 
@@ -119,7 +119,7 @@ class ExplorerApp(ShowBase):
         self.setupShaders()
 
         # inputs
-        self.accept('x', self.toggle_light)
+        self.accept('v', self.toggle_light)
         self.accept('c', self.toggle_perspective)
         self.pusher.addInPattern('%fn-into-%in')
         self.pusher.addOutPattern('%fn-out-%in')
@@ -128,6 +128,11 @@ class ExplorerApp(ShowBase):
         self.accept("Player-out-Ground", self.player_out_ground)
         self.accept("Player-into-Ground", self.player_hit_ground)
         self.accept("Player-again-Ground", self.player_hit_ground)
+        
+        self.accept("q", self.move_camera, [(-1, 0, 0)]) 
+        self.accept("e", self.move_camera, [(1, 0, 0)])      
+          
+               
         
         
     def init_models(self):
@@ -159,7 +164,7 @@ class ExplorerApp(ShowBase):
         
         # create moon
         moon_model = self.loader.loadModel(self.path_p3d / MOON_PATH)
-        moon_position = (0, 100, 100)
+        moon_position = (-125, 300, 75)
         moon_scale = [5 for _ in range(3)]
         self.moon = CustomObject3D(moon_model, moon_position, self.labyrinth_np, scale=moon_scale)
         
@@ -209,61 +214,47 @@ class ExplorerApp(ShowBase):
     def move_entity(self, entity, direction):
         entity.move(*direction)
 
+    def move_camera(self, direction):
+        self.camera_pos[0] += direction[0] * 90
+        if direction[1] < 0 and self.camera_pos[1] > 120 or direction[1] > 0 and self.camera_pos[1] < 230:
+            self.camera_pos[1] += direction[1] * 90
+        
+        move_camera(self.camera, self.camera_zoom, self.camera_pos)
+
+
     def read_inputs_task(self, task):
         isDown = self.mouseWatcherNode.is_button_down
+        MouseWatcher
 
         # Camera
         has_camera_moved = False
-        if isDown(KeyboardButton.asciiKey("a")):
-            self.camera_pos[0] -= 1
-            has_camera_moved = True
-        if isDown(KeyboardButton.asciiKey("d")):
-            self.camera_pos[0] += 1
-            has_camera_moved = True
-        if isDown(KeyboardButton.asciiKey("w")):
-            if self.camera_pos[1] > 120:
-                self.camera_pos[1] -= 1
-                has_camera_moved = True
-        if isDown(KeyboardButton.asciiKey("s")):
-            if self.camera_pos[1] < 230:
-                self.camera_pos[1] += 1
-                has_camera_moved = True
-        if isDown(KeyboardButton.asciiKey("e")):
+
+        if isDown(KeyboardButton.asciiKey("x")):
             self.camera_zoom -= 1
             has_camera_moved = True
-        if isDown(KeyboardButton.asciiKey("q")):
+        if isDown(KeyboardButton.asciiKey("z")):
             self.camera_zoom += 1
             has_camera_moved = True
         
         if has_camera_moved:
             move_camera(self.camera, self.camera_zoom, self.camera_pos)
 
-        # Flashlight
-        if isDown(KeyboardButton.left()):
-            self.flashlight_pos[0] -= 1
-        if isDown(KeyboardButton.right()):
-            self.flashlight_pos[0] += 1
-        if isDown(KeyboardButton.up()):
-            self.flashlight_pos[1] += 1
-        if isDown(KeyboardButton.down()):
-            self.flashlight_pos[1] -= 1
-
         #Player
         self.player.velocity[0] = 0
         self.player.velocity[1] = 0
-        if isDown(KeyboardButton.asciiKey("j")):
+        if isDown(KeyboardButton.asciiKey("a")):
             self.player.velocity[0] -= PLAYER_SPEED
-        if isDown(KeyboardButton.asciiKey("l")):
+        if isDown(KeyboardButton.asciiKey("d")):
             self.player.velocity[0] += PLAYER_SPEED
-        if isDown(KeyboardButton.asciiKey("i")):
+        if isDown(KeyboardButton.asciiKey("w")):
             self.player.velocity[1] += PLAYER_SPEED
-        if isDown(KeyboardButton.asciiKey("k")):
+        if isDown(KeyboardButton.asciiKey("s")):
             self.player.velocity[1] -= PLAYER_SPEED
-        if isDown(KeyboardButton.asciiKey("u")):
+        if isDown(KeyboardButton.space()):
             if self.player.is_on_ground:
                 self.player.velocity[2] = PLAYER_JUMP_SPEED
                 self.player.is_on_ground = False
-        if isDown(KeyboardButton.asciiKey("o")):
+        if isDown(KeyboardButton.asciiKey("f")):
             self.player.put_light()
         
         # Update entities
