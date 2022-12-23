@@ -216,6 +216,9 @@ class ExplorerApp(ShowBase):
 
     def move_camera(self, direction):
         self.camera_pos[0] += direction[0] * 90
+        self.player.model.setH(self.camera_pos[0])
+        
+        # TODO: not used ig?
         if direction[1] < 0 and self.camera_pos[1] > 120 or direction[1] > 0 and self.camera_pos[1] < 230:
             self.camera_pos[1] += direction[1] * 90
         
@@ -242,14 +245,17 @@ class ExplorerApp(ShowBase):
         #Player
         self.player.velocity[0] = 0
         self.player.velocity[1] = 0
-        if isDown(KeyboardButton.asciiKey("a")):
-            self.player.velocity[0] -= PLAYER_SPEED
+        player_radians = math.radians(self.player.model.getH())
+        horizontal_idx = int(math.sin(player_radians))
+        vertical_idx = int(math.cos(player_radians))
+        if isDown(KeyboardButton.asciiKey("a")): # 0 -> 0, 90 -> 1, 180 -> 0, 270 -> 1
+            self.player.velocity[abs(horizontal_idx)] -= PLAYER_SPEED * horizontal_idx if horizontal_idx != 0 else PLAYER_SPEED
         if isDown(KeyboardButton.asciiKey("d")):
-            self.player.velocity[0] += PLAYER_SPEED
+            self.player.velocity[abs(horizontal_idx)] += PLAYER_SPEED * horizontal_idx if horizontal_idx != 0 else PLAYER_SPEED
         if isDown(KeyboardButton.asciiKey("w")):
-            self.player.velocity[1] += PLAYER_SPEED
+            self.player.velocity[abs(vertical_idx)] += PLAYER_SPEED * -horizontal_idx if vertical_idx == 0 else PLAYER_SPEED
         if isDown(KeyboardButton.asciiKey("s")):
-            self.player.velocity[1] -= PLAYER_SPEED
+            self.player.velocity[abs(vertical_idx)] -= PLAYER_SPEED * -horizontal_idx if vertical_idx == 0 else PLAYER_SPEED
         if isDown(KeyboardButton.space()):
             if self.player.is_on_ground:
                 self.player.velocity[2] = PLAYER_JUMP_SPEED
