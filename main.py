@@ -98,11 +98,7 @@ class ExplorerApp(ShowBase):
             labyrinth_file=labyrinth_file,
         )
 
-        # test
-        self.test = PointLight('plightt')
-        self.test.setColor((.6,.6,.6,1))
-        self.testnp = self.render.attach_new_node(self.test)
-        self.testnp.setPos((0, 0, 0))
+
 
         self.init_models()
 
@@ -125,14 +121,15 @@ class ExplorerApp(ShowBase):
                 self.labyrinth_block_nodes[floor].setLight(dlnp)
         self.bird.model.setLight(dlnp)
         
+        
+        self.grass_light = PointLight('plightt')
+        self.grass_light.setColor((.6,.6,.6,1))
+        self.grass_lightnp = self.render.attach_new_node(self.grass_light)
+        self.grass_lightnp.setPos((0, 0, 0))
+        
         for grass in self.grasses:
             grass.model.setLight(dlnp)
-
-        # test
-        # self.test = PointLight('plightt')
-        # self.test.setColor((.6,.6,.6,1))
-        # self.testnp = self.render.attach_new_node(self.test)
-        # self.testnp.setPos((0, 0, 0))
+            grass.model.setLight(self.grass_lightnp)
 
         # Task management
         self.mouse_coords = [0, 0]
@@ -172,7 +169,7 @@ class ExplorerApp(ShowBase):
         
     def move_grasslight_task(self, task):
         angle = task.time / 2
-        self.testnp.setPos(100 * math.sin(angle), -100.0 * math.cos(angle), 3)
+        self.grass_lightnp.setPos(100 * math.sin(angle), -100.0 * math.cos(angle), 3)
         return task.cont
         
     def init_models(self):
