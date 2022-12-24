@@ -208,7 +208,7 @@ class ExplorerApp(ShowBase):
         moon_model = self.loader.loadModel(self.path_p3d / MOON_PATH)
         moon_position = (-125, 300, 75)
         moon_scale = [5 for _ in range(3)]
-        self.moon = CustomObject3D(moon_model, moon_position, self.render, scale=moon_scale)
+        self.moon = CustomObject3D(moon_model, moon_position, self.render, scale=moon_scale, is_flat=True)
         
         # TODO: add glow to the moon?
         # create ambient light only for the moon

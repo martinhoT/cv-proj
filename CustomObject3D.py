@@ -1,5 +1,6 @@
-from panda3d.core import NodePath, CollisionNode, LPoint3f
+from panda3d.core import NodePath, LPoint3f, ShadeModelAttrib
 from typing import Tuple, List
+
 
 
 GRAVITY = 0.01
@@ -7,7 +8,8 @@ GRAVITY = 0.01
 class CustomObject3D:
 
     def __init__(self, model: NodePath, position: Tuple[float, float, float],
-                 parent: NodePath, scale: Tuple[float, float, float] = (1, 1, 1)):
+                 parent: NodePath, scale: Tuple[float, float, float] = (1, 1, 1),
+                 is_flat: bool = False):
                 #  collision: CollisionNode = None, speed: float = 0.0):
         self.model = model
         self.position = position
@@ -21,6 +23,8 @@ class CustomObject3D:
         # Apply scale and position transforms on the model
         self.set_scale(*scale)
         self.set_pos(*position)
+        if is_flat:
+            model.node().setAttrib(ShadeModelAttrib.make(ShadeModelAttrib.MFlat))
 
     def set_scale(self, scale_x, scale_y, scale_z):
         self.model.setScale(scale_x, scale_y, scale_z)

@@ -15,11 +15,10 @@ class Spider(CustomObject3D):
     def __init__(self, position, parent, game, scale=[.01, .01, .01], movement_axis=(1, 1, 1), wall_dimensions=(1, 1, 1)):
         model = game.loader.loadModel(MODEL_PATH)
         flat_chance = random.random()
-        if flat_chance < FLAT_SHADING_CHANCE:
-            model.node().setAttrib(ShadeModelAttrib.make(ShadeModelAttrib.MFlat))
+        is_flat = flat_chance < FLAT_SHADING_CHANCE
         random_scale = random.uniform(-SPIDER_SCALE_VARIATION, SPIDER_SCALE_VARIATION)
         scale = [scale[i] + random_scale for i in range(3)]
-        super().__init__(model, position, parent, scale)
+        super().__init__(model, position, parent, scale, is_flat=is_flat)
         self.gravity = 0
         self.movement_axis = movement_axis
         self.wall_dimensions = wall_dimensions
