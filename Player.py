@@ -47,7 +47,8 @@ class Player(CustomObject3D):
         # TODO: not affecting floor
         for node_to_illuminate in self.get_light_surroundings(distance_threshold=LIGHT_DISTANCE_THRESHOLD):
             node_to_illuminate.setLight(pn)
-        
+            node_to_illuminate.show()
+
     def get_light_surroundings(self, distance_threshold: float) -> Generator[NodePath, None, None]:
         for child in self.parent.children:
             # To make sure that the light only affects objects within the same floor

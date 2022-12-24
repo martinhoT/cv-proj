@@ -69,6 +69,7 @@ class ExplorerApp(ShowBase):
         self.DEBUG_3D_AXIS = debug_opts.get('3d_axis', False)
         self.DEBUG_COLLISIONS = debug_opts.get('collisions', False)
         self.DEBUG_MOUSE_CAMERA = debug_opts.get('mouse_camera', False)
+        self.DEBUG_HIDE_UNLIT = debug_opts.get('hide_unlit', False)
 
         # set window size
         props = WindowProperties()
@@ -326,6 +327,9 @@ class ExplorerApp(ShowBase):
                 self.player.velocity[2] = PLAYER_JUMP_SPEED
                 self.player.is_on_ground = False
         if isDown(KeyboardButton.asciiKey("f")):
+            if self.DEBUG_HIDE_UNLIT:
+                for np in self.labyrinth_np.children:
+                    np.hide()
             self.player.put_light()
         
         # Update entities
@@ -523,6 +527,9 @@ parser_debug.add_argument('--debug.3d-axis',
 parser_debug.add_argument('--debug.collisions',
     action='store_true',
     help='show the collision boundaries')
+parser_debug.add_argument('--debug.hide_unlit',
+    action='store_true',
+    help='when putting a light, only show the labyrinth nodes that were lit')
 parser_debug.add_argument('--debug.fps',
     action='store_true',
     help='show an FPS counter at the top right')
