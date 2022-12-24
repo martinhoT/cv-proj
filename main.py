@@ -3,8 +3,6 @@ import time
 import argparse
 import random
 
-import simplepbr
-
 from typing import Dict, Tuple
 from direct.showbase.ShowBase import ShowBase
 from direct.filter.FilterManager import FilterManager
@@ -15,7 +13,7 @@ from CustomObject3D import CustomObject3D
 from Player import Player
 from bird import Bird
 from spider import Spider
-from labyrinth import Floor, Parallelepiped, Labyrinth, Pillar, Wall, Window
+from labyrinth import Floor, Parallelepiped, Labyrinth, Wall, Window
 
 from common import *
 
@@ -34,7 +32,7 @@ LIGHTNING_STRIKE_INTENSITY = 1.0
 LIGHTNING_STRIKE_DURATION = 0.05   # in seconds
 
 MOON_PATH = "models/moon/moon2.obj"
-MOON_LIGHT_INTENSITY = .25
+MOON_LIGHT_INTENSITY = 0.25
 MOON_SELF_LIGHT_INTENSITY = 0.9
 GRASS_PATH = "models/grass/grass_bump4.obj"
 GRASS_SCALE = 50
