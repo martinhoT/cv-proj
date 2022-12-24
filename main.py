@@ -11,8 +11,7 @@ from panda3d.core import *
 
 from CustomObject3D import CustomObject3D
 from Player import Player
-from bird import Bird
-from spider import Spider
+from mobs import Bird, Spider, Firefly
 from labyrinth import Floor, Parallelepiped, Labyrinth, Wall, Window
 
 from common import *
@@ -37,7 +36,7 @@ MOON_SELF_LIGHT_INTENSITY = 0.9
 GRASS_PATH = "models/grass/grass_bump4.obj"
 GRASS_SCALE = 50
 
-GRASS_LIGHT = False
+GRASS_LIGHT = True
 
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
 # If power-of-2 textures is enforced, then the code has to deal with the texture padding.
@@ -102,8 +101,6 @@ class ExplorerApp(ShowBase):
             labyrinth_file=labyrinth_file,
         )
 
-
-
         self.init_models()
 
         # Lighting
@@ -128,12 +125,14 @@ class ExplorerApp(ShowBase):
         
         self.grass_light = PointLight('plightt')
         self.grass_light.setColor((.6,.6,.6,1))
-        self.grass_lightnp = self.render.attach_new_node(self.grass_light)
-        self.grass_lightnp.setPos((0, 0, 0))
+        if GRASS_LIGHT:
+            self.grass_lightnp = self.render.attach_new_node(self.grass_light)
+            self.grass_lightnp.setPos((0, 0, 0))
         
         for grass in self.grasses:
             grass.model.setLight(dlnp)
-            grass.model.setLight(self.grass_lightnp)
+            if GRASS_LIGHT:
+                grass.model.setLight(self.grass_lightnp)
 
         # Task management
         self.mouse_coords = [0, 0]
@@ -168,9 +167,9 @@ class ExplorerApp(ShowBase):
         
           
         self.taskMgr.add(self.update_camera_rotation_task, 'update_camera_rotation_task')
-        self.taskMgr.add(self.move_grasslight_task, 'move_grasslight_task')
         
-
+        if GRASS_LIGHT:
+            self.taskMgr.add(self.move_grasslight_task, 'move_grasslight_task')
         
     def move_grasslight_task(self, task):
         angle = task.time / 2
@@ -226,8 +225,6 @@ class ExplorerApp(ShowBase):
         # create grass
         grass_scale = [GRASS_SCALE for _ in range(2)] + [1]
         
-        # grass_position = (self.labyrinth.width/2, self.labyrinth.depth/2, -50)
-        
         self.grasses = []
         
         for i in range(-10, 10):
@@ -236,12 +233,12 @@ class ExplorerApp(ShowBase):
                 grass_model = self.loader.loadModel(self.path_p3d / GRASS_PATH)
                 grass_position = [i*model_size*2, j*model_size*2, -50]
                 grass = CustomObject3D(grass_model, grass_position.copy(), self.labyrinth_np, scale=grass_scale)
-                
-                if GRASS_LIGHT:
-                    grass.model.setLight(self.testnp)
-                
                 self.grasses.append(grass)
         
+        # create fireflies
+        firefly_height = -10
+        #self.firefly = Firefly([player_position[0], player_position[1], player_position[2] - firefly_height], 
+        #                       self.labyrinth_np, self, rotation_center=[15, 10, firefly_height])
     
     def init_spider(self, wall_obj: Wall, labyrinth_np: NodePath):
         spider_scale = [Spider.SCALE * 1 for _ in range(3)]
@@ -339,6 +336,7 @@ class ExplorerApp(ShowBase):
             spider.update()
         
         self.bird.update(task.time)
+        # self.firefly.update(task.time)
 
         return Task.cont
 
