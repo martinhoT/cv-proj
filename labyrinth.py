@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 
 TEXTURE_WALL = 'textures/wall.png'
+TEXTURE_WALL_TILING_FACTORS = (0.3, 0.15)
 TEXTURE_WINDOW = 'textures/glass.png'
 
 @dataclass(frozen=True)
@@ -532,7 +533,28 @@ class Parallelepiped:
         ]
         normal_cols = np.vstack( [np.repeat([normal], 6, axis=0) for normal in normals] )
 
-        self._vertices = np.hstack([ vertices, color_cols, normal_cols ])
+        # Tangent and binormal vectors are needed for bump mapping: https://discourse.panda3d.org/t/custom-geometry-and-bump-mapping-bts-space/24256/3
+        tangents = [
+            [ ux,  0,  0],   # BOTTOM
+            [-ux,  0,  0],   # TOP
+            [ 0, -ux,  0],   # LEFT
+            [ 0,  ux,  0],   # RIGHT
+            [ ux,  0,  0],   # BACK
+            [ ux,  0,  0],   # FRONT
+        ]
+        tangent_cols = np.vstack( [np.repeat([tangent], 6, axis=0) for tangent in tangents] )
+
+        binormals = [
+            [ 0,  uy,  0],   # BOTTOM
+            [ 0,  uy,  0],   # TOP
+            [ 0,  0,  uy],   # LEFT
+            [ 0,  0,  uy],   # RIGHT
+            [ 0,  0,  uy],   # BACK
+            [ 0,  0,  uy],   # FRONT
+        ]
+        binormal_cols = np.vstack( [np.repeat([binormal], 6, axis=0) for binormal in binormals] )
+
+        self._vertices = np.hstack([ vertices, color_cols, normal_cols, tangent_cols, binormal_cols ])
 
 
     def get_vertices(self) -> np.ndarray:
@@ -563,7 +585,7 @@ class Floor(LabyrinthBlock):
             strictly_roof: bool,
             *args, **kwargs):
 
-        kwargs.setdefault('tiling_factors', (1.0, 0.5))
+        kwargs.setdefault('tiling_factors', TEXTURE_WALL_TILING_FACTORS)
         kwargs.setdefault('texture', TEXTURE_WALL)
 
         super().__init__(*args, **kwargs)
@@ -587,7 +609,7 @@ class Wall(LabyrinthBlock):
             north_inside: bool=False,
             *args, **kwargs):
 
-        kwargs.setdefault('tiling_factors', (1.0, 0.5))
+        kwargs.setdefault('tiling_factors', TEXTURE_WALL_TILING_FACTORS)
         kwargs.setdefault('texture', TEXTURE_WALL)
 
         super().__init__(*args, **kwargs)
@@ -607,7 +629,7 @@ class Wall(LabyrinthBlock):
 class Pillar(LabyrinthBlock):
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('tiling_factors', (1.0, 0.5))
+        kwargs.setdefault('tiling_factors', TEXTURE_WALL_TILING_FACTORS)
         kwargs.setdefault('texture', TEXTURE_WALL)
 
         super().__init__(*args, **kwargs)

@@ -1,16 +1,24 @@
 from panda3d.core import *
-from typing import Tuple
 import math
 
-from labyrinth import Parallelepiped, Labyrinth
+from labyrinth import Parallelepiped
 
 
 def generateGeometry(parallelepiped: Parallelepiped, name: str) -> GeomNode:
     # Number of vertices per primitive (triangles)
     nvp = 3
 
-    # OpenGL style
-    vertex_format = GeomVertexFormat.getV3n3c4t2()
+    # We have to build our own array format, since Panda3D's defaults don't include tangent and binormal vectors which we need for bump mapping
+    # https://docs.panda3d.org/1.10/python/programming/internal-structures/geometry-storage/geomvertexformat
+    #v3n3c4t2
+    vertex_format_array = GeomVertexArrayFormat()
+    vertex_format_array.addColumn('vertex', 3, Geom.NTFloat32, Geom.CPoint)
+    vertex_format_array.addColumn('normal', 3, Geom.NTFloat32, Geom.CNormal)
+    vertex_format_array.addColumn('color', 4, Geom.NTUint8, Geom.C_color)   # OpenGL color format
+    vertex_format_array.addColumn('texcoord', 2, Geom.NTFloat32, Geom.C_texcoord)
+    vertex_format_array.addColumn('tangent', 3, Geom.NTFloat32, Geom.C_vector)
+    vertex_format_array.addColumn('binormal', 3, Geom.NTFloat32, Geom.C_vector)
+    vertex_format = GeomVertexFormat.registerFormat(vertex_format_array)
     vertex_data = GeomVertexData('v_' + name, vertex_format, Geom.UHStatic)
 
     vertices = parallelepiped.get_vertices()
@@ -20,12 +28,16 @@ def generateGeometry(parallelepiped: Parallelepiped, name: str) -> GeomNode:
     texcoord_writer = GeomVertexWriter(vertex_data, 'texcoord')
     color_writer = GeomVertexWriter(vertex_data, 'color')
     normal_writer = GeomVertexWriter(vertex_data, 'normal')
+    tangent_writer = GeomVertexWriter(vertex_data, 'tangent')
+    binormal_writer = GeomVertexWriter(vertex_data, 'binormal')
 
     for vertex in vertices:
         vertex_writer.addData3(*vertex[:nvp])
         texcoord_writer.addData2(*vertex[nvp:nvp + 2])
         color_writer.addData4(*vertex[nvp + 2:nvp + 6])
-        normal_writer.addData3(*vertex[nvp + 6:])
+        normal_writer.addData3(*vertex[nvp + 6:nvp + 9])
+        tangent_writer.addData3(*vertex[nvp + 9:nvp + 12])
+        binormal_writer.addData3(*vertex[nvp + 12:])
 
     primitive = GeomTriangles(Geom.UHStatic)
 

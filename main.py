@@ -12,7 +12,7 @@ from panda3d.core import *
 from CustomObject3D import CustomObject3D
 from Player import Player
 from mobs import Bird, Spider, Firefly
-from labyrinth import Floor, Parallelepiped, Labyrinth, Wall, Window
+from labyrinth import TEXTURE_WALL, Floor, Parallelepiped, Labyrinth, Wall, Window
 
 from common import *
 
@@ -29,6 +29,8 @@ ZOOM_SENSIBILITY = 5
 FLASHLIGHT_RADIUS = 0.2
 LIGHTNING_STRIKE_INTENSITY = 1.0
 LIGHTNING_STRIKE_DURATION = 0.05   # in seconds
+
+LABYRINTH_WALL_BUMP_TEXTURE = 'textures/wall_bump.png'
 
 MOON_PATH = "models/moon/moon2.obj"
 MOON_LIGHT_INTENSITY = 0.25
@@ -241,7 +243,7 @@ class ExplorerApp(ShowBase):
         
         # create fireflies
         firefly_height = -10
-        #self.firefly = Firefly([player_position[0], player_position[1], player_position[2] - firefly_height], 
+        # self.firefly = Firefly([player_position[0], player_position[1], player_position[2] - firefly_height], 
         #                       self.labyrinth_np, self, rotation_center=[15, 10, firefly_height])
     
     def init_spider(self, wall_obj: Wall, labyrinth_np: NodePath):
@@ -368,7 +370,9 @@ class ExplorerApp(ShowBase):
     def generateLabyrinth(self, parent_node: NodePath, labyrinth_file: str) -> Tuple[NodePath, Labyrinth]:
         self.labyrinth_block_nodes.clear()
         # Keep track of textures used by the labyrinth's blocks, so we don't have to tell Panda3D to repeatedly load them
-        textures = {} 
+        textures = {
+            LABYRINTH_WALL_BUMP_TEXTURE: self.loader.loadTexture(self.path_p3d / LABYRINTH_WALL_BUMP_TEXTURE)
+        } 
         self.spiders = []
         labyrinth_np = parent_node.attachNewNode('Labyrinth')
         labyrinth = Labyrinth.from_map_file(labyrinth_file, self.DEBUG_MAP)
@@ -381,6 +385,10 @@ class ExplorerApp(ShowBase):
             if block.texture not in textures:
                 textures[block.texture] = self.loader.loadTexture(self.path_p3d / block.texture)
             block_node.setTexture(textures[block.texture])
+            if block.texture == TEXTURE_WALL:
+                ts = TextureStage('ts')
+                ts.setMode(TextureStage.MNormal)
+                block_node.setTexture(ts, textures[LABYRINTH_WALL_BUMP_TEXTURE])
             block_node.setPos(block.position)
             
             if isinstance(block, Window):

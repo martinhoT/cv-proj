@@ -1,7 +1,7 @@
 from CustomObject3D import CustomObject3D
 from panda3d.core import *
 from typing import Generator, Iterable, Tuple, List
-from labyrinth import Parallelepiped
+from labyrinth import Labyrinth, Parallelepiped
 from common import *
 
 N_LIGHTS = 3
