@@ -51,8 +51,9 @@ class Player(CustomObject3D):
 
     def get_light_surroundings(self, distance_threshold: float) -> Generator[NodePath, None, None]:
         for child in self.parent.children:
-            # To make sure that the light only affects objects within the same floor
-            # This also assumes the objects to be lit are above the light (the light is on the floor)
+        # To make sure that the light only affects objects within the same floor
+        # This also assumes the objects to be lit are above the light (the light is on the floor)
             height_difference = child.getZ() - self.model.getZ()
             if self.model.get_distance(child) < distance_threshold and height_difference <= Labyrinth.DIMS_WALL_HEIGHT and height_difference >= -Labyrinth.DIMS_FLOOR_HEIGHT:
                 yield child
+
