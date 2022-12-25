@@ -6,8 +6,8 @@ from common import *
 
 N_LIGHTS = 3
 LIGHT_COLOR = (1, 0.05, 0.5, 1)
-LIGHT_POWER = 50
-LIGHT_DISTANCE_THRESHOLD = 15
+LIGHT_POWER = 20
+LIGHT_DISTANCE_THRESHOLD = 10
 SHADOW_RESOLUTION = 128
 
 class Player(CustomObject3D):
@@ -29,7 +29,7 @@ class Player(CustomObject3D):
         pl = PointLight('plight')
 
         pl.setColor((LIGHT_COLOR[0] * LIGHT_POWER, LIGHT_COLOR[1] * LIGHT_POWER, LIGHT_COLOR[2] * LIGHT_POWER, LIGHT_COLOR[3]))
-        pl.setShadowCaster(True, SHADOW_RESOLUTION, SHADOW_RESOLUTION)
+        pl.setShadowCaster(False, SHADOW_RESOLUTION, SHADOW_RESOLUTION)
         pl.setAttenuation((1, 0, 1))
         light_cube = generateGeometry(Parallelepiped(0.5, 0.5, 0.5, color=LIGHT_COLOR), 'flashlight')
         pn = self.parent.attachNewNode(pl)
@@ -41,10 +41,10 @@ class Player(CustomObject3D):
         
         light_cube, pn = self.lights.pop()
         pn.attachNewNode(light_cube)
-        pn.setPos(self.position)
+        light_position = (self.position[0], self.position[1], self.position[2] + .1)
+        pn.setPos(light_position)
        
         # TODO: add glow effect to the lights?
-        # TODO: not affecting floor
         for node_to_illuminate in self.get_light_surroundings(distance_threshold=LIGHT_DISTANCE_THRESHOLD):
             node_to_illuminate.setLight(pn)
             node_to_illuminate.show()

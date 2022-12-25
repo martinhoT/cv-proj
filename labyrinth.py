@@ -282,6 +282,7 @@ class Labyrinth:
                     blocks.append(block)
 
         # Optimize the blocks, to avoid many unnecessary repetitions
+        # TODO: merges may affect other code that expects the labyrinth to be in cells (such as floor positions, or walls for the spiders)
         blocks = cls.merge_blocks(blocks)
         print('Number of blocks:', len(blocks))
 

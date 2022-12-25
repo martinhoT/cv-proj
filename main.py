@@ -22,7 +22,7 @@ HEIGHT = 600
 PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
 AMBIENT_LIGHT_INTENSITY = 0.4
-DIRECTIONAL_LIGHT_INTENSITY = 0.2
+DIRECTIONAL_LIGHT_INTENSITY = 0.3
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 SPIDER_SPAWN_CHANCE = 1
 CAMERA_SENSIBILITY = 90
@@ -531,7 +531,7 @@ parser_debug.add_argument('--debug.3d-axis',
 parser_debug.add_argument('--debug.collisions',
     action='store_true',
     help='show the collision boundaries')
-parser_debug.add_argument('--debug.hide_unlit',
+parser_debug.add_argument('--debug.hide-unlit',
     action='store_true',
     help='when putting a light, only show the labyrinth nodes that were lit')
 parser_debug.add_argument('--debug.fps',
