@@ -36,6 +36,7 @@ MOON_LIGHT_INTENSITY = 0.25
 MOON_SELF_LIGHT_INTENSITY = 0.9
 GRASS_PATH = "models/grass/grass_bump4.obj"
 GRASS_SCALE = 50
+GRASS_FOG_DENSITY = 0.0035
 
 GRASS_LIGHT = False
 
@@ -49,7 +50,6 @@ depth-bits 24
 ''')
 
 
-# TODO: set fog for the grass? so that we can't see the horizon?
 # TODO: consistent case style? camelCase, snake_case...
 # TODO: to consider: temporary lights (like candles)? fixed literal spotlights?
 class ExplorerApp(ShowBase):
@@ -131,9 +131,13 @@ class ExplorerApp(ShowBase):
         self.grass_lightnp = self.render.attach_new_node(self.grass_light)
         self.grass_lightnp.setPos((0, 0, 0))
         
+        grass_fog = Fog('Grass fog')
+        grass_fog.setColor(*SKY_COLOR)
+        grass_fog.setExpDensity(GRASS_FOG_DENSITY)
         for grass in self.grasses:
             grass.model.setLight(dlnp)
             grass.model.setLight(self.grass_lightnp)
+            grass.model.setFog(grass_fog)
 
         # Task management
         self.mouse_coords = [0, 0]
