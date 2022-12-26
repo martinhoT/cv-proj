@@ -30,7 +30,7 @@ FLASHLIGHT_RADIUS = 0.2
 LIGHTNING_STRIKE_INTENSITY = 1.0
 LIGHTNING_STRIKE_DURATION = 0.05   # in seconds
 
-LABYRINTH_WALL_BUMP_TEXTURE = 'textures/wall_bump.png'
+LABYRINTH_WALL_BUMP_TEXTURE = 'textures/wall_height.png'
 
 MOON_PATH = "models/moon/moon2.obj"
 MOON_LIGHT_INTENSITY = 0.25
@@ -382,12 +382,13 @@ class ExplorerApp(ShowBase):
             block_node = labyrinth_np.attachNewNode(block_geom)
             self.labyrinth_block_nodes[block] = block_node
             
+            # TODO: Anisotropic filtering? Mipmapping?
             if block.texture not in textures:
                 textures[block.texture] = self.loader.loadTexture(self.path_p3d / block.texture)
             block_node.setTexture(textures[block.texture])
             if block.texture == TEXTURE_WALL:
                 ts = TextureStage('ts')
-                ts.setMode(TextureStage.MNormal)
+                ts.setMode(TextureStage.MHeight)
                 block_node.setTexture(ts, textures[LABYRINTH_WALL_BUMP_TEXTURE])
             block_node.setPos(block.position)
             

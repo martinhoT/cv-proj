@@ -1,8 +1,7 @@
 import copy
-from functools import reduce
 import numpy as np
 
-from typing import Any, Callable, Dict, Set, Tuple, List, Union
+from typing import Any, Callable, Dict, Tuple, List, Union
 from dataclasses import dataclass
 
 
