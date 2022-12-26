@@ -282,7 +282,6 @@ class Labyrinth:
                     blocks.append(block)
 
         # Optimize the blocks, to avoid many unnecessary repetitions
-        # TODO: merges may affect other code that expects the labyrinth to be in cells (such as floor positions, or walls for the spiders)
         blocks = cls.merge_blocks(blocks)
         print('Number of blocks:', len(blocks))
 
@@ -327,7 +326,6 @@ class Labyrinth:
             merge_method=lambda x_blocks: (set(x for x, block in x_blocks), x_blocks[0][1]),
         ))
 
-        # TODO: it's merging the walls as pillars
         # Merge the walls and pillars
         walls: Dict[int, List[Union[Wall, Pillar]]] = {}
         # for block in blocks:
@@ -373,9 +371,6 @@ class Labyrinth:
                     merge_key=merge_key,
                     merge_method=merge_method,
                 )
-
-            # TODO: merge along y but don't accomodate for the holes, forget it
-            # TODO: create vertical strips and compare to see which should be used
 
             for y, x_spans in horizontal_spans.items():
                 for x_span, model_block in x_spans:

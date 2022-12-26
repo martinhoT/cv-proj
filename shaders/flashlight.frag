@@ -88,7 +88,6 @@ void main() {
     float normalDiff = 1.0 - max(normal.g, 0.0);
 
     float depth = texture2D(dtex, texcoord).x;
-    // TODO: use panda3d setFog() instead?
     // How much is the light affected by the distance to the camera. 0 means full fog.
     float fogDisturbance = 1 - pow(depth, 50);
 
@@ -96,13 +95,11 @@ void main() {
 
     vec4 flashlightCircle = vec4(filledCircle(u_mouse, lightRadius, st, lightBorder), 1.0);
 
-    // TODO: Make depth affect the flashlight radius & smoothness instead?
     vec4 flashlightColor = fogDisturbance * lightPower * normalDiff * lightFlicker * flashlightCircle;
     vec4 flashlightLit = max(backgroundColor, flashlightColor);
 
     vec4 base = texture2D(tex, texcoord);
     
-    // TODO: can make creepy effect! checkout the test values below
     // Get luminance of the color buffer using the YCoCg color space
     float luminance = 0.25 * base.r + 0.5 * base.g + 0.25 * base.b;
     
@@ -126,5 +123,5 @@ void main() {
     // p3d_FragColor = vec4(luminance);
     // p3d_FragColor = vec4(smoothstep(0.35, 1.0, luminance) * 2.0);
     // p3d_FragColor = vec4(useBaseColor);
-    // p3d_FragColor = vec4(base);
+    p3d_FragColor = vec4(base);
 }

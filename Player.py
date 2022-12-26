@@ -29,7 +29,7 @@ class Player(CustomObject3D):
         pl = PointLight('plight')
 
         pl.setColor((LIGHT_COLOR[0] * LIGHT_POWER, LIGHT_COLOR[1] * LIGHT_POWER, LIGHT_COLOR[2] * LIGHT_POWER, LIGHT_COLOR[3]))
-        pl.setShadowCaster(False, SHADOW_RESOLUTION, SHADOW_RESOLUTION)
+        pl.setShadowCaster(True, SHADOW_RESOLUTION, SHADOW_RESOLUTION)
         pl.setAttenuation((1, 0, 1))
         light_cube = generateGeometry(Parallelepiped(0.5, 0.5, 0.5, color=LIGHT_COLOR), 'flashlight')
         pn = self.parent.attachNewNode(pl)
@@ -41,18 +41,17 @@ class Player(CustomObject3D):
         
         light_cube, pn = self.lights.pop()
         pn.attachNewNode(light_cube)
-        light_position = (self.position[0], self.position[1], self.position[2] + .1)
+        light_position = (self.position[0], self.position[1], self.position[2] + Labyrinth.DIMS_WALL_HEIGHT / 2)
         pn.setPos(light_position)
        
-        # TODO: add glow effect to the lights?
         for node_to_illuminate in self.get_light_surroundings(distance_threshold=LIGHT_DISTANCE_THRESHOLD):
             node_to_illuminate.setLight(pn)
             node_to_illuminate.show()
 
     def get_light_surroundings(self, distance_threshold: float) -> Generator[NodePath, None, None]:
         for child in self.parent.children:
-        # To make sure that the light only affects objects within the same floor
-        # This also assumes the objects to be lit are above the light (the light is on the floor)
+            # To make sure that the light only affects objects within the same floor
+            # This also assumes the objects to be lit are above the light (the light is on the floor)
             height_difference = child.getZ() - self.model.getZ()
             if self.model.get_distance(child) < distance_threshold and height_difference <= Labyrinth.DIMS_WALL_HEIGHT and height_difference >= -Labyrinth.DIMS_FLOOR_HEIGHT:
                 yield child

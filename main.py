@@ -51,8 +51,6 @@ depth-bits 24
 ''')
 
 
-# TODO: consistent case style? camelCase, snake_case...
-# TODO: to consider: temporary lights (like candles)? fixed literal spotlights?
 class ExplorerApp(ShowBase):
 
     labyrinth_block_nodes: Dict[Parallelepiped, NodePath] = {}
@@ -215,7 +213,6 @@ class ExplorerApp(ShowBase):
         moon_scale = [5 for _ in range(3)]
         self.moon = CustomObject3D(moon_model, moon_position, self.render, scale=moon_scale, is_flat=True)
         
-        # TODO: add glow to the moon?
         # create ambient light only for the moon
         moon_self_light = AmbientLight('Moon self light')
         moon_self_light.setColor((MOON_SELF_LIGHT_INTENSITY, MOON_SELF_LIGHT_INTENSITY, MOON_SELF_LIGHT_INTENSITY, 1))
@@ -384,7 +381,6 @@ class ExplorerApp(ShowBase):
             block_node = labyrinth_np.attachNewNode(block_geom)
             self.labyrinth_block_nodes[block] = block_node
             
-            # TODO: Anisotropic filtering? Mipmapping?
             if block.texture not in textures:
                 textures[block.texture] = self.loader.loadTexture(self.path_p3d / block.texture)
             block_node.setTexture(textures[block.texture])
