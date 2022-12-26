@@ -30,7 +30,10 @@ FLASHLIGHT_RADIUS = 0.2
 LIGHTNING_STRIKE_INTENSITY = 1.0
 LIGHTNING_STRIKE_DURATION = 0.05   # in seconds
 
-LABYRINTH_WALL_HEIGHT_TEXTURE = 'textures/wall_height.png'
+LABYRINTH_WALL_HEIGHT_TEXTURE_PATH = 'textures/wall_height.png'
+GRASS_COLOR_TEXTURE_PATH = 'models/grass/Stylized_Grass_002_basecolor.jpg'
+GRASS_HEIGHT_TEXTURE_PATH = 'models/grass/Stylized_Grass_002_height.png'
+GRASS_NORMAL_TEXTURE_PATH = 'models/grass/Stylized_Grass_002_normal.jpg'
 
 MOON_PATH = "models/moon/moon2.obj"
 MOON_LIGHT_INTENSITY = 0.25
@@ -133,10 +136,10 @@ class ExplorerApp(ShowBase):
         grass_fog.setColor(*SKY_COLOR)
         grass_fog.setExpDensity(GRASS_FOG_DENSITY)
         for grass in self.grasses:
-            grass.model.setLight(dlnp)
+            grass.setLight(dlnp)
             if GRASS_LIGHT:
-                grass.model.setLight(self.grass_lightnp)
-            grass.model.setFog(grass_fog)
+                grass.setLight(self.grass_lightnp)
+            grass.setFog(grass_fog)
 
         # Task management
         self.mouse_coords = [0, 0]
@@ -226,16 +229,31 @@ class ExplorerApp(ShowBase):
         self.moon.model.setLight(pn)
         
         # create grass
-        grass_scale = [GRASS_SCALE for _ in range(2)] + [1]
-        
         self.grasses = []
         
+        grass_color_texture = self.loader.loadTexture(self.path_p3d / GRASS_COLOR_TEXTURE_PATH)
+        grass_height_texture = self.loader.loadTexture(self.path_p3d / GRASS_HEIGHT_TEXTURE_PATH)
+        grass_normal_texture = self.loader.loadTexture(self.path_p3d / GRASS_NORMAL_TEXTURE_PATH)
+
         for i in range(-10, 10):
-            for j in range(-10,10):
-                model_size = 1 * GRASS_SCALE
-                grass_model = self.loader.loadModel(self.path_p3d / GRASS_PATH)
-                grass_position = [i*model_size*2, j*model_size*2, -50]
-                grass = CustomObject3D(grass_model, grass_position.copy(), self.labyrinth_np, scale=grass_scale)
+            for j in range(-10, 10):
+                grass_plane = generateGeometry(Parallelepiped(GRASS_SCALE, .1, GRASS_SCALE), f'grass_{i}x{j}')
+
+                grass = self.labyrinth_np.attachNewNode(grass_plane)
+                grass.setPos(i * GRASS_SCALE, j * GRASS_SCALE, -50)
+
+                grass.node()
+
+                grass.setTexture(grass_color_texture)
+
+                ts = TextureStage('Grass Height')
+                ts.setMode(TextureStage.MHeight)
+                grass.setTexture(ts, grass_height_texture)
+
+                ts = TextureStage('Grass Normal')
+                ts.setMode(TextureStage.MNormal)
+                grass.setTexture(ts, grass_normal_texture)
+                
                 self.grasses.append(grass)
         
         # create fireflies
@@ -370,7 +388,7 @@ class ExplorerApp(ShowBase):
         self.labyrinth_block_nodes.clear()
         # Keep track of textures used by the labyrinth's blocks, so we don't have to tell Panda3D to repeatedly load them
         textures = {
-            LABYRINTH_WALL_HEIGHT_TEXTURE: self.loader.loadTexture(self.path_p3d / LABYRINTH_WALL_HEIGHT_TEXTURE)
+            LABYRINTH_WALL_HEIGHT_TEXTURE_PATH: self.loader.loadTexture(self.path_p3d / LABYRINTH_WALL_HEIGHT_TEXTURE_PATH)
         } 
         self.spiders = []
         labyrinth_np = parent_node.attachNewNode('Labyrinth')
@@ -385,9 +403,9 @@ class ExplorerApp(ShowBase):
                 textures[block.texture] = self.loader.loadTexture(self.path_p3d / block.texture)
             block_node.setTexture(textures[block.texture])
             if block.texture == TEXTURE_WALL:
-                ts = TextureStage('ts')
+                ts = TextureStage('Wall Height')
                 ts.setMode(TextureStage.MHeight)
-                block_node.setTexture(ts, textures[LABYRINTH_WALL_HEIGHT_TEXTURE])
+                block_node.setTexture(ts, textures[LABYRINTH_WALL_HEIGHT_TEXTURE_PATH])
             block_node.setPos(block.position)
             
             if isinstance(block, Window):

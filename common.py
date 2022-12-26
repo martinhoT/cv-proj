@@ -10,7 +10,6 @@ def generateGeometry(parallelepiped: Parallelepiped, name: str) -> GeomNode:
 
     # We have to build our own array format, since Panda3D's defaults don't include tangent and binormal vectors which we need for bump mapping
     # https://docs.panda3d.org/1.10/python/programming/internal-structures/geometry-storage/geomvertexformat
-    #v3n3c4t2
     vertex_format_array = GeomVertexArrayFormat()
     vertex_format_array.addColumn('vertex', 3, Geom.NTFloat32, Geom.CPoint)
     vertex_format_array.addColumn('normal', 3, Geom.NTFloat32, Geom.CNormal)

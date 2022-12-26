@@ -123,5 +123,5 @@ void main() {
     // p3d_FragColor = vec4(luminance);
     // p3d_FragColor = vec4(smoothstep(0.35, 1.0, luminance) * 2.0);
     // p3d_FragColor = vec4(useBaseColor);
-    p3d_FragColor = vec4(base);
+    // p3d_FragColor = vec4(base);
 }
