@@ -359,11 +359,13 @@ class ExplorerApp(ShowBase):
     def lightning_strike(self):
         self.ambient_light_np.node().setColor((LIGHTNING_STRIKE_INTENSITY, LIGHTNING_STRIKE_INTENSITY, LIGHTNING_STRIKE_INTENSITY, 1))
         self.quad_filter.setShaderInput('lightRadius', 2.0)
+        self.quad_filter.setShaderInput('lightFlickerRatio', 0.0)
         self.taskMgr.doMethodLater(LIGHTNING_STRIKE_DURATION, self.lightning_strike_stop, 'Stop lightning strike')
 
     def lightning_strike_stop(self, task):
         self.ambient_light_np.node().setColor((AMBIENT_LIGHT_INTENSITY, AMBIENT_LIGHT_INTENSITY, AMBIENT_LIGHT_INTENSITY, 1))
         self.quad_filter.setShaderInput('lightRadius', FLASHLIGHT_RADIUS)
+        self.quad_filter.setShaderInput('lightFlickerRatio', self.flashlight_flicker)
 
         return Task.done
 
