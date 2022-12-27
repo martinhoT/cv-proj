@@ -29,6 +29,7 @@ OBJECT_SPAWN_CHANCE = 0.1
 CAMERA_SENSIBILITY = 90
 ZOOM_SENSIBILITY = 5
 ZOOM_INITIAL = 60
+FLASHLIGHT_POWER = 1
 FLASHLIGHT_RADIUS = 0.2
 LIGHTNING_STRIKE_INTENSITY = 1.0
 LIGHTNING_STRIKE_DURATION = 0.05   # in seconds
@@ -156,7 +157,7 @@ class ExplorerApp(ShowBase):
         self.taskMgr.add(self.read_inputs_task, 'read_inputs_task')
 
         self.quad_filter = None
-        self.flashlight_power = 1
+        self.flashlight_power = FLASHLIGHT_POWER
         self.flashlight_flicker = 0
         self.start_time = time.time()   # avoid providing extremelly large numbers to the shaders, since GLSL acts funky with those (in sin() for instance), so send time since app launch
         self.setupShaders()
@@ -249,8 +250,6 @@ class ExplorerApp(ShowBase):
 
                 grass = self.labyrinth_np.attachNewNode(grass_plane)
                 grass.setPos(i * GRASS_SCALE, j * GRASS_SCALE, GRASS_HEIGHT)
-
-                grass.node()
 
                 grass.setTexture(grass_color_texture)
 
