@@ -11,17 +11,17 @@ from panda3d.core import *
 
 from CustomObject3D import CustomObject3D
 from Player import Player
-from mobs import Bird, Spider, Firefly, SpotlightOBJ
+from mobs import Bird, Spider, Firefly
 from labyrinth import TEXTURE_WALL, Floor, Parallelepiped, Labyrinth, Wall, Window
 
 from common import *
-from objects import Table
+from objects import Table, SpotlightOBJ
 
 WIDTH = 800
 HEIGHT = 600
 PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
-AMBIENT_LIGHT_INTENSITY = 0.7 # 0.4
+AMBIENT_LIGHT_INTENSITY = 0.4
 DIRECTIONAL_LIGHT_INTENSITY = 0.3
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 SPIDER_SPAWN_CHANCE = 0.2
@@ -46,10 +46,11 @@ MOON_LIGHT_INTENSITY = 0.25
 MOON_SELF_LIGHT_INTENSITY = 0.9
 GRASS_PATH = "models/grass/grass_bump4.obj"
 GRASS_SCALE = 50
-GRASS_FOG_DENSITY = 0 #0.0035
+GRASS_FOG_DENSITY = 0.0035
 GRASS_HEIGHT = -10 #-50
 
 GRASS_LIGHT = True
+GRASS_LIGHT_COLOR = (.06, .06, .06, 1)
 
 SPOTLIGHT_SCALE = 0.2
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
@@ -135,7 +136,7 @@ class ExplorerApp(ShowBase):
         
         
         self.grass_light = PointLight('plightt')
-        self.grass_light.setColor((.6,.6,.6,1))
+        self.grass_light.setColor(GRASS_LIGHT_COLOR)
         if GRASS_LIGHT:
             self.grass_lightnp = self.render.attach_new_node(self.grass_light)
             self.grass_lightnp.setPos((0, 0, 0))
@@ -254,13 +255,13 @@ class ExplorerApp(ShowBase):
 
                 grass.setTexture(grass_color_texture)
 
-                ts = TextureStage('Grass Height')
-                ts.setMode(TextureStage.MHeight)
-                grass.setTexture(ts, grass_height_texture)
+                # ts = TextureStage('Grass Height')
+                # ts.setMode(TextureStage.MHeight)
+                # grass.setTexture(ts, grass_height_texture)
 
-                ts = TextureStage('Grass Normal')
-                ts.setMode(TextureStage.MNormal)
-                grass.setTexture(ts, grass_normal_texture)
+                # ts = TextureStage('Grass Normal')
+                # ts.setMode(TextureStage.MNormal)
+                # grass.setTexture(ts, grass_normal_texture)
                 
                 self.grasses.append(grass)
         
