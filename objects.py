@@ -1,5 +1,5 @@
 from CustomObject3D import CustomObject3D
-from panda3d.core import NodePath, PointLight, VBase4, Spotlight, PerspectiveLens
+from panda3d.core import NodePath, PointLight, VBase4, Spotlight, PerspectiveLens, LPoint3
 
 class Table(CustomObject3D):
     
@@ -13,7 +13,7 @@ class Table(CustomObject3D):
 class SpotlightOBJ(CustomObject3D):
     
     MODEL_PATH = "models/spotlight/spotlight2.obj"
-    LIGHT_COLOR = (10000000, 10000000, 10000000, 1)
+    LIGHT_COLOR = (10, 10, 10, 1)
     LIGHT_DISTANCE_THRESHOLD = 12
     
     
@@ -31,7 +31,7 @@ class SpotlightOBJ(CustomObject3D):
         self.lens = PerspectiveLens()
         self.slight.setLens(self.lens)
         self.slnp = self.parent.attachNewNode(self.slight)
-        self.slnp.setPos(self.model.getPos())
+        self.slnp.setPos(self.model.getPos() + LPoint3(0, 0, 5))
         self.slnp.lookAt(look_at)
         test.setLight(self.slnp)
         

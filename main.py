@@ -38,15 +38,15 @@ LIGHTNING_BACKGROUND_POS = (-LIGHTNING_BACKGROUND_SIZE/2, LIGHTNING_BACKGROUND_S
 
 LABYRINTH_WALL_HEIGHT_TEXTURE_PATH = 'textures/wall_height.png'
 LIGHTNING_BACKGROUND_TEXTURE_PATH = 'textures/lightning.png'
-GRASS_COLOR_TEXTURE_PATH = 'models/grass/Stylized_Grass_002_basecolor.jpg'
-GRASS_HEIGHT_TEXTURE_PATH = 'models/grass/Stylized_Grass_002_height.png'
-GRASS_NORMAL_TEXTURE_PATH = 'models/grass/Stylized_Grass_002_normal.jpg'
+GRASS_COLOR_TEXTURE_PATH = 'models/grass/everytexture.com-stock-nature-grass-texture-00004-diffuse.jpg'
+GRASS_HEIGHT_TEXTURE_PATH = 'models/grass/everytexture.com-stock-nature-grass-texture-00004-bump.jpg'
+GRASS_NORMAL_TEXTURE_PATH = 'models/grass/everytexture.com-stock-nature-grass-texture-00004-normal.jpg'
 
 MOON_PATH = "models/moon/moon2.obj"
 MOON_LIGHT_INTENSITY = 0.25
 MOON_SELF_LIGHT_INTENSITY = 0.9
 GRASS_PATH = "models/grass/grass_bump4.obj"
-GRASS_SCALE = 50
+GRASS_SCALE = 500
 GRASS_FOG_DENSITY = 0.0035
 GRASS_HEIGHT = -10 #-50
 
@@ -254,13 +254,13 @@ class ExplorerApp(ShowBase):
 
                 grass.setTexture(grass_color_texture)
 
-                # ts = TextureStage('Grass Height')
-                # ts.setMode(TextureStage.MHeight)
-                # grass.setTexture(ts, grass_height_texture)
+                ts = TextureStage('Grass Height')
+                ts.setMode(TextureStage.MHeight)
+                grass.setTexture(ts, grass_height_texture)
 
-                # ts = TextureStage('Grass Normal')
-                # ts.setMode(TextureStage.MNormal)
-                # grass.setTexture(ts, grass_normal_texture)
+                ts = TextureStage('Grass Normal')
+                ts.setMode(TextureStage.MNormal)
+                grass.setTexture(ts, grass_normal_texture)
                 
                 self.grasses.append(grass)
         
