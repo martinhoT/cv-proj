@@ -15,6 +15,7 @@ from mobs import Bird, Spider, Firefly, SpotlightOBJ
 from labyrinth import TEXTURE_WALL, Floor, Parallelepiped, Labyrinth, Wall, Window
 
 from common import *
+from objects import Table
 
 WIDTH = 800
 HEIGHT = 600
@@ -23,7 +24,8 @@ PLAYER_JUMP_SPEED = 0.35
 AMBIENT_LIGHT_INTENSITY = 0.7 # 0.4
 DIRECTIONAL_LIGHT_INTENSITY = 0.3
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
-SPIDER_SPAWN_CHANCE = 1
+SPIDER_SPAWN_CHANCE = 0.2
+OBJECT_SPAWN_CHANCE = 0.1
 CAMERA_SENSIBILITY = 90
 ZOOM_SENSIBILITY = 5
 ZOOM_INITIAL = 60
@@ -50,7 +52,6 @@ GRASS_HEIGHT = -10 #-50
 GRASS_LIGHT = True
 
 SPOTLIGHT_SCALE = 0.2
-
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
 # If power-of-2 textures is enforced, then the code has to deal with the texture padding.
 # We want so simplify the shader code so they are disabled. There is already wide support for non-power-of-2 textures (https://discourse.panda3d.org/t/cg-glsl-filtermanager-texpad-x/14694/8)
@@ -284,20 +285,29 @@ class ExplorerApp(ShowBase):
     
         self.spotlight_obj.look_at((0, 0, -10))
         
+        # table_model = self.loader.loadModel(self.path_p3d / TABLE_PATH)
+        # table = CustomObject3D(table_model, (0, 0, 0), self.labyrinth_np, scale=[0.5 for _ in range(3)])
+        
     
-    def init_spider(self, wall_obj: Wall, labyrinth_np: NodePath):
+    def init_objs(self, wall_obj: Wall, labyrinth_np: NodePath):
         spider_scale = [Spider.SCALE * 1 for _ in range(3)]
+        table_scale = [0.025 for _ in range(3)]
+        table_distance = table_scale[0] * 20
         if wall_obj.east_inside:
-            self.spawn_spider(wall_obj.position[0] + wall_obj.width, wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2] + wall_obj.height / 2, -90, -90, 0, labyrinth_np, spider_scale, (0,1,1), wall_obj)
+            self.spawn_spider(wall_obj.position[0] + wall_obj.width, wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2] + wall_obj.height / 2, 90, -90, 0, labyrinth_np, spider_scale, (0,1,1), wall_obj)
+            self.spawn_obj(wall_obj.position[0] + wall_obj.width + table_distance, wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2], -90, 90, 0, labyrinth_np, table_scale)            
 
         if wall_obj.west_inside:
             self.spawn_spider(wall_obj.position[0], wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2] + wall_obj.height / 2, 90, -90, 0, labyrinth_np, spider_scale, (0,1,1), wall_obj)
+            self.spawn_obj(wall_obj.position[0] - table_distance, wall_obj.position[1] + wall_obj.depth / 2, wall_obj.position[2], -90, 90, 0, labyrinth_np, table_scale)
 
         if wall_obj.south_inside:
             self.spawn_spider(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1] + wall_obj.depth, wall_obj.position[2] + wall_obj.height / 2, 0, -90, 0, labyrinth_np, spider_scale, (1,0,1), wall_obj)
+            self.spawn_obj(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1] + wall_obj.depth + table_distance, wall_obj.position[2], 180, 90, 0, labyrinth_np, table_scale)
 
         if wall_obj.north_inside:
             self.spawn_spider(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1], wall_obj.position[2] + wall_obj.height / 2, 180, -90, 0, labyrinth_np, spider_scale, (1,0,1), wall_obj)
+            self.spawn_obj(wall_obj.position[0] + wall_obj.width / 2, wall_obj.position[1] - table_distance, wall_obj.position[2], 0, 90, 0, labyrinth_np, table_scale)
 
     def spawn_spider(self, x, y, z, h, p, r, labyrinth_np, scale, movement_axis, wall):
         spawn_chance = random.random()
@@ -307,6 +317,12 @@ class ExplorerApp(ShowBase):
 
             self.spiders.append(spider)
             return spider
+    
+    def spawn_obj(self, x, y, z, h, p, r, labyrinth_np, scale):
+        spawn_chance = random.random()
+        if spawn_chance < OBJECT_SPAWN_CHANCE:
+            table = Table([x, y, z], labyrinth_np, self, scale=scale)
+            table.model.setHpr(h, p, r)
             
     def player_hit_ground(self, entity):
         is_bellow_player = entity.getSurfacePoint(self.player.model).getY() <= 0
@@ -450,7 +466,7 @@ class ExplorerApp(ShowBase):
                 block_node.setTransparency(True)
             
             if isinstance(block, Wall):
-                self.init_spider(block, labyrinth_np)
+                self.init_objs(block, labyrinth_np)
             
             # Collisions
             is_ground = isinstance(block, Floor)

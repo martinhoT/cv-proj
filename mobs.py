@@ -155,4 +155,3 @@ class SpotlightOBJ(CustomObject3D):
     def look_at(self, look_at):
         self.slnp.lookAt(look_at)
         
-    
