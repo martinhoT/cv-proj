@@ -26,11 +26,15 @@ SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 SPIDER_SPAWN_CHANCE = 1
 CAMERA_SENSIBILITY = 90
 ZOOM_SENSIBILITY = 5
+ZOOM_INITIAL = 60
 FLASHLIGHT_RADIUS = 0.2
 LIGHTNING_STRIKE_INTENSITY = 1.0
 LIGHTNING_STRIKE_DURATION = 0.05   # in seconds
+LIGHTNING_BACKGROUND_SIZE = 500
+LIGHTNING_BACKGROUND_POS = (-LIGHTNING_BACKGROUND_SIZE/2, LIGHTNING_BACKGROUND_SIZE, -70)
 
 LABYRINTH_WALL_HEIGHT_TEXTURE_PATH = 'textures/wall_height.png'
+LIGHTNING_BACKGROUND_TEXTURE_PATH = 'textures/lightning.png'
 GRASS_COLOR_TEXTURE_PATH = 'models/grass/Stylized_Grass_002_basecolor.jpg'
 GRASS_HEIGHT_TEXTURE_PATH = 'models/grass/Stylized_Grass_002_height.png'
 GRASS_NORMAL_TEXTURE_PATH = 'models/grass/Stylized_Grass_002_normal.jpg'
@@ -80,7 +84,7 @@ class ExplorerApp(ShowBase):
 
         # camera variables
         self.camera_pos = [0, 180, 0]
-        self.camera_zoom = 60
+        self.camera_zoom = ZOOM_INITIAL
         self.camera_perspective_lens = self.cam.node().getLens()
         self.camera_orthographic_lens = OrthographicLens()
         update_orthographic_lens(self.camera_orthographic_lens, WIDTH, HEIGHT)
@@ -237,7 +241,7 @@ class ExplorerApp(ShowBase):
 
         for i in range(-10, 10):
             for j in range(-10, 10):
-                grass_plane = generateGeometry(Parallelepiped(GRASS_SCALE, .1, GRASS_SCALE), f'grass_{i}x{j}')
+                grass_plane = generateGeometry(Parallelepiped(GRASS_SCALE, 0, GRASS_SCALE), f'grass_{i}x{j}')
 
                 grass = self.labyrinth_np.attachNewNode(grass_plane)
                 grass.setPos(i * GRASS_SCALE, j * GRASS_SCALE, -50)
@@ -256,6 +260,16 @@ class ExplorerApp(ShowBase):
                 
                 self.grasses.append(grass)
         
+        # create the lightning strike background
+        lightning_image = self.loader.loadTexture(self.path_p3d / LIGHTNING_BACKGROUND_TEXTURE_PATH)
+        cm = CardMaker('lightning maker')
+        cm.set_frame(0, LIGHTNING_BACKGROUND_SIZE, 0, LIGHTNING_BACKGROUND_SIZE * lightning_image.get_y_size() / lightning_image.get_x_size())
+        self.lightning_strike_background = self.render.attachNewNode(cm.generate())
+        self.lightning_strike_background.setPos(LIGHTNING_BACKGROUND_POS)
+        self.lightning_strike_background.setTransparency(True)
+        self.lightning_strike_background.hide()
+        self.lightning_strike_background.setTexture(lightning_image)
+
         # create fireflies
         firefly_height = -10
         # self.firefly = Firefly([player_position[0], player_position[1], player_position[2] - firefly_height], 
@@ -311,6 +325,9 @@ class ExplorerApp(ShowBase):
         self.camera_zoom = max(self.camera_zoom, 10)
         self.camera_zoom = min(self.camera_zoom, 150)
         move_camera(self.camera, self.camera_zoom, self.camera_pos)
+        
+        # Reduce the flashlight radius when the camera is zoomed out, sorta following the inverse square law
+        self.quad_filter.setShaderInput('lightRadius', 1 / (self.camera_zoom**2 * (1 / FLASHLIGHT_RADIUS) / ZOOM_INITIAL**2))
 
     def read_inputs_task(self, task):
         isDown = self.mouseWatcherNode.is_button_down
@@ -372,12 +389,23 @@ class ExplorerApp(ShowBase):
             self.cam.node().setLens(self.camera_perspective_lens)
 
     def lightning_strike(self):
+        self.lightning_strike_background.show()
+        x_angle = math.radians(self.camera_pos[0])
+        self.lightning_strike_background.setPos(
+            LIGHTNING_BACKGROUND_POS[0] * math.cos(x_angle) - LIGHTNING_BACKGROUND_POS[1] * math.sin(x_angle),
+            LIGHTNING_BACKGROUND_POS[0] * math.sin(x_angle) + LIGHTNING_BACKGROUND_POS[1] * math.cos(x_angle),
+            LIGHTNING_BACKGROUND_POS[2]
+        )
+        self.lightning_strike_background.lookAt(self.cam)
+        self.lightning_strike_background.setH(self.lightning_strike_background.getH() + 180)
+
         self.ambient_light_np.node().setColor((LIGHTNING_STRIKE_INTENSITY, LIGHTNING_STRIKE_INTENSITY, LIGHTNING_STRIKE_INTENSITY, 1))
         self.quad_filter.setShaderInput('lightRadius', 2.0)
         self.quad_filter.setShaderInput('lightFlickerRatio', 0.0)
         self.taskMgr.doMethodLater(LIGHTNING_STRIKE_DURATION, self.lightning_strike_stop, 'Stop lightning strike')
 
     def lightning_strike_stop(self, task):
+        self.lightning_strike_background.hide()
         self.ambient_light_np.node().setColor((AMBIENT_LIGHT_INTENSITY, AMBIENT_LIGHT_INTENSITY, AMBIENT_LIGHT_INTENSITY, 1))
         self.quad_filter.setShaderInput('lightRadius', FLASHLIGHT_RADIUS)
         self.quad_filter.setShaderInput('lightFlickerRatio', self.flashlight_flicker)
