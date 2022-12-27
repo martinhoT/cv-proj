@@ -20,7 +20,7 @@ WIDTH = 800
 HEIGHT = 600
 PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
-AMBIENT_LIGHT_INTENSITY = 1 # 0.4
+AMBIENT_LIGHT_INTENSITY = 0.7 # 0.4
 DIRECTIONAL_LIGHT_INTENSITY = 0.3
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 SPIDER_SPAWN_CHANCE = 1
@@ -44,8 +44,8 @@ MOON_LIGHT_INTENSITY = 0.25
 MOON_SELF_LIGHT_INTENSITY = 0.9
 GRASS_PATH = "models/grass/grass_bump4.obj"
 GRASS_SCALE = 50
-GRASS_FOG_DENSITY = 0.0035
-GRASS_HEIGHT = -50
+GRASS_FOG_DENSITY = 0 #0.0035
+GRASS_HEIGHT = -10 #-50
 
 GRASS_LIGHT = True
 
@@ -279,8 +279,10 @@ class ExplorerApp(ShowBase):
         #                       self.labyrinth_np, self, rotation_center=[15, 10, firefly_height])
         
         # create spotlight object
-        self.spotlight_obj = SpotlightOBJ([player_position[0], player_position[1], GRASS_HEIGHT], self.labyrinth_np, self,
-                                          scale=[SPOTLIGHT_SCALE for _ in range(3)])
+        self.spotlight_obj = SpotlightOBJ([player_position[0] - 50, player_position[1] - 50, GRASS_HEIGHT], self.labyrinth_np, self,
+                                          scale=[SPOTLIGHT_SCALE for _ in range(3)], look_at=(-25, -25, -49), test=self.render)
+    
+        self.spotlight_obj.look_at((0, 0, -10))
         
     
     def init_spider(self, wall_obj: Wall, labyrinth_np: NodePath):
