@@ -107,7 +107,7 @@ void main() {
     // In this case we take the strongest color component
     float lightnessFactor = max(max(base.r, base.g), base.b);
     // Determine how much of the base color to keep based on the previous lightness factor
-    float useBaseColor = smoothstep(0.4, 1.0, lightnessFactor);
+    float useBaseColor = smoothstep(0.1, 1.0, lightnessFactor);
     // Use the flashlight if the base color is not too lit, and keep the base lighting otherwise
     
     // Let all other lights flicker as well (affects the moon too...)
