@@ -29,12 +29,20 @@ OBJECT_SPAWN_CHANCE = 0.1
 CAMERA_SENSIBILITY = 90
 ZOOM_SENSIBILITY = 5
 ZOOM_INITIAL = 60
+
+PERSPECTIVE_CHANCE = 0.01
+PERSPECTIVE_RETURN_CHANCE = 0.05
+
 FLASHLIGHT_POWER = 1
 FLASHLIGHT_RADIUS = 0.2
+FLASHLIGHT_FLICKER_CHANCE = 0.01
+FLASHLIGHT_RETURN_CHANCE = 0.01
+
 LIGHTNING_STRIKE_INTENSITY = 1.0
 LIGHTNING_STRIKE_DURATION = 0.05   # in seconds
 LIGHTNING_BACKGROUND_SIZE = 500
 LIGHTNING_BACKGROUND_POS = (-LIGHTNING_BACKGROUND_SIZE/2, LIGHTNING_BACKGROUND_SIZE, -70)
+LIGHTNING_CHANCE = 0.01
 
 LABYRINTH_WALL_HEIGHT_TEXTURE_PATH = 'textures/wall_height.png'
 LIGHTNING_BACKGROUND_TEXTURE_PATH = 'textures/lightning.png'
@@ -164,9 +172,12 @@ class ExplorerApp(ShowBase):
         self.setupShaders()
 
         # inputs
-        self.accept('v', self.toggle_light)
-        self.accept('c', self.toggle_perspective)
-        self.accept('b', self.lightning_strike)
+        self.is_light_toogle = False
+        self.is_perspective_toogle = False
+        # self.accept('v', self.toggle_light)
+        # self.accept('c', self.toggle_perspective)
+        # self.accept('b', self.lightning_strike)
+        self.taskMgr.add(self.generate_random_event, 'generate_random_event')
         self.pusher.addInPattern('%fn-into-%in')
         self.pusher.addOutPattern('%fn-out-%in')
         self.pusher.addAgainPattern('%fn-again-%in')
@@ -606,6 +617,26 @@ class ExplorerApp(ShowBase):
         elif not self.is_mouse_holded and self.previous_mouse_pos is not None:
             self.previous_mouse_pos = None
 
+        return Task.cont
+
+    def generate_random_event(self, task):
+        if random.random() < LIGHTNING_CHANCE:
+            self.lightning_strike()
+        
+        flick_chance = random.random()
+        if (not self.is_light_toogle and flick_chance < FLASHLIGHT_FLICKER_CHANCE) or \
+            self.is_light_toogle and flick_chance < FLASHLIGHT_RETURN_CHANCE:
+            self.toggle_light()
+            self.is_light_toogle = not self.is_light_toogle
+        
+        perspective_chance = random.random()
+        if (not self.is_perspective_toogle and perspective_chance < PERSPECTIVE_CHANCE) or \
+            self.is_perspective_toogle and perspective_chance < PERSPECTIVE_RETURN_CHANCE:
+            self.toggle_perspective()
+            self.is_perspective_toogle = not self.is_perspective_toogle
+
+            
+        
         return Task.cont
 
 
