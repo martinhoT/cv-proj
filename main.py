@@ -50,7 +50,7 @@ GRASS_FOG_DENSITY = 0.0035
 GRASS_HEIGHT = -10 #-50
 
 GRASS_LIGHT = True
-GRASS_LIGHT_COLOR = (.06, .06, .06, 1)
+GRASS_LIGHT_COLOR = (.6, .6, .6, 1)
 
 SPOTLIGHT_SCALE = 0.2
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
@@ -255,13 +255,13 @@ class ExplorerApp(ShowBase):
 
                 grass.setTexture(grass_color_texture)
 
-                # ts = TextureStage('Grass Height')
-                # ts.setMode(TextureStage.MHeight)
-                # grass.setTexture(ts, grass_height_texture)
+                ts = TextureStage('Grass Height')
+                ts.setMode(TextureStage.MHeight)
+                grass.setTexture(ts, grass_height_texture)
 
-                # ts = TextureStage('Grass Normal')
-                # ts.setMode(TextureStage.MNormal)
-                # grass.setTexture(ts, grass_normal_texture)
+                ts = TextureStage('Grass Normal')
+                ts.setMode(TextureStage.MNormal)
+                grass.setTexture(ts, grass_normal_texture)
                 
                 self.grasses.append(grass)
         
@@ -363,7 +363,7 @@ class ExplorerApp(ShowBase):
         #Player
         self.player.velocity[0] = 0
         self.player.velocity[1] = 0
-        player_radians = math.radians(self.player.model.getH())
+        player_radians = math.radians(self.camera_pos[0])
         player_sin = math.sin(player_radians)
         player_cos = math.cos(player_radians)
         horizontal_idx = 0
@@ -377,6 +377,10 @@ class ExplorerApp(ShowBase):
         if isDown(KeyboardButton.asciiKey("d")):
             self.player.velocity[horizontal_idx] += PLAYER_SPEED * player_cos 
             self.player.velocity[rev_horizontal_idx] += PLAYER_SPEED * player_sin
+            new_sin = 1 - player_sin if player_sin >= 0 else 1 + player_sin
+            self.player.model.setH(-90 * player_cos + 90 * new_sin)
+            print(f"Player sin: {player_sin}")
+            print(f"Player cos: {player_cos}")
         if isDown(KeyboardButton.asciiKey("w")):
             self.player.velocity[vertical_idx] += PLAYER_SPEED * player_cos 
             self.player.velocity[rev_vertical_idx] -= PLAYER_SPEED * player_sin
@@ -580,7 +584,7 @@ class ExplorerApp(ShowBase):
             self.camera_pos[1] = max(120, self.camera_pos[1])
             self.camera_pos[1] = min(230, self.camera_pos[1])	
         
-            self.player.model.setH(self.camera_pos[0])
+            # self.player.model.setH(self.camera_pos[0])
             move_camera(self.camera, self.camera_zoom, self.camera_pos)
             self.previous_mouse_pos = [mouse_x, mouse_y]
             

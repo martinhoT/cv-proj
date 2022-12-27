@@ -13,7 +13,7 @@ class Table(CustomObject3D):
 class SpotlightOBJ(CustomObject3D):
     
     MODEL_PATH = "models/spotlight/spotlight2.obj"
-    LIGHT_COLOR = (10000000, 10000000, 10000000, 1)
+    LIGHT_COLOR = (0, 0, 0, 1)
     LIGHT_DISTANCE_THRESHOLD = 12
     
     
@@ -31,7 +31,7 @@ class SpotlightOBJ(CustomObject3D):
         self.lens = PerspectiveLens()
         self.slight.setLens(self.lens)
         self.slnp = self.parent.attachNewNode(self.slight)
-        self.slnp.setPos(self.model.getPos())
+        self.slnp.setPos(position[0], position[1], position[2] + 5)
         self.slnp.lookAt(look_at)
         test.setLight(self.slnp)
         
