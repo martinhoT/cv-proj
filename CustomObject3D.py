@@ -29,7 +29,7 @@ class CustomObject3D:
         self.set_pos(*position)
         self.pn = None
         if is_flat:
-            model.node().setAttrib(ShadeModelAttrib.make(ShadeModelAttrib.MFlat))
+            self.model.node().setAttrib(ShadeModelAttrib.make(ShadeModelAttrib.MFlat))
         
         # if emmits_light:
         #     # Create light

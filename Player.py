@@ -17,7 +17,7 @@ class Player(CustomObject3D):
     def __init__(self, model: NodePath, position: Tuple[float, float, float],
                  parent: NodePath, scale: Tuple[float, float, float] = (1, 1, 1)):
         
-        super().__init__(model, position, parent, scale)
+        super().__init__(model, position, parent, scale, is_flat=True)
         self.is_on_ground = False
         self.lights = [self.generate_light() for _ in range(N_LIGHTS)]
         self.rotation = 0

@@ -193,7 +193,6 @@ class ExplorerApp(ShowBase):
         self.accept("mouse1-up", self.left_release)
         self.accept("wheel_up", self.on_mouse_wheel, [ZOOM_SENSIBILITY])
         self.accept("wheel_down", self.on_mouse_wheel, [-ZOOM_SENSIBILITY])
-        
           
         self.taskMgr.add(self.update_camera_rotation_task, 'update_camera_rotation_task')
         
@@ -206,7 +205,7 @@ class ExplorerApp(ShowBase):
         return task.cont
         
     def init_models(self):
-        player_model: NodePath = self.loader.loadModel(self.path_p3d / 'models/player/amongus_corrected.obj')
+        player_model: NodePath = self.loader.loadModel(self.path_p3d / 'models/player/amongus_flat.obj')
         for material in player_model.find_all_materials():
             material.set_ambient(material.get_diffuse())
         # rotate player model vertically
@@ -241,12 +240,13 @@ class ExplorerApp(ShowBase):
         # create ambient light only for the moon
         moon_self_light = AmbientLight('Moon self light')
         moon_self_light.setColor((MOON_SELF_LIGHT_INTENSITY, MOON_SELF_LIGHT_INTENSITY, MOON_SELF_LIGHT_INTENSITY, 1))
-        self.moon.model.setLight( self.moon.model.attachNewNode(moon_self_light) )
+        self.moon.model.setLight(self.moon.model.attachNewNode(moon_self_light))
+        
 
         pl = PointLight('plight')
         pl.setColor((MOON_LIGHT_INTENSITY, MOON_LIGHT_INTENSITY, MOON_LIGHT_INTENSITY, 1))
         pn = self.moon.model.attachNewNode(pl)
-        # pn.setPos(moon_position + LPoint3(-125/2, -150, -40))
+        # pn.setPos(LPoint3(moon_position[0], 0, 0))
         pn.setPos((0, 0, 0))
         
         self.moon.model.setLight(pn)

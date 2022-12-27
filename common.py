@@ -59,7 +59,7 @@ def update_orthographic_lens(camera_orthographic_lens, windowX: int, windowY: in
     camera_orthographic_lens.setAspectRatio(windowX / windowY)
     
     
-def move_camera(camera, camera_zoom, camera_pos, camera_focus):
+def move_camera(camera, camera_zoom, camera_pos, camera_focus=(0, 0, 0)):
     multiplier = camera_zoom
     angle_x_degrees = camera_pos[0] * 1
     angle_y_degrees = camera_pos[1] * 1

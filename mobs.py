@@ -36,7 +36,7 @@ class Spider(CustomObject3D):
     SCALE = 0.01
     SPEED = 0.1
     MODEL_PATH = 'models/spider/SM_Japanise_Krab.obj'
-    FLAT_SHADING_CHANCE = 1
+    FLAT_SHADING_CHANCE = 0
     SPIDER_SCALE_VARIATION = 0.005
     
     def __init__(self, position, parent, game, scale=[.01, .01, .01], movement_axis=(1, 1, 1), wall_dimensions=(1, 1, 1)):
