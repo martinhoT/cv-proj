@@ -44,6 +44,8 @@ LIGHTNING_BACKGROUND_SIZE = 500
 LIGHTNING_BACKGROUND_POS = (-LIGHTNING_BACKGROUND_SIZE/2, LIGHTNING_BACKGROUND_SIZE, -70)
 LIGHTNING_CHANCE = 0.01
 
+IGNORE_RANDOM_EVENTS = True
+
 LABYRINTH_WALL_HEIGHT_TEXTURE_PATH = 'textures/wall_height.png'
 LIGHTNING_BACKGROUND_TEXTURE_PATH = 'textures/lightning.png'
 GRASS_COLOR_TEXTURE_PATH = 'models/grass/everytexture.com-stock-nature-grass-texture-00004-diffuse.jpg'
@@ -99,6 +101,7 @@ class ExplorerApp(ShowBase):
         # camera variables
         self.camera_pos = [0, 180, 0]
         self.camera_zoom = ZOOM_INITIAL
+        self.camera_focus = (0, 0, 0)
         self.camera_perspective_lens = self.cam.node().getLens()
         self.camera_orthographic_lens = OrthographicLens()
         update_orthographic_lens(self.camera_orthographic_lens, WIDTH, HEIGHT)
@@ -161,7 +164,7 @@ class ExplorerApp(ShowBase):
 
         # Task management
         self.mouse_coords = [0, 0]
-
+        self.accept('tab', self.change_camera_focus)
         self.taskMgr.add(self.update_mouse_coords_task, 'update_mouse_coords_task')
         self.taskMgr.add(self.read_inputs_task, 'read_inputs_task')
 
@@ -174,9 +177,7 @@ class ExplorerApp(ShowBase):
         # inputs
         self.is_light_toogle = False
         self.is_perspective_toogle = False
-        # self.accept('v', self.toggle_light)
-        # self.accept('c', self.toggle_perspective)
-        # self.accept('b', self.lightning_strike)
+
         self.taskMgr.add(self.generate_random_event, 'generate_random_event')
         self.pusher.addInPattern('%fn-into-%in')
         self.pusher.addOutPattern('%fn-out-%in')
@@ -226,14 +227,14 @@ class ExplorerApp(ShowBase):
         
         self.pusher.addCollider(player_collider, self.player.model)
         self.cTrav.addCollider(player_collider, self.pusher)
-        move_camera(self.camera, self.camera_zoom, self.camera_pos)
+        move_camera(self.camera, self.camera_zoom, self.camera_pos, self.camera_focus)
     
         # create bird
         self.bird = Bird([player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, self)
         
         # create moon
         moon_model = self.loader.loadModel(self.path_p3d / MOON_PATH)
-        moon_position = (-125, 300, 75)
+        moon_position = LPoint3(-125, 300, 75)
         moon_scale = [5 for _ in range(3)]
         self.moon = CustomObject3D(moon_model, moon_position, self.render, scale=moon_scale, is_flat=True)
         
@@ -245,6 +246,7 @@ class ExplorerApp(ShowBase):
         pl = PointLight('plight')
         pl.setColor((MOON_LIGHT_INTENSITY, MOON_LIGHT_INTENSITY, MOON_LIGHT_INTENSITY, 1))
         pn = self.moon.model.attachNewNode(pl)
+        # pn.setPos(moon_position + LPoint3(-125/2, -150, -40))
         pn.setPos((0, 0, 0))
         
         self.moon.model.setLight(pn)
@@ -361,7 +363,7 @@ class ExplorerApp(ShowBase):
         self.camera_zoom -= delta
         self.camera_zoom = max(self.camera_zoom, 10)
         self.camera_zoom = min(self.camera_zoom, 150)
-        move_camera(self.camera, self.camera_zoom, self.camera_pos)
+        move_camera(self.camera, self.camera_zoom, self.camera_pos, self.camera_focus)
         
         # Reduce the flashlight radius when the camera is zoomed out, sorta following the inverse square law
         self.quad_filter.setShaderInput('lightRadius', 1 / (self.camera_zoom**2 * (1 / FLASHLIGHT_RADIUS) / ZOOM_INITIAL**2))
@@ -597,6 +599,13 @@ class ExplorerApp(ShowBase):
 
         return Task.cont
 
+    def change_camera_focus(self):
+        if self.camera_focus == (0, 0, 0):
+            self.camera_focus = self.moon.model.getPos()
+        else:
+            self.camera_focus = (0, 0, 0)
+        move_camera(self.camera, self.camera_zoom, self.camera_pos, self.camera_focus)
+
     def update_camera_rotation_task(self, task):
         if self.mouseWatcherNode.hasMouse() and self.is_mouse_holded:
             mouse_x = self.mouseWatcherNode.getMouseX()
@@ -611,7 +620,7 @@ class ExplorerApp(ShowBase):
             self.camera_pos[1] = min(230, self.camera_pos[1])	
         
             # self.player.model.setH(self.camera_pos[0])
-            move_camera(self.camera, self.camera_zoom, self.camera_pos)
+            move_camera(self.camera, self.camera_zoom, self.camera_pos, self.camera_focus)
             self.previous_mouse_pos = [mouse_x, mouse_y]
             
         elif not self.is_mouse_holded and self.previous_mouse_pos is not None:
@@ -620,6 +629,7 @@ class ExplorerApp(ShowBase):
         return Task.cont
 
     def generate_random_event(self, task):
+        if IGNORE_RANDOM_EVENTS: return Task.cont
         if random.random() < LIGHTNING_CHANCE:
             self.lightning_strike()
         
@@ -635,8 +645,6 @@ class ExplorerApp(ShowBase):
             self.toggle_perspective()
             self.is_perspective_toogle = not self.is_perspective_toogle
 
-            
-        
         return Task.cont
 
 
