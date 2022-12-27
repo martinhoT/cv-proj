@@ -46,7 +46,7 @@ MOON_PATH = "models/moon/moon2.obj"
 MOON_LIGHT_INTENSITY = 0.25
 MOON_SELF_LIGHT_INTENSITY = 0.9
 GRASS_PATH = "models/grass/grass_bump4.obj"
-GRASS_SCALE = 500
+GRASS_SCALE = 100
 GRASS_FOG_DENSITY = 0.0035
 GRASS_HEIGHT = -10 #-50
 
@@ -370,15 +370,18 @@ class ExplorerApp(ShowBase):
         vertical_idx = 1
         rev_vertical_idx = 0
         player_rotation = 0
+        had_player_input = False
         
         if isDown(KeyboardButton.asciiKey("a")):
             self.player.velocity[horizontal_idx] -= PLAYER_SPEED * player_cos
             self.player.velocity[rev_horizontal_idx] -= PLAYER_SPEED * player_sin
             player_rotation += 90
+            had_player_input = True
         if isDown(KeyboardButton.asciiKey("d")):
             self.player.velocity[horizontal_idx] += PLAYER_SPEED * player_cos 
             self.player.velocity[rev_horizontal_idx] += PLAYER_SPEED * player_sin
             player_rotation -= 90
+            had_player_input = True
         if isDown(KeyboardButton.asciiKey("w")):
             self.player.velocity[vertical_idx] += PLAYER_SPEED * player_cos 
             self.player.velocity[rev_vertical_idx] -= PLAYER_SPEED * player_sin
@@ -386,6 +389,7 @@ class ExplorerApp(ShowBase):
                 player_rotation += 45
             elif player_rotation > 0:
                 player_rotation -= 45
+            had_player_input = True
         if isDown(KeyboardButton.asciiKey("s")):
             self.player.velocity[vertical_idx] -= PLAYER_SPEED * player_cos 
             self.player.velocity[rev_vertical_idx] += PLAYER_SPEED * player_sin
@@ -395,8 +399,9 @@ class ExplorerApp(ShowBase):
                 player_rotation -= 45
             else:
                 player_rotation = 180
+            had_player_input = True
 
-        self.player.rotation = (self.camera_pos[0] + player_rotation)    
+        self.player.rotation = self.camera_pos[0] + player_rotation if had_player_input else self.player.rotation
         
         if isDown(KeyboardButton.space()):
             if self.player.is_on_ground:
