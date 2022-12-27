@@ -11,7 +11,7 @@ from panda3d.core import *
 
 from CustomObject3D import CustomObject3D
 from Player import Player
-from mobs import Bird, Spider, Firefly
+from mobs import Bird, Spider, Firefly, SpotlightOBJ
 from labyrinth import TEXTURE_WALL, Floor, Parallelepiped, Labyrinth, Wall, Window
 
 from common import *
@@ -20,7 +20,7 @@ WIDTH = 800
 HEIGHT = 600
 PLAYER_SPEED = 0.25
 PLAYER_JUMP_SPEED = 0.35
-AMBIENT_LIGHT_INTENSITY = 0.4
+AMBIENT_LIGHT_INTENSITY = 1 # 0.4
 DIRECTIONAL_LIGHT_INTENSITY = 0.3
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
 SPIDER_SPAWN_CHANCE = 1
@@ -45,8 +45,11 @@ MOON_SELF_LIGHT_INTENSITY = 0.9
 GRASS_PATH = "models/grass/grass_bump4.obj"
 GRASS_SCALE = 50
 GRASS_FOG_DENSITY = 0.0035
+GRASS_HEIGHT = -50
 
 GRASS_LIGHT = True
+
+SPOTLIGHT_SCALE = 0.2
 
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
 # If power-of-2 textures is enforced, then the code has to deal with the texture padding.
@@ -244,7 +247,7 @@ class ExplorerApp(ShowBase):
                 grass_plane = generateGeometry(Parallelepiped(GRASS_SCALE, 0, GRASS_SCALE), f'grass_{i}x{j}')
 
                 grass = self.labyrinth_np.attachNewNode(grass_plane)
-                grass.setPos(i * GRASS_SCALE, j * GRASS_SCALE, -50)
+                grass.setPos(i * GRASS_SCALE, j * GRASS_SCALE, GRASS_HEIGHT)
 
                 grass.node()
 
@@ -274,6 +277,11 @@ class ExplorerApp(ShowBase):
         firefly_height = -10
         # self.firefly = Firefly([player_position[0], player_position[1], player_position[2] - firefly_height], 
         #                       self.labyrinth_np, self, rotation_center=[15, 10, firefly_height])
+        
+        # create spotlight object
+        self.spotlight_obj = SpotlightOBJ([player_position[0], player_position[1], GRASS_HEIGHT], self.labyrinth_np, self,
+                                          scale=[SPOTLIGHT_SCALE for _ in range(3)])
+        
     
     def init_spider(self, wall_obj: Wall, labyrinth_np: NodePath):
         spider_scale = [Spider.SCALE * 1 for _ in range(3)]

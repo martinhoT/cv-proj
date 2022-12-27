@@ -120,3 +120,57 @@ class Firefly(CustomObject3D):
             if "grass" in child.name or self.model.get_distance(child) < distance_threshold:
                 yield child
     
+class SpotlightOBJ(CustomObject3D):
+    
+    MODEL_PATH = "models/spotlight/spotlight2.obj"
+    LIGHT_COLOR = 6500
+    LIGHT_DISTANCE_THRESHOLD = 12
+    
+    
+    def __init__(self, position, parent, game, scale=[1, 1, 1]):
+        model = game.loader.loadModel(SpotlightOBJ.MODEL_PATH)
+        super().__init__(model, position, parent, scale, emmits_light=True, 
+                         light_color_temperature=SpotlightOBJ.LIGHT_COLOR, light_distance_threshold=SpotlightOBJ.LIGHT_DISTANCE_THRESHOLD)
+        self.gravity = 0
+        self.velocity = [0, 0, 0]
+        self.model.setP(90)
+        self.model.setH(180)
+        
+        
+    #     pl = PointLight('pl')
+    #     pl.setColorTemperature(SpotlightOBJ.LIGHT_COLOR)
+    #     pl.setShadowCaster(True, CustomObject3D.SHADOW_RESOLUTION, CustomObject3D.SHADOW_RESOLUTION)
+    #     self.pn = self.parent.attachNewNode(pl)
+    #     self.pn.setPos(self.model.getPos())
+        
+    #     if SpotlightOBJ.LIGHT_DISTANCE_THRESHOLD > 0:
+    #         for node_to_illuminate in self.get_light_surroundings(distance_threshold=SpotlightOBJ.LIGHT_DISTANCE_THRESHOLD):
+    #             node_to_illuminate.setLight(self.pn)
+    #             node_to_illuminate.show()
+    #     else:
+    #         self.parent.setLight(self.pn)
+    
+    
+    # def update(self, time):
+    #     angleDegrees = time * SpotlightOBJ.ROTATION_SPEED
+    #     angleRadians = angleDegrees * (math.pi / 180.0)
+        
+    #     self.model.setPos(
+    #         (self.distance_from_center) * math.sin(angleRadians) + self.rotation_center[0],
+    #         -(self.distance_from_center) * math.cos(angleRadians) + self.rotation_center[1],
+    #         self.rotation_center[2]
+    #     )
+    #     self.pn.setPos(self.model.getPos())
+    #     self.model.setH(angleDegrees + 90)
+        
+    #     for node_to_illuminate in self.get_light_surroundings(distance_threshold=SpotlightOBJ.LIGHT_DISTANCE_THRESHOLD):
+    #         node_to_illuminate.setLight(self.pn)
+    #         node_to_illuminate.show()
+        
+    
+    # def get_light_surroundings(self, distance_threshold: float) -> Generator[NodePath, None, None]:
+    #     for child in self.parent.children:
+    #         # To make sure that the light only affects objects within the same floor
+    #         # This also assumes the objects to be lit are above the light (the light is on the floor)
+    #         if "grass" in child.name or self.model.get_distance(child) < distance_threshold:
+    #             yield child
