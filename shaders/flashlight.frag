@@ -104,10 +104,10 @@ void main() {
     float luminance = 0.25 * base.r + 0.5 * base.g + 0.25 * base.b;
     
     // How should lit should a color be considered, and thus not need the flashlight light?
-    // In this case we take the strongest color component
+    // In this case we take the strongest color component (the HSV value V)
     float lightnessFactor = max(max(base.r, base.g), base.b);
     // Determine how much of the base color to keep based on the previous lightness factor
-    float useBaseColor = smoothstep(0.4, 1, lightnessFactor);
+    float useBaseColor = smoothstep(0.4, 1.0, lightnessFactor);
     // Use the flashlight if the base color is not too lit, and keep the base lighting otherwise
     
     // Let all other lights flicker as well (affects the moon too...)
@@ -121,7 +121,8 @@ void main() {
     // p3d_FragColor = vec4(normalDiff);
     // p3d_FragColor = vec4(.5 + .5*sin(u_time));
     // p3d_FragColor = vec4(luminance);
-    // p3d_FragColor = vec4(smoothstep(0.35, 1.0, luminance) * 2.0);
+    // p3d_FragColor = vec4(lightnessFactor);
+    // p3d_FragColor = vec4(smoothstep(0.4, 1.0, luminance));
     // p3d_FragColor = vec4(useBaseColor);
     p3d_FragColor = vec4(base);
 }
