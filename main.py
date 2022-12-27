@@ -369,24 +369,35 @@ class ExplorerApp(ShowBase):
         rev_horizontal_idx = 1
         vertical_idx = 1
         rev_vertical_idx = 0
+        player_rotation = 0
         
         if isDown(KeyboardButton.asciiKey("a")):
             self.player.velocity[horizontal_idx] -= PLAYER_SPEED * player_cos
             self.player.velocity[rev_horizontal_idx] -= PLAYER_SPEED * player_sin
+            player_rotation += 90
         if isDown(KeyboardButton.asciiKey("d")):
             self.player.velocity[horizontal_idx] += PLAYER_SPEED * player_cos 
             self.player.velocity[rev_horizontal_idx] += PLAYER_SPEED * player_sin
-            new_sin = 1 - player_sin if player_sin >= 0 else 1 + player_sin
-            self.player.model.setH(-90 * player_cos + 90 * new_sin)
-            print(f"Player sin: {player_sin}")
-            print(f"Player cos: {player_cos}")
+            player_rotation -= 90
         if isDown(KeyboardButton.asciiKey("w")):
             self.player.velocity[vertical_idx] += PLAYER_SPEED * player_cos 
             self.player.velocity[rev_vertical_idx] -= PLAYER_SPEED * player_sin
+            if player_rotation < 0:
+                player_rotation += 45
+            elif player_rotation > 0:
+                player_rotation -= 45
         if isDown(KeyboardButton.asciiKey("s")):
             self.player.velocity[vertical_idx] -= PLAYER_SPEED * player_cos 
             self.player.velocity[rev_vertical_idx] += PLAYER_SPEED * player_sin
-            
+            if player_rotation > 0:
+                player_rotation += 45
+            elif player_rotation < 0:
+                player_rotation -= 45
+            else:
+                player_rotation = 180
+
+        self.player.rotation = (self.camera_pos[0] + player_rotation)    
+        
         if isDown(KeyboardButton.space()):
             if self.player.is_on_ground:
                 self.player.velocity[2] = PLAYER_JUMP_SPEED
