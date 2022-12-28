@@ -59,25 +59,36 @@ def update_orthographic_lens(camera_orthographic_lens, windowX: int, windowY: in
     camera_orthographic_lens.setAspectRatio(windowX / windowY)
     
     
-def move_camera(camera, camera_zoom, camera_pos, camera_focus=(0, 0, 0), grass_height=-10, 
-                grass_treshold=-5):
-    camera_pos_radians = math.radians(camera_pos[1])
+def move_camera(camera, camera_zoom, camera_angle, camera_focus=(0, 0, 0), grass_height=-10, 
+                grass_treshold=-5, labyrinth_boundaries=None):
+    
+    camera_pos_radians = math.radians(camera_angle[1])
     multiplier = camera_zoom * math.sin(camera_pos_radians)
     
     grass_limit = grass_height + grass_treshold
-    if multiplier < grass_limit: 
-        return False
     
-    angle_x_degrees = camera_pos[0]
-    angle_y_degrees = camera_pos[1] 
+    angle_x_degrees = camera_angle[0]
+    angle_y_degrees = camera_angle[1] 
     angle_x_radians = angle_x_degrees * (math.pi / 180.0)
     angle_y_radians = angle_y_degrees * (math.pi / 180.0)
 
-    camera.setPos(
+    new_pos = (
         math.sin(angle_x_radians) * camera_zoom + camera_focus[0],
         -math.cos(angle_x_radians) * camera_zoom * -math.cos(angle_y_radians) + camera_focus[1],
-        max(math.sin(angle_y_radians) * camera_zoom + camera_focus[2], grass_limit)
+        (math.sin(angle_y_radians) * camera_zoom + camera_focus[2])
     )
     
+    if labyrinth_boundaries is not None:
+        if -labyrinth_boundaries[0] < new_pos[0] < labyrinth_boundaries[0] and \
+           -labyrinth_boundaries[1] < new_pos[1] < labyrinth_boundaries[1] and \
+           -labyrinth_boundaries[2] < new_pos[2] < labyrinth_boundaries[2]:
+
+            return False
+    
+    if multiplier < grass_limit: 
+        return False
+    
+
+    camera.setPos(*new_pos)
     camera.lookAt(camera_focus)
     return True

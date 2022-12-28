@@ -146,7 +146,6 @@ class ExplorerApp(ShowBase):
                 self.labyrinth_block_nodes[floor].setLight(dlnp)
         self.bird.model.setLight(dlnp)
         
-        
         self.grass_light = PointLight('plightt')
         self.grass_light.setColor(GRASS_LIGHT_COLOR)
         if GRASS_LIGHT:
@@ -365,9 +364,10 @@ class ExplorerApp(ShowBase):
         new_camera_zoom = min(new_camera_zoom, 150)
         
         has_moved = move_camera(self.camera, new_camera_zoom, self.camera_pos, self.camera_focus,
-                                grass_height=GRASS_HEIGHT)
+                                grass_height=GRASS_HEIGHT, labyrinth_boundaries=[self.labyrinth.width, self.labyrinth.depth, self.labyrinth.height])
         
-        if has_moved: self.camera_zoom = new_camera_zoom
+        if has_moved: 
+            self.camera_zoom = new_camera_zoom
         
         # Reduce the flashlight radius when the camera is zoomed out, sorta following the inverse square law
         self.quad_filter.setShaderInput('lightRadius', 1 / (self.camera_zoom**2 * (1 / FLASHLIGHT_RADIUS) / ZOOM_INITIAL**2))
@@ -624,7 +624,8 @@ class ExplorerApp(ShowBase):
             new_camera_pos[1] = max(120, new_camera_pos[1])
             new_camera_pos[1] = min(230, new_camera_pos[1])	
         
-            had_move = move_camera(self.camera, self.camera_zoom, new_camera_pos, self.camera_focus)
+            had_move = move_camera(self.camera, self.camera_zoom, new_camera_pos, self.camera_focus, 
+                                   grass_height=GRASS_HEIGHT, labyrinth_boundaries=[self.labyrinth.width, self.labyrinth.depth, self.labyrinth.height])
             if had_move:
                 self.camera_pos = new_camera_pos.copy()
                 
