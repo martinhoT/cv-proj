@@ -58,7 +58,7 @@ MOON_SELF_LIGHT_INTENSITY = 0.9
 GRASS_PATH = "models/grass/grass_bump4.obj"
 GRASS_SCALE = 100
 GRASS_FOG_DENSITY = 0.0035
-GRASS_HEIGHT = -10 #-50
+GRASS_HEIGHT = -30 #-50
 
 GRASS_LIGHT = True
 GRASS_LIGHT_COLOR = (.6, .6, .6, 1)
@@ -297,9 +297,9 @@ class ExplorerApp(ShowBase):
         
         # create spotlight object
         self.spotlight_obj = SpotlightOBJ([player_position[0] - 50, player_position[1] - 50, GRASS_HEIGHT], self.labyrinth_np, self,
-                                          scale=[SPOTLIGHT_SCALE for _ in range(3)], look_at=(0, 0, 0), test=self.render)
+                                          scale=[SPOTLIGHT_SCALE for _ in range(3)], look_at=LPoint3(0, 0, 0), grass_height=GRASS_HEIGHT, test=self.render)
     
-        self.spotlight_obj.look_at((0, 0, -10))
+        self.spotlight_obj.look_at(LPoint3(0, 0, GRASS_HEIGHT))
         
         
     
@@ -442,6 +442,7 @@ class ExplorerApp(ShowBase):
         
         self.bird.update(task.time)
         # self.firefly.update(task.time)
+        self.spotlight_obj.update()
 
         return Task.cont
 
