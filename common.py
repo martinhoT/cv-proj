@@ -59,17 +59,25 @@ def update_orthographic_lens(camera_orthographic_lens, windowX: int, windowY: in
     camera_orthographic_lens.setAspectRatio(windowX / windowY)
     
     
-def move_camera(camera, camera_zoom, camera_pos, camera_focus=(0, 0, 0)):
-    multiplier = camera_zoom
-    angle_x_degrees = camera_pos[0] * 1
-    angle_y_degrees = camera_pos[1] * 1
+def move_camera(camera, camera_zoom, camera_pos, camera_focus=(0, 0, 0), grass_height=-10, 
+                grass_treshold=-5):
+    camera_pos_radians = math.radians(camera_pos[1])
+    multiplier = camera_zoom * math.sin(camera_pos_radians)
+    
+    grass_limit = grass_height + grass_treshold
+    if multiplier < grass_limit: 
+        return False
+    
+    angle_x_degrees = camera_pos[0]
+    angle_y_degrees = camera_pos[1] 
     angle_x_radians = angle_x_degrees * (math.pi / 180.0)
     angle_y_radians = angle_y_degrees * (math.pi / 180.0)
 
     camera.setPos(
-        math.sin(angle_x_radians) * multiplier + camera_focus[0],
-        -math.cos(angle_x_radians) * multiplier * -math.cos(angle_y_radians) + camera_focus[1],
-        math.sin(angle_y_radians) * multiplier + camera_focus[2]
+        math.sin(angle_x_radians) * camera_zoom + camera_focus[0],
+        -math.cos(angle_x_radians) * camera_zoom * -math.cos(angle_y_radians) + camera_focus[1],
+        max(math.sin(angle_y_radians) * camera_zoom + camera_focus[2], grass_limit)
     )
     
     camera.lookAt(camera_focus)
+    return True

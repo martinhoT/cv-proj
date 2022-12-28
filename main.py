@@ -360,10 +360,14 @@ class ExplorerApp(ShowBase):
         self.is_mouse_holded = False
     
     def on_mouse_wheel(self, delta):
-        self.camera_zoom -= delta
-        self.camera_zoom = max(self.camera_zoom, 10)
-        self.camera_zoom = min(self.camera_zoom, 150)
-        move_camera(self.camera, self.camera_zoom, self.camera_pos, self.camera_focus)
+        new_camera_zoom = self.camera_zoom - delta
+        new_camera_zoom = max(new_camera_zoom, 10)
+        new_camera_zoom = min(new_camera_zoom, 150)
+        
+        has_moved = move_camera(self.camera, new_camera_zoom, self.camera_pos, self.camera_focus,
+                                grass_height=GRASS_HEIGHT)
+        
+        if has_moved: self.camera_zoom = new_camera_zoom
         
         # Reduce the flashlight radius when the camera is zoomed out, sorta following the inverse square law
         self.quad_filter.setShaderInput('lightRadius', 1 / (self.camera_zoom**2 * (1 / FLASHLIGHT_RADIUS) / ZOOM_INITIAL**2))
@@ -614,13 +618,16 @@ class ExplorerApp(ShowBase):
                 self.previous_mouse_pos = [mouse_x, mouse_y]
                 
             mouse_offset = [mouse_x - self.previous_mouse_pos[0], mouse_y - self.previous_mouse_pos[1]]
-            self.camera_pos[0] -= mouse_offset[0] * CAMERA_SENSIBILITY
-            self.camera_pos[1] += mouse_offset[1] * CAMERA_SENSIBILITY
-            self.camera_pos[1] = max(120, self.camera_pos[1])
-            self.camera_pos[1] = min(230, self.camera_pos[1])	
+            new_camera_pos = self.camera_pos.copy()
+            new_camera_pos[0] -= mouse_offset[0] * CAMERA_SENSIBILITY
+            new_camera_pos[1] += mouse_offset[1] * CAMERA_SENSIBILITY
+            new_camera_pos[1] = max(120, new_camera_pos[1])
+            new_camera_pos[1] = min(230, new_camera_pos[1])	
         
-            # self.player.model.setH(self.camera_pos[0])
-            move_camera(self.camera, self.camera_zoom, self.camera_pos, self.camera_focus)
+            had_move = move_camera(self.camera, self.camera_zoom, new_camera_pos, self.camera_focus)
+            if had_move:
+                self.camera_pos = new_camera_pos.copy()
+                
             self.previous_mouse_pos = [mouse_x, mouse_y]
             
         elif not self.is_mouse_holded and self.previous_mouse_pos is not None:
