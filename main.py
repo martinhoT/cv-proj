@@ -29,12 +29,22 @@ OBJECT_SPAWN_CHANCE = 0.1
 CAMERA_SENSIBILITY = 90
 ZOOM_SENSIBILITY = 5
 ZOOM_INITIAL = 60
+
+PERSPECTIVE_CHANCE = 0.01
+PERSPECTIVE_RETURN_CHANCE = 0.05
+
 FLASHLIGHT_POWER = 1
 FLASHLIGHT_RADIUS = 0.2
+FLASHLIGHT_FLICKER_CHANCE = 0.01
+FLASHLIGHT_RETURN_CHANCE = 0.01
+
 LIGHTNING_STRIKE_INTENSITY = 1.0
 LIGHTNING_STRIKE_DURATION = 0.05   # in seconds
 LIGHTNING_BACKGROUND_SIZE = 500
 LIGHTNING_BACKGROUND_POS = (-LIGHTNING_BACKGROUND_SIZE/2, LIGHTNING_BACKGROUND_SIZE, -70)
+LIGHTNING_CHANCE = 0.01
+
+IGNORE_RANDOM_EVENTS = True
 
 LABYRINTH_WALL_HEIGHT_TEXTURE_PATH = 'textures/wall_height.png'
 LIGHTNING_BACKGROUND_TEXTURE_PATH = 'textures/lightning.png'
@@ -46,12 +56,12 @@ MOON_PATH = "models/moon/moon2.obj"
 MOON_LIGHT_INTENSITY = 0.25
 MOON_SELF_LIGHT_INTENSITY = 0.9
 GRASS_PATH = "models/grass/grass_bump4.obj"
-GRASS_SCALE = 500
+GRASS_SCALE = 100
 GRASS_FOG_DENSITY = 0.0035
 GRASS_HEIGHT = -10 #-50
 
 GRASS_LIGHT = True
-GRASS_LIGHT_COLOR = (.06, .06, .06, 1)
+GRASS_LIGHT_COLOR = (.6, .6, .6, 1)
 
 SPOTLIGHT_SCALE = 0.2
 # Enable non-power-of-2 textures. This is relevant for the FilterManager post-processing.
@@ -91,6 +101,7 @@ class ExplorerApp(ShowBase):
         # camera variables
         self.camera_pos = [0, 180, 0]
         self.camera_zoom = ZOOM_INITIAL
+        self.camera_focus = (0, 0, 0)
         self.camera_perspective_lens = self.cam.node().getLens()
         self.camera_orthographic_lens = OrthographicLens()
         update_orthographic_lens(self.camera_orthographic_lens, WIDTH, HEIGHT)
@@ -153,7 +164,7 @@ class ExplorerApp(ShowBase):
 
         # Task management
         self.mouse_coords = [0, 0]
-
+        self.accept('tab', self.change_camera_focus)
         self.taskMgr.add(self.update_mouse_coords_task, 'update_mouse_coords_task')
         self.taskMgr.add(self.read_inputs_task, 'read_inputs_task')
 
@@ -164,9 +175,10 @@ class ExplorerApp(ShowBase):
         self.setupShaders()
 
         # inputs
-        self.accept('v', self.toggle_light)
-        self.accept('c', self.toggle_perspective)
-        self.accept('b', self.lightning_strike)
+        self.is_light_toogle = False
+        self.is_perspective_toogle = False
+
+        self.taskMgr.add(self.generate_random_event, 'generate_random_event')
         self.pusher.addInPattern('%fn-into-%in')
         self.pusher.addOutPattern('%fn-out-%in')
         self.pusher.addAgainPattern('%fn-again-%in')
@@ -181,7 +193,6 @@ class ExplorerApp(ShowBase):
         self.accept("mouse1-up", self.left_release)
         self.accept("wheel_up", self.on_mouse_wheel, [ZOOM_SENSIBILITY])
         self.accept("wheel_down", self.on_mouse_wheel, [-ZOOM_SENSIBILITY])
-        
           
         self.taskMgr.add(self.update_camera_rotation_task, 'update_camera_rotation_task')
         
@@ -194,7 +205,7 @@ class ExplorerApp(ShowBase):
         return task.cont
         
     def init_models(self):
-        player_model: NodePath = self.loader.loadModel(self.path_p3d / 'models/player/amongus_corrected.obj')
+        player_model: NodePath = self.loader.loadModel(self.path_p3d / 'models/player/amongus_flat.obj')
         for material in player_model.find_all_materials():
             material.set_ambient(material.get_diffuse())
         # rotate player model vertically
@@ -215,25 +226,27 @@ class ExplorerApp(ShowBase):
         
         self.pusher.addCollider(player_collider, self.player.model)
         self.cTrav.addCollider(player_collider, self.pusher)
-        move_camera(self.camera, self.camera_zoom, self.camera_pos)
+        move_camera(self.camera, self.camera_zoom, self.camera_pos, self.camera_focus)
     
         # create bird
         self.bird = Bird([player_position[0] + 5, player_position[1], player_position[2]], self.labyrinth_np, self)
         
         # create moon
         moon_model = self.loader.loadModel(self.path_p3d / MOON_PATH)
-        moon_position = (-125, 300, 75)
+        moon_position = LPoint3(-125, 300, 75)
         moon_scale = [5 for _ in range(3)]
         self.moon = CustomObject3D(moon_model, moon_position, self.render, scale=moon_scale, is_flat=True)
         
         # create ambient light only for the moon
         moon_self_light = AmbientLight('Moon self light')
         moon_self_light.setColor((MOON_SELF_LIGHT_INTENSITY, MOON_SELF_LIGHT_INTENSITY, MOON_SELF_LIGHT_INTENSITY, 1))
-        self.moon.model.setLight( self.moon.model.attachNewNode(moon_self_light) )
+        self.moon.model.setLight(self.moon.model.attachNewNode(moon_self_light))
+        
 
         pl = PointLight('plight')
         pl.setColor((MOON_LIGHT_INTENSITY, MOON_LIGHT_INTENSITY, MOON_LIGHT_INTENSITY, 1))
         pn = self.moon.model.attachNewNode(pl)
+        # pn.setPos(LPoint3(moon_position[0], 0, 0))
         pn.setPos((0, 0, 0))
         
         self.moon.model.setLight(pn)
@@ -350,7 +363,7 @@ class ExplorerApp(ShowBase):
         self.camera_zoom -= delta
         self.camera_zoom = max(self.camera_zoom, 10)
         self.camera_zoom = min(self.camera_zoom, 150)
-        move_camera(self.camera, self.camera_zoom, self.camera_pos)
+        move_camera(self.camera, self.camera_zoom, self.camera_pos, self.camera_focus)
         
         # Reduce the flashlight radius when the camera is zoomed out, sorta following the inverse square law
         self.quad_filter.setShaderInput('lightRadius', 1 / (self.camera_zoom**2 * (1 / FLASHLIGHT_RADIUS) / ZOOM_INITIAL**2))
@@ -362,27 +375,47 @@ class ExplorerApp(ShowBase):
         #Player
         self.player.velocity[0] = 0
         self.player.velocity[1] = 0
-        player_radians = math.radians(self.player.model.getH())
+        player_radians = math.radians(self.camera_pos[0])
         player_sin = math.sin(player_radians)
         player_cos = math.cos(player_radians)
         horizontal_idx = 0
         rev_horizontal_idx = 1
         vertical_idx = 1
         rev_vertical_idx = 0
+        player_rotation = 0
+        had_player_input = False
         
         if isDown(KeyboardButton.asciiKey("a")):
             self.player.velocity[horizontal_idx] -= PLAYER_SPEED * player_cos
             self.player.velocity[rev_horizontal_idx] -= PLAYER_SPEED * player_sin
+            player_rotation += 90
+            had_player_input = True
         if isDown(KeyboardButton.asciiKey("d")):
             self.player.velocity[horizontal_idx] += PLAYER_SPEED * player_cos 
             self.player.velocity[rev_horizontal_idx] += PLAYER_SPEED * player_sin
+            player_rotation -= 90
+            had_player_input = True
         if isDown(KeyboardButton.asciiKey("w")):
             self.player.velocity[vertical_idx] += PLAYER_SPEED * player_cos 
             self.player.velocity[rev_vertical_idx] -= PLAYER_SPEED * player_sin
+            if player_rotation < 0:
+                player_rotation += 45
+            elif player_rotation > 0:
+                player_rotation -= 45
+            had_player_input = True
         if isDown(KeyboardButton.asciiKey("s")):
             self.player.velocity[vertical_idx] -= PLAYER_SPEED * player_cos 
             self.player.velocity[rev_vertical_idx] += PLAYER_SPEED * player_sin
-            
+            if player_rotation > 0:
+                player_rotation += 45
+            elif player_rotation < 0:
+                player_rotation -= 45
+            else:
+                player_rotation = 180
+            had_player_input = True
+
+        self.player.rotation = self.camera_pos[0] + player_rotation if had_player_input else self.player.rotation
+        
         if isDown(KeyboardButton.space()):
             if self.player.is_on_ground:
                 self.player.velocity[2] = PLAYER_JUMP_SPEED
@@ -566,6 +599,13 @@ class ExplorerApp(ShowBase):
 
         return Task.cont
 
+    def change_camera_focus(self):
+        if self.camera_focus == (0, 0, 0):
+            self.camera_focus = self.moon.model.getPos()
+        else:
+            self.camera_focus = (0, 0, 0)
+        move_camera(self.camera, self.camera_zoom, self.camera_pos, self.camera_focus)
+
     def update_camera_rotation_task(self, task):
         if self.mouseWatcherNode.hasMouse() and self.is_mouse_holded:
             mouse_x = self.mouseWatcherNode.getMouseX()
@@ -579,12 +619,31 @@ class ExplorerApp(ShowBase):
             self.camera_pos[1] = max(120, self.camera_pos[1])
             self.camera_pos[1] = min(230, self.camera_pos[1])	
         
-            self.player.model.setH(self.camera_pos[0])
-            move_camera(self.camera, self.camera_zoom, self.camera_pos)
+            # self.player.model.setH(self.camera_pos[0])
+            move_camera(self.camera, self.camera_zoom, self.camera_pos, self.camera_focus)
             self.previous_mouse_pos = [mouse_x, mouse_y]
             
         elif not self.is_mouse_holded and self.previous_mouse_pos is not None:
             self.previous_mouse_pos = None
+
+        return Task.cont
+
+    def generate_random_event(self, task):
+        if IGNORE_RANDOM_EVENTS: return Task.cont
+        if random.random() < LIGHTNING_CHANCE:
+            self.lightning_strike()
+        
+        flick_chance = random.random()
+        if (not self.is_light_toogle and flick_chance < FLASHLIGHT_FLICKER_CHANCE) or \
+            self.is_light_toogle and flick_chance < FLASHLIGHT_RETURN_CHANCE:
+            self.toggle_light()
+            self.is_light_toogle = not self.is_light_toogle
+        
+        perspective_chance = random.random()
+        if (not self.is_perspective_toogle and perspective_chance < PERSPECTIVE_CHANCE) or \
+            self.is_perspective_toogle and perspective_chance < PERSPECTIVE_RETURN_CHANCE:
+            self.toggle_perspective()
+            self.is_perspective_toogle = not self.is_perspective_toogle
 
         return Task.cont
 

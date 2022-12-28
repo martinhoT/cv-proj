@@ -11,12 +11,16 @@ LIGHT_DISTANCE_THRESHOLD = 10
 SHADOW_RESOLUTION = 128
 
 class Player(CustomObject3D):
+    
+    ROTATION_SPEED = 20
+    
     def __init__(self, model: NodePath, position: Tuple[float, float, float],
                  parent: NodePath, scale: Tuple[float, float, float] = (1, 1, 1)):
         
-        super().__init__(model, position, parent, scale)
+        super().__init__(model, position, parent, scale, is_flat=True)
         self.is_on_ground = False
         self.lights = [self.generate_light() for _ in range(N_LIGHTS)]
+        self.rotation = 0
     
     def update(self):
         if self.is_on_ground:
@@ -24,6 +28,14 @@ class Player(CustomObject3D):
         else:
             self.velocity[2] -= self.gravity
         self.move()
+        
+        if abs(self.model.getH() - self.rotation) > Player.ROTATION_SPEED:
+            if self.model.getH() < self.rotation:
+                self.model.setH(self.model.getH() + Player.ROTATION_SPEED)
+            elif self.model.getH() > self.rotation:
+                self.model.setH(self.model.getH() - Player.ROTATION_SPEED)
+        else:
+            self.model.setH(self.rotation)
 
     def generate_light(self):
         pl = PointLight('plight')

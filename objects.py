@@ -26,14 +26,14 @@ class SpotlightOBJ(CustomObject3D):
         self.model.setP(90)
         self.model.setH(180)
 
-        self.slight = Spotlight('slight')
-        self.slight.setColor(SpotlightOBJ.LIGHT_COLOR)
-        self.lens = PerspectiveLens()
-        self.slight.setLens(self.lens)
-        self.slnp = self.parent.attachNewNode(self.slight)
-        self.slnp.setPos(self.model.getPos() + LPoint3(0, 0, 5))
-        self.slnp.lookAt(look_at)
-        test.setLight(self.slnp)
+        # self.slight = Spotlight('slight')
+        # self.slight.setColor(SpotlightOBJ.LIGHT_COLOR)
+        # self.lens = PerspectiveLens()
+        # self.slight.setLens(self.lens)
+        # self.slnp = self.parent.attachNewNode(self.slight)
+        # self.slnp.setPos(self.model.getPos() + LPoint3(0, 0, 5))
+        # self.slnp.lookAt(look_at)
+        # test.setLight(self.slnp)
         
         # create pointlight to make the lamp glow
         self.pointlight = PointLight('pointlight')
@@ -43,5 +43,6 @@ class SpotlightOBJ(CustomObject3D):
         self.model.setLight(self.pnp)
     
     def look_at(self, look_at):
-        self.slnp.lookAt(look_at)
+        # self.slnp.lookAt(look_at)
+        pass
         
