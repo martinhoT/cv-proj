@@ -30,7 +30,7 @@ CAMERA_SENSIBILITY = 90
 ZOOM_SENSIBILITY = 5
 ZOOM_INITIAL = 60
 
-PERSPECTIVE_CHANCE = 0.01
+PERSPECTIVE_CHANCE = 0.001
 PERSPECTIVE_RETURN_CHANCE = 0.05
 
 FLASHLIGHT_POWER = 1
@@ -104,7 +104,7 @@ class ExplorerApp(ShowBase):
         self.camera_focus = (0, 0, 0)
         self.camera_perspective_lens = self.cam.node().getLens()
         self.camera_orthographic_lens = OrthographicLens()
-        update_orthographic_lens(self.camera_orthographic_lens, WIDTH, HEIGHT)
+        update_orthographic_lens(self.camera_orthographic_lens, WIDTH, HEIGHT, self.camera_zoom)
 
         self.path = os.path.dirname(os.path.abspath(__file__))
         self.path_p3d = Filename.fromOsSpecific(self.path)
@@ -176,6 +176,10 @@ class ExplorerApp(ShowBase):
         # inputs
         self.is_light_toogle = False
         self.is_perspective_toogle = False
+
+        self.accept('v', self.toggle_light)
+        self.accept('c', self.toggle_perspective)
+        self.accept('b', self.lightning_strike)
 
         self.taskMgr.add(self.generate_random_event, 'generate_random_event')
         self.pusher.addInPattern('%fn-into-%in')
@@ -297,8 +301,6 @@ class ExplorerApp(ShowBase):
     
         self.spotlight_obj.look_at((0, 0, -10))
         
-        # table_model = self.loader.loadModel(self.path_p3d / TABLE_PATH)
-        # table = CustomObject3D(table_model, (0, 0, 0), self.labyrinth_np, scale=[0.5 for _ in range(3)])
         
     
     def init_objs(self, wall_obj: Wall, labyrinth_np: NodePath):
@@ -368,6 +370,8 @@ class ExplorerApp(ShowBase):
         
         if has_moved: 
             self.camera_zoom = new_camera_zoom
+            update_orthographic_lens(self.camera_orthographic_lens, WIDTH, HEIGHT, self.camera_zoom)
+            
         
         # Reduce the flashlight radius when the camera is zoomed out, sorta following the inverse square law
         self.quad_filter.setShaderInput('lightRadius', 1 / (self.camera_zoom**2 * (1 / FLASHLIGHT_RADIUS) / ZOOM_INITIAL**2))
@@ -448,6 +452,7 @@ class ExplorerApp(ShowBase):
     def toggle_perspective(self):
         if isinstance(self.cam.node().getLens(), PerspectiveLens):
             self.cam.node().setLens(self.camera_orthographic_lens)
+            update_orthographic_lens(self.camera_orthographic_lens, WIDTH, HEIGHT, self.camera_zoom)
         else:
             self.cam.node().setLens(self.camera_perspective_lens)
 
@@ -531,7 +536,7 @@ class ExplorerApp(ShowBase):
     def windowResized(self):
         newX, newY = self.win.getSize()
         self.quad_filter.setShaderInput('u_resolution', (newX, newY))
-        update_orthographic_lens(self.camera_orthographic_lens, newX, newY)
+        update_orthographic_lens(self.camera_orthographic_lens, newX, newY, self.camera_zoom)
 
     def setupShaders(self):
         # Plenty of features, including normal maps and per-pixel lighting

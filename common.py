@@ -53,9 +53,10 @@ def generateGeometry(parallelepiped: Parallelepiped, name: str) -> GeomNode:
     return node
 
 
-def update_orthographic_lens(camera_orthographic_lens, windowX: int, windowY: int):
+def update_orthographic_lens(camera_orthographic_lens, windowX: int, windowY: int, camera_zoom: float):
     """Set the orthographic lens' parameters with respect to the window size."""
-    camera_orthographic_lens.setFilmSize(30 * max(windowX / windowY, 1))   # Why? no clue
+    MULTIPLIER = 0.5
+    camera_orthographic_lens.setFilmSize(MULTIPLIER * camera_zoom)
     camera_orthographic_lens.setAspectRatio(windowX / windowY)
     
     
