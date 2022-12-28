@@ -293,7 +293,7 @@ class ExplorerApp(ShowBase):
         
         # create spotlight object
         self.spotlight_obj = SpotlightOBJ([player_position[0] - 50, player_position[1] - 50, GRASS_HEIGHT], self.labyrinth_np, self,
-                                          scale=[SPOTLIGHT_SCALE for _ in range(3)], look_at=(-25, -25, -49), test=self.render)
+                                          scale=[SPOTLIGHT_SCALE for _ in range(3)], look_at=(0, 0, 0), test=self.render)
     
         self.spotlight_obj.look_at((0, 0, -10))
         
