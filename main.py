@@ -44,8 +44,6 @@ LIGHTNING_BACKGROUND_SIZE = 500
 LIGHTNING_BACKGROUND_POS = (-LIGHTNING_BACKGROUND_SIZE/2, LIGHTNING_BACKGROUND_SIZE, -70)
 LIGHTNING_CHANCE = 0.01
 
-IGNORE_RANDOM_EVENTS = True
-
 LABYRINTH_WALL_HEIGHT_TEXTURE_PATH = 'textures/wall_height.png'
 LIGHTNING_BACKGROUND_TEXTURE_PATH = 'textures/lightning.png'
 GRASS_COLOR_TEXTURE_PATH = 'models/grass/everytexture.com-stock-nature-grass-texture-00004-diffuse.jpg'
@@ -92,6 +90,7 @@ class ExplorerApp(ShowBase):
         self.DEBUG_COLLISIONS = debug_opts.get('collisions', False)
         self.DEBUG_MOUSE_CAMERA = debug_opts.get('mouse_camera', False)
         self.DEBUG_HIDE_UNLIT = debug_opts.get('hide_unlit', False)
+        self.DEBUG_MANUAL_RANDOM_EVENTS = debug_opts.get('no_chaos', False)
 
         # set window size
         props = WindowProperties()
@@ -177,9 +176,10 @@ class ExplorerApp(ShowBase):
         self.is_light_toogle = False
         self.is_perspective_toogle = False
 
-        self.accept('v', self.toggle_light)
-        self.accept('c', self.toggle_perspective)
-        self.accept('b', self.lightning_strike)
+        if self.DEBUG_MANUAL_RANDOM_EVENTS:
+            self.accept('v', self.toggle_light)
+            self.accept('c', self.toggle_perspective)
+            self.accept('b', self.lightning_strike)
 
         self.taskMgr.add(self.generate_random_event, 'generate_random_event')
         self.pusher.addInPattern('%fn-into-%in')
@@ -663,7 +663,7 @@ class ExplorerApp(ShowBase):
         return Task.cont
 
     def generate_random_event(self, task):
-        if IGNORE_RANDOM_EVENTS: return Task.cont
+        if self.DEBUG_MANUAL_RANDOM_EVENTS: return Task.cont
         if random.random() < LIGHTNING_CHANCE:
             self.lightning_strike()
         
@@ -710,6 +710,9 @@ parser_debug.add_argument('--debug.fps',
 parser_debug.add_argument('--debug.log',
     action='store_true',
     help='print debug messages (reduces performance)')
+parser_debug.add_argument('--debug.no-chaos',
+    action='store_true',
+    help='the random events are fired manually instead of automatically')
 
 
 args = parser.parse_args()
