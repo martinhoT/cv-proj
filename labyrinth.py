@@ -156,6 +156,7 @@ class Labyrinth:
 
                     object_underneath: bool = object_type != cls.NODE_HOLE \
                         and previous_layout and previous_layout[y_idx][x_idx] != cls.NODE_EMPTY
+                    object_ontop: bool = any(floor_layout[y_idx][x_idx] != cls.NODE_EMPTY for floor_layout in floor_layouts[idx+1:])
 
                     if object_type == cls.NODE_WALL_H:
                         block = Wall(**block_args, **cls.ATTRIBUTES_WALL_H, color=wall_color)
@@ -175,7 +176,7 @@ class Labyrinth:
                     elif object_type == cls.NODE_FLOOR or object_underneath:
                         
                         # Whether or not this is strictly a roof, and so not meant to be a walkable floor
-                        block_args['strictly_roof'] = object_type != cls.NODE_FLOOR and object_underneath
+                        block_args['strictly_roof'] = object_type != cls.NODE_FLOOR and object_underneath and not object_ontop
 
                         # Middle floor
                         if (x_idx % 2) == 1 and (y_idx % 2) == 1:
