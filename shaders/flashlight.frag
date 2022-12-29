@@ -100,19 +100,18 @@ void main() {
 
     vec4 base = texture2D(tex, texcoord);
     
-    // Get luminance of the color buffer using the YCoCg color space
-    float luminance = 0.25 * base.r + 0.5 * base.g + 0.25 * base.b;
-    
     // How should lit should a color be considered, and thus not need the flashlight light?
     // In this case we take the strongest color component (the HSV value V)
     float lightnessFactor = max(max(base.r, base.g), base.b);
     // Determine how much of the base color to keep based on the previous lightness factor
     float useBaseColor = smoothstep(0.4, 1.0, lightnessFactor);
-    // Use the flashlight if the base color is not too lit, and keep the base lighting otherwise
     
+    // Use the flashlight if the base color is not too lit, and keep the base lighting otherwise
+    vec4 mixed = mix(base * flashlightLit, base, useBaseColor);
     // Let all other lights flicker as well (affects the moon too...)
-    // p3d_FragColor = mix(base * flashlightLit, base * lightFlicker, useBaseColor);
-    p3d_FragColor = mix(base * flashlightLit, base, useBaseColor);
+    // mixed = mix(base * flashlightLit, base * lightFlicker, useBaseColor);
+
+    p3d_FragColor = mixed;
     
     // Test values
     // p3d_FragColor = vec4(depth);   // Depth buffer
