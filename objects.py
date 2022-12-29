@@ -14,27 +14,33 @@ class SpotlightOBJ(CustomObject3D):
     
     MODEL_PATH = "models/spotlight/spotlight2.obj"
     LIGHT_COLOR = (
-        1, 
-        1, 
-        1, 
+        1000, 
+        1000, 
+        1000, 
         1)
-    SELF_LIGHT_COLOR = (1, 1, 1, 1)
+    SELF_LIGHT_COLOR = (
+        1.5, 
+        1.5, 
+        1.5, 
+        1)
     LIGHT_DISTANCE_THRESHOLD = 12
     LIGHT_MOVEMENT_SPEED = 0.1
     
     def __init__(self, position, parent, game, scale=[1, 1, 1], look_at=(0, 0, 0), 
-                grass_height=-10, target_height_limit=0, test=None):
+                grass_height=-10, target_height_limit=-10, test=None):
         model = game.loader.loadModel(SpotlightOBJ.MODEL_PATH)
         super().__init__(model, position, parent, scale, emmits_light=True, 
                          light_color_temperature=SpotlightOBJ.LIGHT_COLOR, light_distance_threshold=SpotlightOBJ.LIGHT_DISTANCE_THRESHOLD)
         self.gravity = 0
         self.velocity = [0, 0, 0]
         self.model.setP(90)
-        self.model.setH(180)
+        self.model.setH(135)
         self.grass_height = grass_height
         self.current_target = look_at
         self.look_direction = 1
         self.target_height_limit = target_height_limit
+        if self.current_target[2] >= self.target_height_limit:
+            self.current_target[2] = self.target_height_limit
 
         peak = self.model.getTightBounds()[1]
         self.slight = Spotlight('slight')
@@ -52,7 +58,7 @@ class SpotlightOBJ(CustomObject3D):
         self.self_slight.setLens(self.lens)
         self.pnp = self.parent.attachNewNode(self.self_slight)
         self.pnp.setPos(look_at)
-        self.pnp.look_at(peak + LPoint3(-10, 0, -10))
+        self.pnp.look_at(peak + LPoint3(-2, 0, -10))
         self.model.setLight(self.pnp)
     
     def update(self):
