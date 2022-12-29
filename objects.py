@@ -14,9 +14,9 @@ class SpotlightOBJ(CustomObject3D):
     
     MODEL_PATH = "models/spotlight/spotlight2.obj"
     LIGHT_COLOR = (
-        1, 
-        1, 
-        1, 
+        1000, 
+        1000, 
+        1000, 
         1)
     SELF_LIGHT_COLOR = (
         1.5, 
@@ -27,7 +27,7 @@ class SpotlightOBJ(CustomObject3D):
     LIGHT_MOVEMENT_SPEED = 0.1
     
     def __init__(self, position, parent, game, scale=[1, 1, 1], look_at=(0, 0, 0), 
-                grass_height=-10, target_height_limit=0, test=None):
+                grass_height=-10, target_height_limit=-10, test=None):
         model = game.loader.loadModel(SpotlightOBJ.MODEL_PATH)
         super().__init__(model, position, parent, scale, emmits_light=True, 
                          light_color_temperature=SpotlightOBJ.LIGHT_COLOR, light_distance_threshold=SpotlightOBJ.LIGHT_DISTANCE_THRESHOLD)
@@ -39,6 +39,8 @@ class SpotlightOBJ(CustomObject3D):
         self.current_target = look_at
         self.look_direction = 1
         self.target_height_limit = target_height_limit
+        if self.current_target[2] >= self.target_height_limit:
+            self.current_target[2] = self.target_height_limit
 
         peak = self.model.getTightBounds()[1]
         self.slight = Spotlight('slight')
