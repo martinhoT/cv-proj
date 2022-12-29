@@ -18,7 +18,11 @@ class SpotlightOBJ(CustomObject3D):
         1, 
         1, 
         1)
-    SELF_LIGHT_COLOR = (1, 1, 1, 1)
+    SELF_LIGHT_COLOR = (
+        1.5, 
+        1.5, 
+        1.5, 
+        1)
     LIGHT_DISTANCE_THRESHOLD = 12
     LIGHT_MOVEMENT_SPEED = 0.1
     
@@ -30,7 +34,7 @@ class SpotlightOBJ(CustomObject3D):
         self.gravity = 0
         self.velocity = [0, 0, 0]
         self.model.setP(90)
-        self.model.setH(180)
+        self.model.setH(135)
         self.grass_height = grass_height
         self.current_target = look_at
         self.look_direction = 1
@@ -52,7 +56,7 @@ class SpotlightOBJ(CustomObject3D):
         self.self_slight.setLens(self.lens)
         self.pnp = self.parent.attachNewNode(self.self_slight)
         self.pnp.setPos(look_at)
-        self.pnp.look_at(peak + LPoint3(-10, 0, -10))
+        self.pnp.look_at(peak + LPoint3(-2, 0, -10))
         self.model.setLight(self.pnp)
     
     def update(self):
