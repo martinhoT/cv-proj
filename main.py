@@ -30,7 +30,7 @@ CAMERA_SENSIBILITY = 90
 ZOOM_SENSIBILITY = 5
 ZOOM_INITIAL = 60
 
-PERSPECTIVE_CHANCE = 0.01
+PERSPECTIVE_CHANCE = 0.001
 PERSPECTIVE_RETURN_CHANCE = 0.05
 
 FLASHLIGHT_POWER = 1
@@ -58,7 +58,7 @@ MOON_SELF_LIGHT_INTENSITY = 0.9
 GRASS_PATH = "models/grass/grass_bump4.obj"
 GRASS_SCALE = 100
 GRASS_FOG_DENSITY = 0.0035
-GRASS_HEIGHT = -10 #-50
+GRASS_HEIGHT = -30 #-50
 
 GRASS_LIGHT = True
 GRASS_LIGHT_COLOR = (.6, .6, .6, 1)
@@ -104,7 +104,7 @@ class ExplorerApp(ShowBase):
         self.camera_focus = (0, 0, 0)
         self.camera_perspective_lens = self.cam.node().getLens()
         self.camera_orthographic_lens = OrthographicLens()
-        update_orthographic_lens(self.camera_orthographic_lens, WIDTH, HEIGHT)
+        update_orthographic_lens(self.camera_orthographic_lens, WIDTH, HEIGHT, self.camera_zoom)
 
         self.path = os.path.dirname(os.path.abspath(__file__))
         self.path_p3d = Filename.fromOsSpecific(self.path)
@@ -146,7 +146,6 @@ class ExplorerApp(ShowBase):
                 self.labyrinth_block_nodes[floor].setLight(dlnp)
         self.bird.model.setLight(dlnp)
         
-        
         self.grass_light = PointLight('plightt')
         self.grass_light.setColor(GRASS_LIGHT_COLOR)
         if GRASS_LIGHT:
@@ -177,6 +176,10 @@ class ExplorerApp(ShowBase):
         # inputs
         self.is_light_toogle = False
         self.is_perspective_toogle = False
+
+        self.accept('v', self.toggle_light)
+        self.accept('c', self.toggle_perspective)
+        self.accept('b', self.lightning_strike)
 
         self.taskMgr.add(self.generate_random_event, 'generate_random_event')
         self.pusher.addInPattern('%fn-into-%in')
@@ -294,12 +297,10 @@ class ExplorerApp(ShowBase):
         
         # create spotlight object
         self.spotlight_obj = SpotlightOBJ([player_position[0] - 50, player_position[1] - 50, GRASS_HEIGHT], self.labyrinth_np, self,
-                                          scale=[SPOTLIGHT_SCALE for _ in range(3)], look_at=(-25, -25, -49), test=self.render)
+                                          scale=[SPOTLIGHT_SCALE for _ in range(3)], look_at=LPoint3(0, 0, 0), grass_height=GRASS_HEIGHT, test=self.render)
     
-        self.spotlight_obj.look_at((0, 0, -10))
+        self.spotlight_obj.look_at(LPoint3(0, 0, GRASS_HEIGHT))
         
-        # table_model = self.loader.loadModel(self.path_p3d / TABLE_PATH)
-        # table = CustomObject3D(table_model, (0, 0, 0), self.labyrinth_np, scale=[0.5 for _ in range(3)])
         
     
     def init_objs(self, wall_obj: Wall, labyrinth_np: NodePath):
@@ -360,10 +361,17 @@ class ExplorerApp(ShowBase):
         self.is_mouse_holded = False
     
     def on_mouse_wheel(self, delta):
-        self.camera_zoom -= delta
-        self.camera_zoom = max(self.camera_zoom, 10)
-        self.camera_zoom = min(self.camera_zoom, 150)
-        move_camera(self.camera, self.camera_zoom, self.camera_pos, self.camera_focus)
+        new_camera_zoom = self.camera_zoom - delta
+        new_camera_zoom = max(new_camera_zoom, 10)
+        new_camera_zoom = min(new_camera_zoom, 150)
+        
+        has_moved = move_camera(self.camera, new_camera_zoom, self.camera_pos, self.camera_focus,
+                                grass_height=GRASS_HEIGHT, labyrinth_boundaries=[self.labyrinth.width, self.labyrinth.depth, self.labyrinth.height])
+        
+        if has_moved: 
+            self.camera_zoom = new_camera_zoom
+            update_orthographic_lens(self.camera_orthographic_lens, WIDTH, HEIGHT, self.camera_zoom)
+            
         
         # Reduce the flashlight radius when the camera is zoomed out, sorta following the inverse square law
         self.quad_filter.setShaderInput('lightRadius', 1 / (self.camera_zoom**2 * (1 / FLASHLIGHT_RADIUS) / ZOOM_INITIAL**2))
@@ -434,6 +442,7 @@ class ExplorerApp(ShowBase):
         
         self.bird.update(task.time)
         # self.firefly.update(task.time)
+        self.spotlight_obj.update()
 
         return Task.cont
 
@@ -444,6 +453,7 @@ class ExplorerApp(ShowBase):
     def toggle_perspective(self):
         if isinstance(self.cam.node().getLens(), PerspectiveLens):
             self.cam.node().setLens(self.camera_orthographic_lens)
+            update_orthographic_lens(self.camera_orthographic_lens, WIDTH, HEIGHT, self.camera_zoom)
         else:
             self.cam.node().setLens(self.camera_perspective_lens)
 
@@ -527,7 +537,7 @@ class ExplorerApp(ShowBase):
     def windowResized(self):
         newX, newY = self.win.getSize()
         self.quad_filter.setShaderInput('u_resolution', (newX, newY))
-        update_orthographic_lens(self.camera_orthographic_lens, newX, newY)
+        update_orthographic_lens(self.camera_orthographic_lens, newX, newY, self.camera_zoom)
 
     def setupShaders(self):
         # Plenty of features, including normal maps and per-pixel lighting
@@ -634,13 +644,17 @@ class ExplorerApp(ShowBase):
                 self.previous_mouse_pos = [mouse_x, mouse_y]
                 
             mouse_offset = [mouse_x - self.previous_mouse_pos[0], mouse_y - self.previous_mouse_pos[1]]
-            self.camera_pos[0] -= mouse_offset[0] * CAMERA_SENSIBILITY
-            self.camera_pos[1] += mouse_offset[1] * CAMERA_SENSIBILITY
-            self.camera_pos[1] = max(120, self.camera_pos[1])
-            self.camera_pos[1] = min(230, self.camera_pos[1])	
+            new_camera_pos = self.camera_pos.copy()
+            new_camera_pos[0] -= mouse_offset[0] * CAMERA_SENSIBILITY
+            new_camera_pos[1] += mouse_offset[1] * CAMERA_SENSIBILITY
+            new_camera_pos[1] = max(120, new_camera_pos[1])
+            new_camera_pos[1] = min(230, new_camera_pos[1])	
         
-            # self.player.model.setH(self.camera_pos[0])
-            move_camera(self.camera, self.camera_zoom, self.camera_pos, self.camera_focus)
+            had_move = move_camera(self.camera, self.camera_zoom, new_camera_pos, self.camera_focus, 
+                                   grass_height=GRASS_HEIGHT, labyrinth_boundaries=[self.labyrinth.width, self.labyrinth.depth, self.labyrinth.height])
+            if had_move:
+                self.camera_pos = new_camera_pos.copy()
+                
             self.previous_mouse_pos = [mouse_x, mouse_y]
             
         elif not self.is_mouse_holded and self.previous_mouse_pos is not None:
