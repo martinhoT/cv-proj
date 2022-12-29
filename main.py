@@ -198,10 +198,10 @@ class ExplorerApp(ShowBase):
         self.accept("wheel_down", self.on_mouse_wheel, [-ZOOM_SENSIBILITY])
           
         self.taskMgr.add(self.update_camera_rotation_task, 'update_camera_rotation_task')
-        
+
         if GRASS_LIGHT:
             self.taskMgr.add(self.move_grasslight_task, 'move_grasslight_task')
-        
+               
     def move_grasslight_task(self, task):
         angle = task.time / 2
         self.grass_lightnp.setPos(100 * math.sin(angle), -100.0 * math.cos(angle), 3)
@@ -572,6 +572,26 @@ class ExplorerApp(ShowBase):
 
         self.accept('aspectRatioChanged', self.windowResized)
         self.taskMgr.add(self.update_shader_time_task, 'update_shader_time_task')
+
+        # glow_shader = Shader.load(Shader.SL_GLSL,
+        #     vertex='shaders/glow.vert',
+        #     fragment='shaders/glow.frag')
+
+        # glow_buffer: GraphicsBuffer = self.win.makeTextureBuffer("Glow buffer", 512, 512)
+        # glow_buffer.setSort(-3)
+        # glow_buffer.setClearColor((0, 0, 0, 1))
+
+        # glow_camera = self.makeCamera(glow_buffer, lens=self.cam.node().getLens())
+
+        # tempnode = NodePath(PandaNode('temp node'))
+        # tempnode.setShader(glow_shader)
+        # glow_camera.node().setInitialState(tempnode.getState())
+        
+        # glow_buffer.getTextureCard().reparentTo(self.render2d)
+        # self.bufferViewer.enable(True)
+        # self.bufferViewer.setPosition("llcorner")
+        # self.bufferViewer.setLayout("hline")
+        # self.bufferViewer.setCardSize(0, 0)
 
     def update_shader_time_task(self, task):
         self.quad_filter.setShaderInput('u_time', time.time() - self.start_time)

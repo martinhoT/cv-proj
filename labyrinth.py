@@ -156,6 +156,7 @@ class Labyrinth:
 
                     object_underneath: bool = object_type != cls.NODE_HOLE \
                         and previous_layout and previous_layout[y_idx][x_idx] != cls.NODE_EMPTY
+                    object_ontop: bool = any(floor_layout[y_idx][x_idx] != cls.NODE_EMPTY for floor_layout in floor_layouts[idx+1:])
 
                     if object_type == cls.NODE_WALL_H:
                         block = Wall(**block_args, **cls.ATTRIBUTES_WALL_H, color=wall_color)
@@ -175,7 +176,7 @@ class Labyrinth:
                     elif object_type == cls.NODE_FLOOR or object_underneath:
                         
                         # Whether or not this is strictly a roof, and so not meant to be a walkable floor
-                        block_args['strictly_roof'] = object_type != cls.NODE_FLOOR and object_underneath
+                        block_args['strictly_roof'] = object_type != cls.NODE_FLOOR and object_underneath and not object_ontop
 
                         # Middle floor
                         if (x_idx % 2) == 1 and (y_idx % 2) == 1:
@@ -459,22 +460,22 @@ class Parallelepiped:
         # Clockwise order
         vertices = np.array([
             # BOTTOM
-            [0, 0, 0,  0,  0],
-            [0, y, 0,  0, vy],
-            [x, y, 0, ux, vy],
+            [0, 0, 0,  0, vy],
+            [0, y, 0,  0,  0],
+            [x, y, 0, ux,  0],
 
-            [0, 0, 0,  0,  0],
-            [x, y, 0, ux, vy],
-            [x, 0, 0, ux,  0],
+            [0, 0, 0,  0, vy],
+            [x, y, 0, ux,  0],
+            [x, 0, 0, ux, vy],
 
             # TOP
-            [0, 0, z, ux,  0],
-            [x, y, z,  0, vy],
-            [0, y, z, ux, vy],
+            [0, 0, z,  0,  0],
+            [x, y, z, ux, vy],
+            [0, y, z,  0, vy],
 
-            [0, 0, z, ux,  0],
-            [x, 0, z,  0,  0],
-            [x, y, z,  0, vy],
+            [0, 0, z,  0,  0],
+            [x, 0, z, ux,  0],
+            [x, y, z, ux, vy],
 
             # LEFT
             [0, y, z,  0, vz],
@@ -495,22 +496,22 @@ class Parallelepiped:
             [x, y, 0, uy,  0],
 
             # BACK
-            [0, y, z,  0, vz],
-            [x, y, z, ux, vz],
-            [0, y, 0,  0,  0],
+            [0, y, z, ux, vz],
+            [x, y, z,  0, vz],
+            [0, y, 0, ux,  0],
 
-            [x, y, z, ux, vz],
-            [x, y, 0, ux,  0],
-            [0, y, 0,  0,  0],
+            [x, y, z,  0, vz],
+            [x, y, 0,  0,  0],
+            [0, y, 0, ux,  0],
 
             # FRONT
-            [0, 0, 0,  0, vz],
-            [x, 0, z, ux,  0],
-            [0, 0, z,  0,  0],
+            [0, 0, 0,  0,  0],
+            [x, 0, z, ux, vz],
+            [0, 0, z,  0, vz],
 
-            [0, 0, 0,  0, vz],
-            [x, 0, 0, ux, vz],
-            [x, 0, z, ux,  0],
+            [0, 0, 0,  0,  0],
+            [x, 0, 0, ux,  0],
+            [x, 0, z, ux, vz],
         ], 'f')
 
         # Color each face with a different shade, mainly for debugging
@@ -529,22 +530,22 @@ class Parallelepiped:
 
         # Tangent and binormal vectors are needed for bump mapping: https://discourse.panda3d.org/t/custom-geometry-and-bump-mapping-bts-space/24256/3
         tangents = [
-            [ ux,  0,  0],   # BOTTOM
-            [-ux,  0,  0],   # TOP
-            [ 0, -ux,  0],   # LEFT
-            [ 0,  ux,  0],   # RIGHT
-            [ ux,  0,  0],   # BACK
-            [ ux,  0,  0],   # FRONT
+            [ ux,   0,  0],   # BOTTOM
+            [ ux,   0,  0],   # TOP
+            [  0, -uy,  0],   # LEFT
+            [  0,  uy,  0],   # RIGHT
+            [-ux,   0,  0],   # BACK
+            [ ux,   0,  0],   # FRONT
         ]
         tangent_cols = np.vstack( [np.repeat([tangent], 6, axis=0) for tangent in tangents] )
 
         binormals = [
-            [ 0,  uy,  0],   # BOTTOM
-            [ 0,  uy,  0],   # TOP
-            [ 0,  0,  uy],   # LEFT
-            [ 0,  0,  uy],   # RIGHT
-            [ 0,  0,  uy],   # BACK
-            [ 0,  0,  uy],   # FRONT
+            [ 0, -vy,   0],   # BOTTOM
+            [ 0,  vy,   0],   # TOP
+            [ 0,   0, -vy],   # LEFT
+            [ 0,   0,  vy],   # RIGHT
+            [ 0,   0,  vy],   # BACK
+            [ 0,   0,  vy],   # FRONT
         ]
         binormal_cols = np.vstack( [np.repeat([binormal], 6, axis=0) for binormal in binormals] )
 
