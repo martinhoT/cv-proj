@@ -206,6 +206,11 @@ class Labyrinth:
                     elif object_type == cls.NODE_FINISH:
                         finish_pos = get_position(x_idx, y_idx, idx)
 
+                        if (x_idx % 2) == 1:
+                            block = TriggerWall(**block_args, **cls.ATTRIBUTES_WALL_H)
+                        
+                        elif (y_idx % 2) == 1:
+                            block = TriggerWall(**block_args, **cls.ATTRIBUTES_WALL_V)
 
                     if block is not None:
                         position = get_position(x_idx, y_idx, idx)
@@ -619,6 +624,14 @@ class Wall(LabyrinthBlock):
             and self.west_inside == other.west_inside \
             and self.south_inside == other.south_inside \
             and self.north_inside == other.north_inside
+
+
+class TriggerWall(LabyrinthBlock):
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('color', (0, 0, 0, 0))
+
+        super().__init__(*args, **kwargs)
 
 
 class Pillar(LabyrinthBlock):

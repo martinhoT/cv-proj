@@ -12,7 +12,7 @@ from panda3d.core import *
 from CustomObject3D import CustomObject3D
 from Player import Player
 from mobs import Bird, Spider, Firefly
-from labyrinth import TEXTURE_WALL, Floor, Parallelepiped, Labyrinth, Wall, Window
+from labyrinth import TEXTURE_WALL, Floor, Parallelepiped, Labyrinth, TriggerWall, Wall, Window
 
 from common import *
 from objects import Table, SpotlightOBJ
@@ -29,6 +29,9 @@ OBJECT_SPAWN_CHANCE = 0.1
 CAMERA_SENSIBILITY = 90
 ZOOM_SENSIBILITY = 5
 ZOOM_INITIAL = 60
+
+START_TRANSITION_DURATION = 1.0
+FINISH_TRANSITION_DURATION = 5.0
 
 PERSPECTIVE_CHANCE = 0.001
 PERSPECTIVE_RETURN_CHANCE = 0.05
@@ -201,6 +204,8 @@ class ExplorerApp(ShowBase):
 
         if GRASS_LIGHT:
             self.taskMgr.add(self.move_grasslight_task, 'move_grasslight_task')
+
+        self.transitions.fadeIn(START_TRANSITION_DURATION)
                
     def move_grasslight_task(self, task):
         angle = task.time / 2
@@ -301,8 +306,6 @@ class ExplorerApp(ShowBase):
     
         self.spotlight_obj.look_at(LPoint3(0, 0, GRASS_HEIGHT))
         
-        
-    
     def init_objs(self, wall_obj: Wall, labyrinth_np: NodePath):
         spider_scale = [Spider.SCALE * 1 for _ in range(3)]
         table_scale = [0.025 for _ in range(3)]
@@ -505,7 +508,7 @@ class ExplorerApp(ShowBase):
                 block_node.setTexture(ts, textures[LABYRINTH_WALL_HEIGHT_TEXTURE_PATH])
             block_node.setPos(block.position)
             
-            if isinstance(block, Window):
+            if isinstance(block, Window) or isinstance(block, TriggerWall):
                 block_node.setTransparency(True)
             
             if isinstance(block, Wall):
@@ -515,6 +518,7 @@ class ExplorerApp(ShowBase):
             is_ground = isinstance(block, Floor)
             node_name = "Ground" if is_ground else "Wall"
             wall_collider_node = CollisionNode(node_name)
+            wall_collider_node
             # get center of the wall
             wall_center = Point3(block.width / 2, block.depth / 2, block.height / 2)
             wall_collider_node.addSolid(CollisionBox(wall_center,
@@ -680,6 +684,14 @@ class ExplorerApp(ShowBase):
             self.is_perspective_toogle = not self.is_perspective_toogle
 
         return Task.cont
+    
+    def finish(self):
+        # Stop both player input and chaos
+        self.taskMgr.remove('read_inputs_task')
+        self.taskMgr.remove('generate_random_event')
+        self.transitions.fadeOut(FINISH_TRANSITION_DURATION)
+
+        exit(0)
 
 
 parser = argparse.ArgumentParser('cv-proj')
