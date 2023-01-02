@@ -20,7 +20,7 @@ from objects import Table, SpotlightOBJ
 WIDTH = 800
 HEIGHT = 600
 PLAYER_SPEED = 0.25
-PLAYER_JUMP_SPEED = 0.35
+PLAYER_JUMP_SPEED = 0.5
 AMBIENT_LIGHT_INTENSITY = 0.4
 DIRECTIONAL_LIGHT_INTENSITY = 0.3
 SKY_COLOR = (0.0, 0.0, AMBIENT_LIGHT_INTENSITY)
@@ -192,6 +192,7 @@ class ExplorerApp(ShowBase):
         self.accept("Player-out-Ground", self.player_out_ground)
         self.accept("Player-into-Ground", self.player_hit_ground)
         self.accept("Player-again-Ground", self.player_hit_ground)
+        self.accept("Player-into-TriggerWall", self.finish)
         
         # Mouse inputs
         self.is_mouse_holded = False
@@ -515,22 +516,21 @@ class ExplorerApp(ShowBase):
             if isinstance(block, Wall):
                 self.init_objs(block, labyrinth_np)
             
-            # Collisions
-            if not isinstance(block, TriggerWall):
-                is_ground = isinstance(block, Floor)
-                node_name = "Ground" if is_ground else "Wall"
-                wall_collider_node = CollisionNode(node_name)
-                wall_collider_node
-                # get center of the wall
-                wall_center = Point3(block.width / 2, block.depth / 2, block.height / 2)
-                wall_collider_node.addSolid(CollisionBox(wall_center,
-                                                        block.width / 2,
-                                                        block.depth / 2,
-                                                        block.height / 2))
-                wall_collider = block_node.attachNewNode(wall_collider_node)
-                if self.DEBUG_COLLISIONS:
-                    wall_collider.show()
-        
+            is_ground = isinstance(block, Floor)
+            is_trigger = isinstance(block, TriggerWall)
+            node_name = "Ground" if is_ground else "TriggerWall" if is_trigger else "Wall"
+            wall_collider_node = CollisionNode(node_name)
+            wall_collider_node
+            # get center of the wall
+            wall_center = Point3(block.width / 2, block.depth / 2, block.height / 2)
+            wall_collider_node.addSolid(CollisionBox(wall_center,
+                                                    block.width / 2,
+                                                    block.depth / 2,
+                                                    block.height / 2))
+            wall_collider = block_node.attachNewNode(wall_collider_node)
+            if self.DEBUG_COLLISIONS:
+                wall_collider.show()
+
         # Center the labyrinth to the origin
         labyrinth_np.setPos(
             - labyrinth.width / 2,
@@ -687,12 +687,15 @@ class ExplorerApp(ShowBase):
 
         return Task.cont
     
-    def finish(self):
+    def finish(self, entity):
         # Stop both player input and chaos
         self.taskMgr.remove('read_inputs_task')
         self.taskMgr.remove('generate_random_event')
+        self.taskMgr.doMethodLater(FINISH_TRANSITION_DURATION, self.exit_game, 'exit_game')
         self.transitions.fadeOut(FINISH_TRANSITION_DURATION)
 
+    
+    def exit_game(self, task):
         exit(0)
 
 
