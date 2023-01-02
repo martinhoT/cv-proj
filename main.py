@@ -499,13 +499,14 @@ class ExplorerApp(ShowBase):
             block_node = labyrinth_np.attachNewNode(block_geom)
             self.labyrinth_block_nodes[block] = block_node
             
-            if block.texture not in textures:
-                textures[block.texture] = self.loader.loadTexture(self.path_p3d / block.texture)
-            block_node.setTexture(textures[block.texture])
-            if block.texture == TEXTURE_WALL:
-                ts = TextureStage('Wall Height')
-                ts.setMode(TextureStage.MHeight)
-                block_node.setTexture(ts, textures[LABYRINTH_WALL_HEIGHT_TEXTURE_PATH])
+            if block.texture is not None:
+                if block.texture not in textures:
+                    textures[block.texture] = self.loader.loadTexture(self.path_p3d / block.texture)
+                block_node.setTexture(textures[block.texture])
+                if block.texture == TEXTURE_WALL:
+                    ts = TextureStage('Wall Height')
+                    ts.setMode(TextureStage.MHeight)
+                    block_node.setTexture(ts, textures[LABYRINTH_WALL_HEIGHT_TEXTURE_PATH])
             block_node.setPos(block.position)
             
             if isinstance(block, Window) or isinstance(block, TriggerWall):
@@ -515,19 +516,20 @@ class ExplorerApp(ShowBase):
                 self.init_objs(block, labyrinth_np)
             
             # Collisions
-            is_ground = isinstance(block, Floor)
-            node_name = "Ground" if is_ground else "Wall"
-            wall_collider_node = CollisionNode(node_name)
-            wall_collider_node
-            # get center of the wall
-            wall_center = Point3(block.width / 2, block.depth / 2, block.height / 2)
-            wall_collider_node.addSolid(CollisionBox(wall_center,
-                                                     block.width / 2,
-                                                     block.depth / 2,
-                                                     block.height / 2))
-            wall_collider = block_node.attachNewNode(wall_collider_node)
-            if self.DEBUG_COLLISIONS:
-                wall_collider.show()
+            if not isinstance(block, TriggerWall):
+                is_ground = isinstance(block, Floor)
+                node_name = "Ground" if is_ground else "Wall"
+                wall_collider_node = CollisionNode(node_name)
+                wall_collider_node
+                # get center of the wall
+                wall_center = Point3(block.width / 2, block.depth / 2, block.height / 2)
+                wall_collider_node.addSolid(CollisionBox(wall_center,
+                                                        block.width / 2,
+                                                        block.depth / 2,
+                                                        block.height / 2))
+                wall_collider = block_node.attachNewNode(wall_collider_node)
+                if self.DEBUG_COLLISIONS:
+                    wall_collider.show()
         
         # Center the labyrinth to the origin
         labyrinth_np.setPos(

@@ -174,6 +174,22 @@ class Labyrinth:
                     elif object_type == cls.NODE_PILLAR:
                         block = Pillar(**block_args, **cls.ATTRIBUTES_PILLAR, color=pillar_color)
                     
+                    elif object_type == cls.NODE_START:
+                        position = get_position(x_idx, y_idx, idx)
+                        length_to_center = cls.DIMS_WALL_LENGTH / 2
+                        start_pos = (position[0] + length_to_center, position[1] + length_to_center, position[2] + cls.DIMS_FLOOR_HEIGHT)   # not sure why only center Y, but works
+                        # Create a floor underneath
+                        block = Floor(**block_args, **cls.ATTRIBUTES_FLOOR_MIDDLE, strictly_roof=False, color=floor_color)
+                    
+                    elif object_type == cls.NODE_FINISH:
+                        finish_pos = get_position(x_idx, y_idx, idx)
+
+                        if (x_idx % 2) == 1:
+                            block = TriggerWall(**block_args, **cls.ATTRIBUTES_WALL_H)
+                        
+                        elif (y_idx % 2) == 1:
+                            block = TriggerWall(**block_args, **cls.ATTRIBUTES_WALL_V)
+
                     elif object_type == cls.NODE_FLOOR or object_underneath:
                         
                         # Whether or not this is strictly a roof, and so not meant to be a walkable floor
@@ -196,28 +212,12 @@ class Labyrinth:
                             block = Floor(**block_args, **cls.ATTRIBUTES_FLOOR_PILLAR)
 
                         block.color = floor_color
-                    
-                    elif object_type == cls.NODE_START:
-                        position = get_position(x_idx, y_idx, idx)
-                        length_to_center = cls.DIMS_WALL_LENGTH / 2
-                        start_pos = (position[0] + length_to_center, position[1] + length_to_center, position[2] + cls.DIMS_FLOOR_HEIGHT)   # not sure why only center Y, but works
-                        # Create a floor underneath
-                        block = Floor(**block_args, **cls.ATTRIBUTES_FLOOR_MIDDLE, strictly_roof=False, color=floor_color)
-                    
-                    elif object_type == cls.NODE_FINISH:
-                        finish_pos = get_position(x_idx, y_idx, idx)
-
-                        if (x_idx % 2) == 1:
-                            block = TriggerWall(**block_args, **cls.ATTRIBUTES_WALL_H)
-                        
-                        elif (y_idx % 2) == 1:
-                            block = TriggerWall(**block_args, **cls.ATTRIBUTES_WALL_V)
 
                     if block is not None:
                         position = get_position(x_idx, y_idx, idx)
                         block.position = position
                         
-                        if isinstance(block, Pillar):
+                        if isinstance(block, Pillar) or isinstance(block, TriggerWall):
                             # Add an extra floor block below
                             blocks.append(Floor(
                                 **block_args,
