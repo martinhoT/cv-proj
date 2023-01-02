@@ -44,6 +44,7 @@ class Labyrinth:
     NODES_H = {NODE_WALL_H, NODE_WINDOW_H}
     NODES_V = {NODE_WALL_V, NODE_WINDOW_V}
     NODES_INSIDE = {NODE_FLOOR, NODE_HOLE, NODE_START}   # Nodes that are inside the labyrinth (not walls, pillars etc.), with walkable space
+    NODES_FLOOR = {NODE_FLOOR, NODE_START, NODE_FINISH}   # Nodes that are ultimately a floor in the labyrinth
 
     DIMS_FLOOR_HEIGHT = 1
     DIMS_WALL_LENGTH = 5
@@ -176,7 +177,7 @@ class Labyrinth:
                     elif object_type == cls.NODE_FLOOR or object_underneath:
                         
                         # Whether or not this is strictly a roof, and so not meant to be a walkable floor
-                        block_args['strictly_roof'] = object_type != cls.NODE_FLOOR and object_underneath and not object_ontop
+                        block_args['strictly_roof'] = object_type not in cls.NODES_FLOOR and object_underneath and not object_ontop
 
                         # Middle floor
                         if (x_idx % 2) == 1 and (y_idx % 2) == 1:
