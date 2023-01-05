@@ -36,6 +36,16 @@ FINISH_TRANSITION_DURATION = 5.0
 PERSPECTIVE_CHANCE = 0.001
 PERSPECTIVE_RETURN_CHANCE = 0.05
 
+SHADER_PATH = 'shaders'
+
+FLASHLIGHT_SHADER_VERTEX = f'{SHADER_PATH}/flashlight.vert'
+FLASHLIGHT_SHADER_FRAGMENT = f'{SHADER_PATH}/flashlight.frag'
+
+DEBUG_SHADER_FRAGMENTS = [
+    f'{SHADER_PATH}/debug/{shader}.frag' 
+    for shader in ['base', 'depth', 'normal', 'useBaseColor', 'value']
+]
+
 FLASHLIGHT_POWER = 1
 FLASHLIGHT_RADIUS = 0.2
 FLASHLIGHT_FLICKER_CHANCE = 0.01
@@ -94,6 +104,7 @@ class ExplorerApp(ShowBase):
         self.DEBUG_MOUSE_CAMERA = debug_opts.get('mouse_camera', False)
         self.DEBUG_HIDE_UNLIT = debug_opts.get('hide_unlit', False)
         self.DEBUG_MANUAL_RANDOM_EVENTS = debug_opts.get('no_chaos', False)
+        self.DEBUG_FRAGMENT_SHADER = debug_opts.get('frag', None)
 
         # set window size
         props = WindowProperties()
@@ -188,6 +199,11 @@ class ExplorerApp(ShowBase):
         self.pusher.addInPattern('%fn-into-%in')
         self.pusher.addOutPattern('%fn-out-%in')
         self.pusher.addAgainPattern('%fn-again-%in')
+
+        if self.DEBUG_FRAGMENT_SHADER:
+            for key, shader in enumerate(DEBUG_SHADER_FRAGMENTS):
+                self.accept(f'alt-{key + 1}', self.change_fragment_shader, [shader])
+            self.accept('alt-0', self.change_fragment_shader, [FLASHLIGHT_SHADER_FRAGMENT])
         
         self.accept("Player-out-Ground", self.player_out_ground)
         self.accept("Player-into-Ground", self.player_hit_ground)
@@ -552,8 +568,8 @@ class ExplorerApp(ShowBase):
         
         # Apply the flashlight effect, and others, using deferred lighting
         flashlight_shader = Shader.load(Shader.SL_GLSL,
-            vertex='shaders/flashlight.vert',
-            fragment='shaders/flashlight.frag')
+            vertex=FLASHLIGHT_SHADER_VERTEX,
+            fragment=FLASHLIGHT_SHADER_FRAGMENT)
 
         # Save the normal buffer into the auxiliary bitplane
         self.render.setAttrib(AuxBitplaneAttrib.make(AuxBitplaneAttrib.ABO_aux_normal))
@@ -687,6 +703,16 @@ class ExplorerApp(ShowBase):
 
         return Task.cont
     
+    def change_fragment_shader(self, fragment_path: str):
+        self.quad_filter.setShader(
+            Shader.load(
+                Shader.SL_GLSL,
+                vertex=FLASHLIGHT_SHADER_VERTEX,
+                fragment=fragment_path,
+            )
+        )
+        print('Loaded shader', fragment_path)
+
     def finish(self, entity):
         # Stop both player input and chaos
         self.taskMgr.remove('read_inputs_task')
@@ -694,7 +720,6 @@ class ExplorerApp(ShowBase):
         self.taskMgr.doMethodLater(FINISH_TRANSITION_DURATION, self.exit_game, 'exit_game')
         self.transitions.fadeOut(FINISH_TRANSITION_DURATION)
 
-    
     def exit_game(self, task):
         exit(0)
 
@@ -730,6 +755,9 @@ parser_debug.add_argument('--debug.log',
 parser_debug.add_argument('--debug.no-chaos',
     action='store_true',
     help='the random events are fired manually instead of automatically')
+parser_debug.add_argument('--debug.frag',
+    action='store_true',
+    help='enable manual change into the debug fragment shaders (alt + number)')
 
 
 args = parser.parse_args()
