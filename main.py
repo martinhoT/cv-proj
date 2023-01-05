@@ -43,7 +43,7 @@ FLASHLIGHT_SHADER_FRAGMENT = f'{SHADER_PATH}/flashlight.frag'
 
 DEBUG_SHADER_FRAGMENTS = [
     f'{SHADER_PATH}/debug/{shader}.frag' 
-    for shader in ['base', 'depth', 'normal', 'useBaseColor', 'value']
+    for shader in ['base', 'depth', 'normal', 'flashlightLit', 'flashlightLitBase', 'value', 'useBaseColor', 'useBaseColorMix']
 ]
 
 FLASHLIGHT_POWER = 1
