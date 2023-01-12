@@ -1,5 +1,5 @@
 from CustomObject3D import CustomObject3D
-from panda3d.core import NodePath, PointLight, VBase4, Spotlight, PerspectiveLens
+from panda3d.core import NodePath, PointLight
 from typing import Generator
 import math
 import random
@@ -19,7 +19,6 @@ class Bird(CustomObject3D):
         self.model.setP(90)
     
     def update(self, time):
-        # super().update()
         angleDegrees = time * self.ROTATION_SPEED
         angleRadians = angleDegrees * (math.pi / 180.0)
         

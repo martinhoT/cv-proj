@@ -1,8 +1,5 @@
-from panda3d.core import NodePath, LPoint3f, ShadeModelAttrib, PointLight, VBase4
-from typing import Tuple, List, Generator
-from labyrinth import Labyrinth, Parallelepiped
-
-
+from panda3d.core import NodePath, LPoint3f, ShadeModelAttrib
+from typing import Tuple, Generator
 
 GRAVITY = 0.01
 
@@ -14,11 +11,10 @@ class CustomObject3D:
                  parent: NodePath, scale: Tuple[float, float, float] = (1, 1, 1),
                  is_flat: bool = False, emmits_light: bool = False, light_color: Tuple[float, float, float] = None,
                  light_color_temperature: float = None, light_distance_threshold: float = 0):
-                #  collision: CollisionNode = None, speed: float = 0.0):
+
         self.model = model
         self.position = position
         self.relative_position = [0, 0, 0]
-        # self.rotation = rotation
         self.scale = scale
         self.parent = parent
         self.velocity = [0, 0, 0]
@@ -31,26 +27,6 @@ class CustomObject3D:
         if is_flat:
             self.model.node().setAttrib(ShadeModelAttrib.make(ShadeModelAttrib.MFlat))
         
-        # if emmits_light:
-        #     # Create light
-        #     pl = PointLight('pl')
-        #     if light_color is not None:
-        #         pl.setColor(VBase4(*light_color, 1))
-        #     elif light_color_temperature is not None:
-        #         pl.setColorTemperature(light_color_temperature)
-        #     pl.setShadowCaster(True, CustomObject3D.SHADOW_RESOLUTION, CustomObject3D.SHADOW_RESOLUTION)
-        #     self.pn = self.parent.attachNewNode(pl)
-        #     self.pn.setPos(self.model.getPos())
-            
-        #     if light_distance_threshold > 0:
-        #         for node_to_illuminate in self.get_light_surroundings(distance_threshold=light_distance_threshold):
-        #             node_to_illuminate.setLight(self.pn)
-        #             node_to_illuminate.show()
-        #     else:
-        #         self.parent.setLight(self.pn)
-                
-
-
     def set_scale(self, scale_x, scale_y, scale_z):
         self.model.setScale(scale_x, scale_y, scale_z)
         self.scale = (scale_x, scale_y, scale_z)

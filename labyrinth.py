@@ -333,25 +333,10 @@ class Labyrinth:
             merge_method=lambda x_blocks: (set(x for x, block in x_blocks), x_blocks[0][1]),
         ))
 
-        # Merge the walls and pillars
-        walls: Dict[int, List[Union[Wall, Pillar]]] = {}
-        # for block in blocks:
-        #     # Ignore Windows
-        #     if type(block) == Wall or type(block) == Pillar:
-        #         walls.setdefault(block.floor_index, []).append(block)
-
-        # merged.extend(cls.merge_horizontal_blocks(floors,
-        #     # they have to be in adjacent cells and have the same attributes or be a Pillar
-        #     merge_key=lambda x_block1, x_block0: (x_block1[0] - x_block0[0]) == 1 and x_block1[1].same_attributes(x_block0[1]),
-        #     # get the span of cell x coordinates, and also a model block whose attributes will be used
-        #     merge_method=lambda x_blocks: (set(x for x, block in x_blocks), x_blocks[0][1]),
-        # ))
-
         # Don't merge the rest
         for block in blocks:
             floors_to_merge = floors[block.floor_index] if block.floor_index in floors else []
-            walls_to_merge = walls[block.floor_index] if block.floor_index in walls else []
-            if block not in floors_to_merge and block not in walls_to_merge:
+            if block not in floors_to_merge:
                 merged.append(block)
 
         return merged
@@ -360,7 +345,7 @@ class Labyrinth:
     @classmethod
     def merge_horizontal_blocks(cls, blocks_at_floor: Dict[int, List['Parallelepiped']], merge_key, merge_method) -> List['Parallelepiped']:
         merged = []
-        for floor, floor_blocks in blocks_at_floor.items():
+        for _, floor_blocks in blocks_at_floor.items():
             # Try to create horizontal strips
             horizontal_strips = []
 
@@ -521,7 +506,6 @@ class Parallelepiped:
         ], 'f')
 
         # Color each face with a different shade, mainly for debugging
-        # color_cols = np.vstack( [np.repeat([[r_, g_, b_, a_]], 6, axis=0) for r_, g_, b_, a_ in np.linspace([0, 0, 0, 0], [r, g, b, a], 6)] )
         color_cols = np.repeat([[r, g, b, a]], len(vertices), axis=0)
         
         normals = [

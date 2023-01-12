@@ -1,5 +1,5 @@
 from CustomObject3D import CustomObject3D
-from panda3d.core import NodePath, PointLight, VBase4, Spotlight, PerspectiveLens, LPoint3
+from panda3d.core import Spotlight, PerspectiveLens, LPoint3
 
 class Table(CustomObject3D):
     
@@ -66,11 +66,10 @@ class SpotlightOBJ(CustomObject3D):
             self.look_direction = -1
         elif self.look_direction == -1 and self.current_target[2] <= self.grass_height:
             self.look_direction = 1
-        # print(f"current target: {self.current_target}, look direction: {self.look_direction}")
+
         self.current_target += LPoint3(0, 0, SpotlightOBJ.LIGHT_MOVEMENT_SPEED * self.look_direction)
     
         self.look_at(self.current_target)
-        # self.pnp.setPos(self.current_target)
     
     def look_at(self, look_at):
         self.slnp.lookAt(look_at)

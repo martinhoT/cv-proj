@@ -1,10 +1,10 @@
 from CustomObject3D import CustomObject3D
 from panda3d.core import *
-from typing import Generator, Iterable, Tuple, List
+from typing import Generator, Tuple
 from labyrinth import Labyrinth, Parallelepiped
 from common import *
 
-N_LIGHTS = 3
+N_LIGHTS = 1
 LIGHT_COLOR = (1, 0.05, 0.5, 1)
 LIGHT_POWER = 20
 LIGHT_DISTANCE_THRESHOLD = 10

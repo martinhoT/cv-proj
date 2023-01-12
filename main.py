@@ -11,7 +11,7 @@ from panda3d.core import *
 
 from CustomObject3D import CustomObject3D
 from Player import Player
-from mobs import Bird, Spider, Firefly
+from mobs import Bird, Spider
 from labyrinth import TEXTURE_WALL, Floor, Parallelepiped, Labyrinth, TriggerWall, Wall, Window
 
 from common import *
@@ -68,8 +68,8 @@ MOON_LIGHT_INTENSITY = 0.25
 MOON_SELF_LIGHT_INTENSITY = 0.9
 GRASS_PATH = "models/grass/grass_bump4.obj"
 GRASS_SCALE = 100
-GRASS_FOG_DENSITY = 0.002 # 0.0035
-GRASS_HEIGHT = -30 #-50
+GRASS_FOG_DENSITY = 0.002
+GRASS_HEIGHT = -30
 
 GRASS_LIGHT = False
 GRASS_LIGHT_COLOR = (.6, .6, .6, 1)
@@ -92,8 +92,6 @@ class ExplorerApp(ShowBase):
     def __init__(self, labyrinth_file: str, debug_opts: dict):
         ShowBase.__init__(self)
 
-
-        # simplepbr.init()
         self.previous_mouse_pos = None
         self.set_background_color(*SKY_COLOR)
 
@@ -216,8 +214,9 @@ class ExplorerApp(ShowBase):
         self.accept("mouse1-up", self.left_release)
         self.accept("wheel_up", self.on_mouse_wheel, [ZOOM_SENSIBILITY])
         self.accept("wheel_down", self.on_mouse_wheel, [-ZOOM_SENSIBILITY])
-          
-        self.taskMgr.add(self.update_camera_rotation_task, 'update_camera_rotation_task')
+        
+        if not self.DEBUG_MOUSE_CAMERA:
+            self.taskMgr.add(self.update_camera_rotation_task, 'update_camera_rotation_task')
 
         if GRASS_LIGHT:
             self.taskMgr.add(self.move_grasslight_task, 'move_grasslight_task')
@@ -312,11 +311,6 @@ class ExplorerApp(ShowBase):
         self.lightning_strike_background.hide()
         self.lightning_strike_background.setTexture(lightning_image)
 
-        # create fireflies
-        firefly_height = -10
-        # self.firefly = Firefly([player_position[0], player_position[1], player_position[2] - firefly_height], 
-        #                       self.labyrinth_np, self, rotation_center=[15, 10, firefly_height])
-        
         # create spotlight object
         self.spotlight_obj = SpotlightOBJ([player_position[0] - 50, player_position[1] - 50, GRASS_HEIGHT], self.labyrinth_np, self,
                                           scale=[SPOTLIGHT_SCALE for _ in range(3)], look_at=LPoint3(0, 0, 0), grass_height=GRASS_HEIGHT, test=self.render)
@@ -367,7 +361,6 @@ class ExplorerApp(ShowBase):
             self.player.is_on_ground = True       
     
     def player_out_ground(self, entity):
-        # print("Out of ground", entity)]
         if self.DEBUG_LOG: print("Out of ground")
         self.player.is_on_ground = False
         
@@ -461,7 +454,6 @@ class ExplorerApp(ShowBase):
             spider.update()
         
         self.bird.update(task.time)
-        # self.firefly.update(task.time)
         self.spotlight_obj.update()
 
         return Task.cont
@@ -595,26 +587,6 @@ class ExplorerApp(ShowBase):
         self.accept('aspectRatioChanged', self.windowResized)
         self.taskMgr.add(self.update_shader_time_task, 'update_shader_time_task')
 
-        # glow_shader = Shader.load(Shader.SL_GLSL,
-        #     vertex='shaders/glow.vert',
-        #     fragment='shaders/glow.frag')
-
-        # glow_buffer: GraphicsBuffer = self.win.makeTextureBuffer("Glow buffer", 512, 512)
-        # glow_buffer.setSort(-3)
-        # glow_buffer.setClearColor((0, 0, 0, 1))
-
-        # glow_camera = self.makeCamera(glow_buffer, lens=self.cam.node().getLens())
-
-        # tempnode = NodePath(PandaNode('temp node'))
-        # tempnode.setShader(glow_shader)
-        # glow_camera.node().setInitialState(tempnode.getState())
-        
-        # glow_buffer.getTextureCard().reparentTo(self.render2d)
-        # self.bufferViewer.enable(True)
-        # self.bufferViewer.setPosition("llcorner")
-        # self.bufferViewer.setLayout("hline")
-        # self.bufferViewer.setCardSize(0, 0)
-
     def update_shader_time_task(self, task):
         self.quad_filter.setShaderInput('u_time', time.time() - self.start_time)
         return Task.cont
@@ -727,8 +699,8 @@ class ExplorerApp(ShowBase):
 parser = argparse.ArgumentParser('cv-proj')
 parser.add_argument('--map', '-m',
     type=str,
-    default='test1.map',
-    help='the labyrinth map file to be loaded (default=\'test1.map\')')
+    default='main.map',
+    help='the labyrinth map file to be loaded (default=\'main.map\')')
 
 parser_debug = parser.add_argument_group('debug', 'Add debug info to the game.')
 parser_debug.add_argument('--debug.map',
@@ -736,7 +708,7 @@ parser_debug.add_argument('--debug.map',
     help='activate the debug environment for the labyrinth scene (colored walls, for instance)')
 parser_debug.add_argument('--debug.mouse-camera',
     action='store_true',
-    help='let the camera be controllable with the mouse')
+    help='let the camera be freely controllable with the mouse using Panda3D\'s default controls')
 parser_debug.add_argument('--debug.3d-axis',
     action='store_true',
     help='place a 3D axis in the scene at the origin')
@@ -754,7 +726,7 @@ parser_debug.add_argument('--debug.log',
     help='print debug messages (reduces performance)')
 parser_debug.add_argument('--debug.no-chaos',
     action='store_true',
-    help='the random events are fired manually instead of automatically')
+    help='the random events are fired manually instead of automatically (keys \'c\', \'v\' and \'b\')')
 parser_debug.add_argument('--debug.frag',
     action='store_true',
     help='enable manual change into the debug fragment shaders (alt + number)')
@@ -765,7 +737,7 @@ args = parser.parse_args()
 debug_opts = {k.split('.')[1]: v for k, v in args._get_kwargs() if k.startswith('debug.')}
 
 app = ExplorerApp(
-    labyrinth_file=args.map,
+    labyrinth_file='maps/' + args.map,
     debug_opts=debug_opts,
 )
 app.setFrameRateMeter(debug_opts['fps'])

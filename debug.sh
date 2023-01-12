@@ -1,1 +1,0 @@
-python3 main.py --map test2.map --debug.fps --debug.map
