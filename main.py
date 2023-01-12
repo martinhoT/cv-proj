@@ -59,14 +59,13 @@ LIGHTNING_CHANCE = 0.01
 
 LABYRINTH_WALL_HEIGHT_TEXTURE_PATH = 'textures/wall_height.png'
 LIGHTNING_BACKGROUND_TEXTURE_PATH = 'textures/lightning.png'
-GRASS_COLOR_TEXTURE_PATH = 'models/grass/everytexture.com-stock-nature-grass-texture-00004-diffuse.jpg'
-GRASS_HEIGHT_TEXTURE_PATH = 'models/grass/everytexture.com-stock-nature-grass-texture-00004-bump.jpg'
-GRASS_NORMAL_TEXTURE_PATH = 'models/grass/everytexture.com-stock-nature-grass-texture-00004-normal.jpg'
+GRASS_COLOR_TEXTURE_PATH = 'textures/grass_diffuse.jpg'
+GRASS_HEIGHT_TEXTURE_PATH = 'textures/grass_bump.jpg'
+GRASS_NORMAL_TEXTURE_PATH = 'textures/grass_normal.jpg'
 
 MOON_PATH = "models/moon/moon2.obj"
 MOON_LIGHT_INTENSITY = 0.25
 MOON_SELF_LIGHT_INTENSITY = 0.9
-GRASS_PATH = "models/grass/grass_bump4.obj"
 GRASS_SCALE = 100
 GRASS_FOG_DENSITY = 0.002
 GRASS_HEIGHT = -30

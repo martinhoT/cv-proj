@@ -3,5 +3,6 @@ venv
 .vscode
 
 textures/no_*
+models/no_*
 p3d-samples
 
